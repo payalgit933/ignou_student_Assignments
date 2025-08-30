@@ -77,9 +77,9 @@ def test_phonepe_credentials():
         # Test with minimal payload
         test_payload = {
             "merchantId": MERCHANT_ID,
-            "merchantTransactionId": f"test_{int(time.time())}",
+            "merchantTransactionId": f"TEST{int(time.time())}",
             "amount": 100,  # ₹1 in paise
-            "merchantUserId": f"test_user_{int(time.time())}",
+            "merchantUserId": f"TESTUSER{int(time.time())}",
             "redirectUrl": "https://ignou-assignment-portal.onrender.com/payment-success",
             "redirectMode": "POST",
             "callbackUrl": "https://ignou-assignment-portal.onrender.com/payment-callback",
@@ -303,9 +303,17 @@ def initiate_payment():
         
         print("✅ All validation passed, proceeding with payment...")
         
+        # PhonePe-specific validations
+        if amount_rupees < 1:
+            return jsonify({"success": False, "error": "Amount must be at least ₹1"}), 400
+        
+        if amount_rupees > 1000:  # PhonePe limit
+            return jsonify({"success": False, "error": "Amount cannot exceed ₹1000"}), 400
+        
         # Calculate amount based on number of subjects (₹1 per subject)
         amount_rupees = len(subjects)
-        merchant_txn_id = f"txn_{int(time.time())}"
+        # PhonePe requires specific transaction ID format (alphanumeric, no special chars)
+        merchant_txn_id = f"TXN{int(time.time())}"
         
         # Store payment session data
         payment_session = {
@@ -335,7 +343,7 @@ def initiate_payment():
             "merchantId": MERCHANT_ID,
             "merchantTransactionId": merchant_txn_id,
             "amount": amount_paise,
-            "merchantUserId": f"user_{int(time.time())}",
+            "merchantUserId": f"USER{int(time.time())}",
             "redirectUrl": f"{render_url}/payment-success",
             "redirectMode": "POST",
             "callbackUrl": f"{render_url}/payment-callback",
@@ -553,13 +561,13 @@ def create_payment():
     amount_rupees = subject_count * 1
     amount_paise = amount_rupees * 100   # PhonePe uses paise
 
-    merchant_txn_id = f"txn_{int(time.time())}"
+    merchant_txn_id = f"TXN{int(time.time())}"
 
     payload = {
         "merchantId": MERCHANT_ID,
         "merchantTransactionId": merchant_txn_id,
         "amount": amount_paise,
-        "merchantUserId": f"user_{int(time.time())}",
+        "merchantUserId": f"USER{int(time.time())}",
         "redirectUrl": "https://ignou-assignment-portal.onrender.com/payment-status",   # ✅ Updated for Render
         "redirectMode": "POST",
         "callbackUrl": "https://ignou-assignment-portal.onrender.com/payment-callback", # ✅ Updated for Render
