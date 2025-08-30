@@ -250,7 +250,7 @@ def initiate_payment():
             "student_name": student_name,
             "enrollment": enrollment,
             "amount": amount_rupees,
-            "status": "completed",
+            "status": "pending",
             "timestamp": time.time()
         }
         
@@ -258,16 +258,62 @@ def initiate_payment():
             app.payment_sessions = {}
         app.payment_sessions[merchant_txn_id] = payment_session
         
-        print(f"✅ Mock payment created: {merchant_txn_id}")
+        # Real PhonePe payment integration
+        print(f"🚀 Initiating real PhonePe payment: {merchant_txn_id}")
         
-        # Return success for testing
-        return jsonify({
-            "success": True,
-            "paymentUrl": f"/payment-success?txn={merchant_txn_id}",
-            "transactionId": merchant_txn_id,
-            "amount": amount_rupees,
-            "subjects": subjects
-        })
+        # Calculate amount in paise (PhonePe requirement)
+        amount_paise = amount_rupees * 100
+        
+        # Get your Render URL - UPDATE THIS WITH YOUR ACTUAL RENDER URL
+        render_url = "https://ignou-assignment-portal.onrender.com"  # ✅ Your actual Render URL
+        
+        payload = {
+            "merchantId": MERCHANT_ID,
+            "merchantTransactionId": merchant_txn_id,
+            "amount": amount_paise,
+            "merchantUserId": f"user_{int(time.time())}",
+            "redirectUrl": f"{render_url}/payment-success",
+            "redirectMode": "POST",
+            "callbackUrl": f"{render_url}/payment-callback",
+            "paymentInstrument": {"type": "PAY_PAGE"}
+        }
+        
+        # Base64 encode payload
+        payload_str = json.dumps(payload)
+        payload_base64 = base64.b64encode(payload_str.encode()).decode()
+        
+        # Generate checksum
+        raw_string = payload_base64 + "/pg/v1/pay" + SALT_KEY
+        checksum = hashlib.sha256(raw_string.encode()).hexdigest() + "###" + SALT_INDEX
+        
+        headers = {
+            "Content-Type": "application/json",
+            "X-VERIFY": checksum,
+            "accept": "application/json"
+        }
+        
+        print(f"📡 Calling PhonePe API with payload: {payload}")
+        
+        # Call PhonePe API
+        response = requests.post(PHONEPE_URL, headers=headers, json={"request": payload_base64})
+        res_data = response.json()
+        
+        print(f"📡 PhonePe API response: {res_data}")
+        
+        if "data" in res_data and "instrumentResponse" in res_data["data"]:
+            redirect_url = res_data["data"]["instrumentResponse"]["redirectInfo"]["url"]
+            print(f"✅ PhonePe payment initiated successfully. Redirect URL: {redirect_url}")
+            
+            return jsonify({
+                "success": True,
+                "paymentUrl": redirect_url,
+                "transactionId": merchant_txn_id,
+                "amount": amount_rupees,
+                "subjects": subjects
+            })
+        else:
+            print(f"❌ PhonePe API error: {res_data}")
+            return jsonify({"success": False, "error": "Payment initiation failed", "details": res_data}), 400
         
     except Exception as e:
         print(f"❌ Payment initiation exception: {str(e)}")
@@ -277,14 +323,17 @@ def initiate_payment():
 @app.route("/payment-success", methods=["GET", "POST"])
 def payment_success():
     try:
-        # Handle both GET (from mock payment) and POST (from real PhonePe)
+        # Handle both GET and POST requests
         if request.method == "GET":
-            # Mock payment - get transaction ID from query parameter
+            # For debugging - get transaction ID from query parameter
             merchant_txn_id = request.args.get("txn")
         else:
-            # Real PhonePe - get from form data
+            # Real PhonePe response - get from form data
             data = request.form.to_dict()
             merchant_txn_id = data.get("merchantTransactionId")
+            
+            # Log the full PhonePe response for debugging
+            print(f"📡 PhonePe response data: {data}")
         
         print(f"🔍 Payment success request - Transaction ID: {merchant_txn_id}")
         
@@ -420,16 +469,16 @@ def create_payment():
 
     merchant_txn_id = f"txn_{int(time.time())}"
 
-    payload = {
-        "merchantId": MERCHANT_ID,
-        "merchantTransactionId": merchant_txn_id,
-        "amount": amount_paise,
-        "merchantUserId": f"user_{int(time.time())}",
-        "redirectUrl": "http://localhost:5000/payment-status",   # change to your domain
-        "redirectMode": "POST",
-        "callbackUrl": "http://localhost:5000/payment-callback", # PhonePe server will call here
-        "paymentInstrument": {"type": "PAY_PAGE"}
-    }
+            payload = {
+            "merchantId": MERCHANT_ID,
+            "merchantTransactionId": merchant_txn_id,
+            "amount": amount_paise,
+            "merchantUserId": f"user_{int(time.time())}",
+            "redirectUrl": "https://ignou-assignment-portal.onrender.com/payment-status",   # ✅ Updated for Render
+            "redirectMode": "POST",
+            "callbackUrl": "https://ignou-assignment-portal.onrender.com/payment-callback", # ✅ Updated for Render
+            "paymentInstrument": {"type": "PAY_PAGE"}
+        }
 
     # Base64 encode
     payload_str = json.dumps(payload)
