@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - IGNOU Assignment Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <div class="text-2xl font-bold">IGNOU</div>
+                    <div class="ml-2 text-sm opacity-90">Assignment Portal</div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/login" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded text-sm transition-all">
+                        Login
+                    </a>
+                    <a href="/register" class="bg-white text-purple-600 hover:bg-opacity-90 px-4 py-2 rounded text-sm transition-all">
+                        Register
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="text-center text-white">
+            <!-- Logo and Title -->
+            <div class="mb-8">
+                <div class="text-6xl font-bold mb-4">IGNOU</div>
+                <div class="text-2xl opacity-90">Assignment Portal</div>
+                <div class="text-lg opacity-80 mt-2">Generate Professional Assignments</div>
+            </div>
+
+            <!-- Description -->
+            <div class="glass-effect rounded-2xl p-8 shadow-2xl max-w-2xl mx-auto mb-8">
+                <h2 class="text-2xl font-bold mb-4">Welcome to IGNOU Assignment Portal</h2>
+                <p class="text-lg opacity-90 mb-6">
+                    Create professional, formatted assignments for your IGNOU courses. 
+                    Our system generates PDFs with proper formatting, signatures, and 
+                    all required details automatically.
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">📝</div>
+                        <h3 class="font-semibold mb-2">Easy Form Filling</h3>
+                        <p class="text-sm opacity-80">Simple form with all required fields</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">💳</div>
+                        <h3 class="font-semibold mb-2">Secure Payment</h3>
+                        <p class="text-sm opacity-80">PhonePe integration for safe transactions</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">📄</div>
+                        <h3 class="font-semibold mb-2">Instant PDFs</h3>
+                        <p class="text-sm opacity-80">Download assignments immediately after payment</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-4">
+                <div class="text-lg opacity-90 mb-4">Get started by creating an account or logging in</div>
+                
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="/register" 
+                       class="bg-white text-purple-600 py-4 px-8 rounded-lg font-semibold text-lg hover:bg-opacity-90 transition-all transform hover:scale-105">
+                        🚀 Create Account
+                    </a>
+                    <a href="/login" 
+                       class="bg-white bg-opacity-20 text-white py-4 px-8 rounded-lg font-semibold text-lg hover:bg-opacity-30 transition-all transform hover:scale-105">
+                        🔑 Sign In
+                    </a>
+                </div>
+            </div>
+
+            <!-- Features List -->
+            <div class="mt-12 glass-effect rounded-2xl p-6 shadow-2xl max-w-4xl mx-auto">
+                <h3 class="text-xl font-semibold mb-4">What You Get:</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                    <div class="flex items-center">
+                        <span class="text-green-400 mr-3">✓</span>
+                        <span>Professional PDF formatting</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-green-400 mr-3">✓</span>
+                        <span>Automatic signature placement</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-green-400 mr-3">✓</span>
+                        <span>Multiple subject support</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-green-400 mr-3">✓</span>
+                        <span>Secure payment gateway</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-green-400 mr-3">✓</span>
+                        <span>Instant download after payment</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-green-400 mr-3">✓</span>
+                        <span>Mobile responsive design</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
