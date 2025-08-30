@@ -14,8 +14,8 @@ app.secret_key = 'your-secret-key-change-this-in-production'  # Change this!
 CORS(app)  # Enable CORS for all routes
 
 # 🔑 Put your real creds here (keep them secret!)
-MERCHANT_ID = "M22TSIUGASJHGH"       # your merchant id
-SALT_KEY = "432e2159-cad2-46c3-93d0-bugio8638ns"   # your API key (Salt Key)
+MERCHANT_ID = "M23KH53VIZWI6"       # your merchant id
+SALT_KEY = "4d87df48-54a4-4f61-9137-a7ccd7b80ea1"   # your API key (Salt Key)
 SALT_INDEX = "1"                 # version (salt index)
 
 # PhonePe sandbox URL
@@ -69,6 +69,70 @@ def test_payment():
         "status": "success",
         "payment_sessions_count": len(getattr(app, 'payment_sessions', {}))
     })
+
+# Test PhonePe credentials route
+@app.route("/test-phonepe-credentials")
+def test_phonepe_credentials():
+    try:
+        # Test with minimal payload
+        test_payload = {
+            "merchantId": MERCHANT_ID,
+            "merchantTransactionId": f"test_{int(time.time())}",
+            "amount": 100,  # ₹1 in paise
+            "merchantUserId": f"test_user_{int(time.time())}",
+            "redirectUrl": "https://ignou-assignment-portal.onrender.com/payment-success",
+            "redirectMode": "POST",
+            "callbackUrl": "https://ignou-assignment-portal.onrender.com/payment-callback",
+            "paymentInstrument": {"type": "PAY_PAGE"}
+        }
+        
+        # Base64 encode payload
+        payload_str = json.dumps(test_payload)
+        payload_base64 = base64.b64encode(payload_str.encode()).decode()
+        
+        # Generate checksum
+        raw_string = payload_base64 + "/pg/v1/pay" + SALT_KEY
+        checksum = hashlib.sha256(raw_string.encode()).hexdigest() + "###" + SALT_INDEX
+        
+        headers = {
+            "Content-Type": "application/json",
+            "X-VERIFY": checksum,
+            "accept": "application/json"
+        }
+        
+        print(f"🧪 Testing PhonePe credentials...")
+        print(f"🧪 MERCHANT_ID: {MERCHANT_ID}")
+        print(f"🧪 SALT_KEY: {SALT_KEY[:10]}...{SALT_KEY[-10:]}")
+        print(f"🧪 SALT_INDEX: {SALT_INDEX}")
+        print(f"🧪 Test payload: {test_payload}")
+        
+        # Make test request
+        response = requests.post(PHONEPE_URL, headers=headers, json={"request": payload_base64})
+        
+        return jsonify({
+            "success": True,
+            "message": "PhonePe credentials test completed",
+            "status_code": response.status_code,
+            "response": response.text[:500] if response.text else "No response text",
+            "credentials": {
+                "merchant_id": MERCHANT_ID,
+                "salt_key_length": len(SALT_KEY),
+                "salt_index": SALT_INDEX,
+                "api_url": PHONEPE_URL
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "credentials": {
+                "merchant_id": MERCHANT_ID,
+                "salt_key_length": len(SALT_KEY),
+                "salt_index": SALT_INDEX,
+                "api_url": PHONEPE_URL
+            }
+        }), 500
 
 # Authentication routes
 @app.route("/api/register", methods=["POST"])
@@ -241,7 +305,7 @@ def initiate_payment():
         
         # Calculate amount based on number of subjects (₹1 per subject)
         amount_rupees = len(subjects)
-        merchant_txn_id = f"mock_txn_{int(time.time())}"
+        merchant_txn_id = f"txn_{int(time.time())}"
         
         # Store payment session data
         payment_session = {
@@ -295,25 +359,47 @@ def initiate_payment():
         print(f"📡 Calling PhonePe API with payload: {payload}")
         
         # Call PhonePe API
-        response = requests.post(PHONEPE_URL, headers=headers, json={"request": payload_base64})
-        res_data = response.json()
+        print(f"📡 Making request to PhonePe API: {PHONEPE_URL}")
+        print(f"📡 Request headers: {headers}")
+        print(f"📡 Request payload: {{'request': payload_base64}}")
         
-        print(f"📡 PhonePe API response: {res_data}")
-        
-        if "data" in res_data and "instrumentResponse" in res_data["data"]:
-            redirect_url = res_data["data"]["instrumentResponse"]["redirectInfo"]["url"]
-            print(f"✅ PhonePe payment initiated successfully. Redirect URL: {redirect_url}")
+        try:
+            response = requests.post(PHONEPE_URL, headers=headers, json={"request": payload_base64})
+            print(f"📡 PhonePe API response status: {response.status_code}")
+            print(f"📡 PhonePe API response headers: {dict(response.headers)}")
             
-            return jsonify({
-                "success": True,
-                "paymentUrl": redirect_url,
-                "transactionId": merchant_txn_id,
-                "amount": amount_rupees,
-                "subjects": subjects
-            })
-        else:
-            print(f"❌ PhonePe API error: {res_data}")
-            return jsonify({"success": False, "error": "Payment initiation failed", "details": res_data}), 400
+            if response.status_code != 200:
+                print(f"❌ PhonePe API returned non-200 status: {response.status_code}")
+                print(f"❌ Response text: {response.text}")
+                return jsonify({"success": False, "error": f"PhonePe API error: {response.status_code}", "details": response.text}), 400
+            
+            res_data = response.json()
+            print(f"📡 PhonePe API response: {res_data}")
+            
+            if "data" in res_data and "instrumentResponse" in res_data["data"]:
+                redirect_url = res_data["data"]["instrumentResponse"]["redirectInfo"]["url"]
+                print(f"✅ PhonePe payment initiated successfully. Redirect URL: {redirect_url}")
+                
+                return jsonify({
+                    "success": True,
+                    "paymentUrl": redirect_url,
+                    "transactionId": merchant_txn_id,
+                    "amount": amount_rupees,
+                    "subjects": subjects
+                })
+            else:
+                print(f"❌ PhonePe API error response: {res_data}")
+                error_msg = res_data.get("message", "Unknown error")
+                code = res_data.get("code", "UNKNOWN")
+                return jsonify({"success": False, "error": f"Payment initiation failed: {error_msg}", "code": code, "details": res_data}), 400
+                
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Network error calling PhonePe API: {str(e)}")
+            return jsonify({"success": False, "error": f"Network error: {str(e)}"}), 500
+        except json.JSONDecodeError as e:
+            print(f"❌ Invalid JSON response from PhonePe: {str(e)}")
+            print(f"❌ Raw response: {response.text}")
+            return jsonify({"success": False, "error": "Invalid response from PhonePe"}), 500
         
     except Exception as e:
         print(f"❌ Payment initiation exception: {str(e)}")
@@ -544,4 +630,3 @@ def get_payment_status(transaction_id):
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
-
