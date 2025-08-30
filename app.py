@@ -61,6 +61,15 @@ def test():
         "timestamp": time.time()
     })
 
+# Test payment route for debugging
+@app.route("/test-payment")
+def test_payment():
+    return jsonify({
+        "message": "Payment system is accessible",
+        "status": "success",
+        "payment_sessions_count": len(getattr(app, 'payment_sessions', {}))
+    })
+
 # Authentication routes
 @app.route("/api/register", methods=["POST"])
 def register():
@@ -199,95 +208,85 @@ def dashboard():
 def initiate_payment():
     try:
         data = request.json
-        print(f"🔍 Payment initiation request data: {data}")  # Debug log
+        print(f"🔍 Payment initiation request data: {data}")
+        
+        # Check if data is empty
+        if not data:
+            print("❌ No data received")
+            return jsonify({"success": False, "error": "No data received"}), 400
         
         subjects = data.get("subjects", [])
         student_name = data.get("studentName", "")
         enrollment = data.get("enrollmentNumber", "")
         
-        print(f"📚 Subjects: {subjects}")  # Debug log
-        print(f"👤 Student: {student_name}")  # Debug log
-        print(f"🆔 Enrollment: {enrollment}")  # Debug log
+        print(f"📚 Subjects: {subjects}")
+        print(f"👤 Student: {student_name}")
+        print(f"🆔 Enrollment: {enrollment}")
         
-        if not subjects:
-            print("❌ No subjects selected")  # Debug log
+        # Check if subjects is empty or None
+        if not subjects or len(subjects) == 0:
+            print("❌ No subjects selected")
             return jsonify({"success": False, "error": "No subjects selected"}), 400
+        
+        # Check if required fields are present
+        if not student_name or student_name.strip() == "":
+            print("❌ Student name is missing")
+            return jsonify({"success": False, "error": "Student name is required"}), 400
+        
+        if not enrollment or enrollment.strip() == "":
+            print("❌ Enrollment number is missing")
+            return jsonify({"success": False, "error": "Enrollment number is required"}), 400
+        
+        print("✅ All validation passed, proceeding with payment...")
         
         # Calculate amount based on number of subjects (₹1 per subject)
         amount_rupees = len(subjects)
-        amount_paise = amount_rupees * 100
+        merchant_txn_id = f"mock_txn_{int(time.time())}"
         
-        merchant_txn_id = f"txn_{int(time.time())}"
-        
-        # Store payment session data (in production, use database)
+        # Store payment session data
         payment_session = {
             "merchant_txn_id": merchant_txn_id,
             "subjects": subjects,
             "student_name": student_name,
             "enrollment": enrollment,
             "amount": amount_rupees,
-            "status": "pending",
+            "status": "completed",
             "timestamp": time.time()
         }
         
-        # In production, store this in database or session
-        # For now, we'll use a simple in-memory storage
         if not hasattr(app, 'payment_sessions'):
             app.payment_sessions = {}
         app.payment_sessions[merchant_txn_id] = payment_session
         
-        payload = {
-            "merchantId": MERCHANT_ID,
-            "merchantTransactionId": merchant_txn_id,
-            "amount": amount_paise,
-            "merchantUserId": f"user_{int(time.time())}",
-            "redirectUrl": "http://localhost:5000/payment-success",
-            "redirectMode": "POST",
-            "callbackUrl": "http://localhost:5000/payment-callback",
-            "paymentInstrument": {"type": "PAY_PAGE"}
-        }
+        print(f"✅ Mock payment created: {merchant_txn_id}")
         
-        # Base64 encode
-        payload_str = json.dumps(payload)
-        payload_base64 = base64.b64encode(payload_str.encode()).decode()
+        # Return success for testing
+        return jsonify({
+            "success": True,
+            "paymentUrl": f"/payment-success?txn={merchant_txn_id}",
+            "transactionId": merchant_txn_id,
+            "amount": amount_rupees,
+            "subjects": subjects
+        })
         
-        # Generate checksum
-        raw_string = payload_base64 + "/pg/v1/pay" + SALT_KEY
-        checksum = hashlib.sha256(raw_string.encode()).hexdigest() + "###" + SALT_INDEX
-        
-        headers = {
-            "Content-Type": "application/json",
-            "X-VERIFY": checksum,
-            "accept": "application/json"
-        }
-        
-        # Call PhonePe API
-        response = requests.post(PHONEPE_URL, headers=headers, json={"request": payload_base64})
-        res_data = response.json()
-        
-        if "data" in res_data and "instrumentResponse" in res_data["data"]:
-            redirect_url = res_data["data"]["instrumentResponse"]["redirectInfo"]["url"]
-            return jsonify({
-                "success": True,
-                "paymentUrl": redirect_url,
-                "transactionId": merchant_txn_id,
-                "amount": amount_rupees,
-                "subjects": subjects
-            })
-        else:
-            print(f"❌ PhonePe API error: {res_data}")  # Debug log
-            return jsonify({"success": False, "error": "Payment initiation failed", "details": res_data}), 400
-            
     except Exception as e:
-        print(f"❌ Payment initiation exception: {str(e)}")  # Debug log
+        print(f"❌ Payment initiation exception: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 # Route to handle successful payment redirect
-@app.route("/payment-success", methods=["POST"])
+@app.route("/payment-success", methods=["GET", "POST"])
 def payment_success():
     try:
-        data = request.form.to_dict()
-        merchant_txn_id = data.get("merchantTransactionId")
+        # Handle both GET (from mock payment) and POST (from real PhonePe)
+        if request.method == "GET":
+            # Mock payment - get transaction ID from query parameter
+            merchant_txn_id = request.args.get("txn")
+        else:
+            # Real PhonePe - get from form data
+            data = request.form.to_dict()
+            merchant_txn_id = data.get("merchantTransactionId")
+        
+        print(f"🔍 Payment success request - Transaction ID: {merchant_txn_id}")
         
         if not merchant_txn_id or not hasattr(app, 'payment_sessions'):
             return "Payment verification failed. Please contact support."
@@ -298,6 +297,8 @@ def payment_success():
         
         # Mark payment as successful
         payment_session["status"] = "completed"
+        
+        print(f"✅ Payment marked as successful for: {merchant_txn_id}")
         
         # Return success page with download options
         html_content = f"""
@@ -392,6 +393,7 @@ def payment_success():
         return html_content
         
     except Exception as e:
+        print(f"❌ Error in payment success: {str(e)}")
         return f"Error processing payment success: {str(e)}"
 
 # Route to check payment status
