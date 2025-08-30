@@ -627,7 +627,7 @@
         <!-- Form Section -->
         <div class="form-section" id="formSection">
             <h2 class="form-title">Student Assignment</h2>
-            <p class="form-subtitle">Please fill in all the required details</p>
+                            <p class="form-subtitle">Please fill in all the required details (some fields are optional)</p>
             <form id="certificateForm">
                 <div class="form-row">
                     <div class="form-group">
@@ -766,12 +766,12 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="mobileNumber" class="required">Mobile Number</label>
-                        <input type="tel" id="mobileNumber" name="mobileNumber" required>
+                        <label for="mobileNumber">Mobile Number (Optional)</label>
+                        <input type="tel" id="mobileNumber" name="mobileNumber">
                     </div>
                     <div class="form-group">
-                        <label for="emailId" class="required">Email ID</label>
-                        <input type="email" id="emailId" name="emailId" required>
+                        <label for="emailId">Email ID (Optional)</label>
+                        <input type="email" id="emailId" name="emailId">
                     </div>
                 </div>
 
@@ -796,14 +796,14 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="required">Has the same assignment been submitted anywhere?</label>
+                        <label>Has the same assignment been submitted anywhere? (Optional)</label>
                         <div class="radio-group">
                             <div class="radio-item">
-                                <input type="radio" id="submittedYes" name="submittedElsewhere" value="Yes" required>
+                                <input type="radio" id="submittedYes" name="submittedElsewhere" value="Yes">
                                 <label for="submittedYes">Yes</label>
                             </div>
                             <div class="radio-item">
-                                <input type="radio" id="submittedNo" name="submittedElsewhere" value="No" required>
+                                <input type="radio" id="submittedNo" name="submittedElsewhere" value="No">
                                 <label for="submittedNo">No</label>
                             </div>
                         </div>
@@ -815,14 +815,14 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="required">Cross-check confirmation: "I confirm the above details are correct."</label>
+                        <label>Cross-check confirmation: "I confirm the above details are correct." (Optional)</label>
                         <div class="radio-group">
                             <div class="radio-item">
-                                <input type="radio" id="confirmYes" name="confirmation" value="Yes" required>
+                                <input type="radio" id="confirmYes" name="confirmation" value="Yes">
                                 <label for="confirmYes">Yes</label>
                             </div>
                             <div class="radio-item">
-                                <input type="radio" id="confirmNo" name="confirmation" value="No" required>
+                                <input type="radio" id="confirmNo" name="confirmation" value="No">
                                 <label for="confirmNo">No</label>
                             </div>
                         </div>
@@ -1279,13 +1279,23 @@
                 return;
             }
             
-            // Validate required fields
-            const requiredFields = ['studentName', 'enrollmentNumber', 'programSelection', 'courseCode', 'studyCenterCode', 'studyCenterAddress', 'mobileNumber', 'emailId'];
+            // Validate required fields (all fields that will be sent to backend)
+            const requiredFields = [
+                'studentName', 'enrollmentNumber', 'programSelection', 'courseCode', 
+                'studyCenterCode', 'studyCenterAddress', 'examType', 'yearSelection', 'mediumSelection'
+            ];
+            
             for (const field of requiredFields) {
                 if (!formData.get(field)) {
                     alert(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
                     return;
                 }
+            }
+            
+            // Special validation for semester number (only required if exam type is semester)
+            if (formData.get('examType') === 'Semester' && !formData.get('semesterNumber')) {
+                alert('Please fill in semester number');
+                return;
             }
             
             // Check if ID card and signature are uploaded
