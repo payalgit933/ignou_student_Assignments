@@ -469,16 +469,16 @@ def create_payment():
 
     merchant_txn_id = f"txn_{int(time.time())}"
 
-            payload = {
-            "merchantId": MERCHANT_ID,
-            "merchantTransactionId": merchant_txn_id,
-            "amount": amount_paise,
-            "merchantUserId": f"user_{int(time.time())}",
-            "redirectUrl": "https://ignou-assignment-portal.onrender.com/payment-status",   # ✅ Updated for Render
-            "redirectMode": "POST",
-            "callbackUrl": "https://ignou-assignment-portal.onrender.com/payment-callback", # ✅ Updated for Render
-            "paymentInstrument": {"type": "PAY_PAGE"}
-        }
+    payload = {
+        "merchantId": MERCHANT_ID,
+        "merchantTransactionId": merchant_txn_id,
+        "amount": amount_paise,
+        "merchantUserId": f"user_{int(time.time())}",
+        "redirectUrl": "https://ignou-assignment-portal.onrender.com/payment-status",   # ✅ Updated for Render
+        "redirectMode": "POST",
+        "callbackUrl": "https://ignou-assignment-portal.onrender.com/payment-callback", # ✅ Updated for Render
+        "paymentInstrument": {"type": "PAY_PAGE"}
+    }
 
     # Base64 encode
     payload_str = json.dumps(payload)
