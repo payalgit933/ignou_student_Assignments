@@ -303,15 +303,15 @@ def initiate_payment():
         
         print("✅ All validation passed, proceeding with payment...")
         
+        # Calculate amount based on number of subjects (₹1 per subject)
+        amount_rupees = len(subjects)
+
         # PhonePe-specific validations
         if amount_rupees < 1:
             return jsonify({"success": False, "error": "Amount must be at least ₹1"}), 400
-        
+
         if amount_rupees > 1000:  # PhonePe limit
             return jsonify({"success": False, "error": "Amount cannot exceed ₹1000"}), 400
-        
-        # Calculate amount based on number of subjects (₹1 per subject)
-        amount_rupees = len(subjects)
         # PhonePe requires specific transaction ID format (alphanumeric, no special chars)
         merchant_txn_id = f"TXN{int(time.time())}"
         
@@ -638,4 +638,5 @@ def get_payment_status(transaction_id):
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
+
 
