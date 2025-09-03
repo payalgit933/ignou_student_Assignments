@@ -14,9 +14,9 @@ app.secret_key = 'your-secret-key-change-this-in-production'  # Change this!
 CORS(app)  # Enable CORS for all routes
 
 # 🔑 Put your real creds here (keep them secret!)
-CASHFREE_APP_ID = "7507092ba19a870910c76c41e7907057"
-CASHFREE_SECRET_KEY = "cfsk_ma_prod_1f807cc5d4fc4acb10819c59fa44d78c_900abc29"
-CASHFREE_BASE_URL = "https://sandbox.cashfree.com/pg/orders"  # use prod URL later
+CASHFREE_APP_ID = "your_sandbox_app_id"
+CASHFREE_SECRET_KEY = "your_sandbox_secret_key"
+CASHFREE_BASE_URL = "https://api.cashfree.com/pg/orders"  # Production URL
 
 # PhonePe sandbox URL
 PHONEPE_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay"
@@ -550,3 +550,4 @@ def get_payment_status(transaction_id):
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
+
