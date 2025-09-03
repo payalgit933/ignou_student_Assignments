@@ -387,21 +387,20 @@ def initiate_payment():
             res_data = response.json()
             print(f"📊 Parsed Response Data: {res_data}")
             
-            # Check for payment link in various possible field names
-            payment_url = None
-            possible_fields = ["payment_link", "payment_url", "link", "url", "checkout_url"]
-            
-            for field in possible_fields:
-                if field in res_data:
-                    payment_url = res_data[field]
-                    print(f"✅ Found payment URL in field '{field}': {payment_url}")
-                    break
-            
-            if not payment_url:
-                print(f"❌ No payment URL found in response. Available keys: {list(res_data.keys())}")
+            # Check for payment_session_id to construct payment URL
+            if "payment_session_id" in res_data:
+                payment_session_id = res_data["payment_session_id"]
+                print(f"✅ Found payment_session_id: {payment_session_id}")
+                
+                # Construct the payment URL using the session ID
+                payment_url = f"https://payments.cashfree.com/order/#/{payment_session_id}"
+                print(f"✅ Constructed payment URL: {payment_url}")
+                
+            else:
+                print(f"❌ No payment_session_id found in response. Available keys: {list(res_data.keys())}")
                 return jsonify({
                     "success": False, 
-                    "error": f"Payment link not found in response. Available fields: {list(res_data.keys())}. Response: {res_data}"
+                    "error": f"Payment session ID not found in response. Available fields: {list(res_data.keys())}. Response: {res_data}"
                 }), 400
             
             return jsonify({
