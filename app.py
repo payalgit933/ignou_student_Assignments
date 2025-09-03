@@ -491,31 +491,41 @@ def initiate_payment():
 @app.route("/payment-success", methods=["GET", "POST"])
 def payment_success():
     try:
-        # Handle both GET and POST requests
-        if request.method == "GET":
-            # For debugging - get transaction ID from query parameter
-            merchant_txn_id = request.args.get("txn")
-        else:
-            # Real PhonePe response - get from form data
-            data = request.form.to_dict()
-            merchant_txn_id = data.get("merchantTransactionId")
-            
-            # Log the full PhonePe response for debugging
-            print(f"📡 PhonePe response data: {data}")
+        # Get order ID from query parameters (Cashfree sends this)
+        order_id = request.args.get("order_id")
+        print(f"🔍 Payment success request - Order ID: {order_id}")
         
-        print(f"🔍 Payment success request - Transaction ID: {merchant_txn_id}")
+        if not order_id:
+            return "Payment verification failed. Order ID not found."
         
-        if not merchant_txn_id or not hasattr(app, 'payment_sessions'):
-            return "Payment verification failed. Please contact support."
+        # Verify payment with Cashfree API
+        headers = {
+            "x-client-id": CASHFREE_APP_ID,
+            "x-client-secret": CASHFREE_SECRET_KEY,
+            "x-api-version": "2022-09-01",
+            "Content-Type": "application/json"
+        }
         
-        payment_session = app.payment_sessions.get(merchant_txn_id)
-        if not payment_session:
-            return "Payment session not found. Please contact support."
+        # Get order status from Cashfree
+        order_url = f"https://api.cashfree.com/pg/orders/{order_id}"
+        response = requests.get(order_url, headers=headers)
         
-        # Mark payment as successful
-        payment_session["status"] = "completed"
+        print(f"📡 Cashfree order status response: {response.status_code}")
+        print(f"📡 Response: {response.text}")
         
-        print(f"✅ Payment marked as successful for: {merchant_txn_id}")
+        if response.status_code != 200:
+            return f"Payment verification failed. API error: {response.text}"
+        
+        order_data = response.json()
+        order_status = order_data.get("order_status", "UNKNOWN")
+        
+        print(f"📊 Order status: {order_status}")
+        
+        if order_status != "PAID":
+            return f"Payment verification failed. Order status: {order_status}. Please contact support."
+        
+        # Payment is verified as successful
+        print(f"✅ Payment verified as successful for order: {order_id}")
         
         # Return success page with download options
         html_content = f"""
@@ -535,16 +545,16 @@ def payment_success():
                 <div class="bg-white rounded-lg shadow-lg p-8 text-center">
                     <div class="text-green-600 text-6xl mb-4">✅</div>
                     <h1 class="text-3xl font-bold text-gray-800 mb-4">Payment Successful!</h1>
-                    <p class="text-gray-600 mb-6">Your payment of ₹{payment_session['amount']} has been processed successfully.</p>
+                    <p class="text-gray-600 mb-6">Your payment of ₹{order_data.get('order_amount', 'N/A')} has been processed successfully.</p>
                     
                     <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
                         <h2 class="text-xl font-semibold text-blue-800 mb-4">Payment Details</h2>
                         <div class="text-left space-y-2">
-                            <p><strong>Transaction ID:</strong> {merchant_txn_id}</p>
-                            <p><strong>Student:</strong> {payment_session['student_name']}</p>
-                            <p><strong>Enrollment:</strong> {payment_session['enrollment']}</p>
-                            <p><strong>Amount:</strong> ₹{payment_session['amount']}</p>
-                            <p><strong>Subjects:</strong> {', '.join(payment_session['subjects'])}</p>
+                            <p><strong>Order ID:</strong> {order_id}</p>
+                            <p><strong>Status:</strong> ✅ PAID</p>
+                            <p><strong>Amount:</strong> ₹{order_data.get('order_amount', 'N/A')}</p>
+                            <p><strong>Payment Method:</strong> QR Code</p>
+                            <p><strong>Transaction Time:</strong> {order_data.get('created_at', 'N/A')}</p>
                         </div>
                     </div>
                     
@@ -679,13 +689,25 @@ def create_payment():
 
 @app.route("/payment-callback", methods=["POST"])
 def payment_callback():
-    data = request.json
-    status = data.get("code")
-    if status == "PAYMENT_SUCCESS":
-        # ✅ mark order paid in DB here
-        return jsonify({"status": "success", "message": "Payment received. Allow PDF download."})
-    else:
-        return jsonify({"status": "failed", "message": "Payment not completed"})
+    try:
+        # Cashfree sends webhook data
+        data = request.json
+        print(f"📡 Cashfree webhook received: {data}")
+        
+        # Extract order information
+        order_id = data.get("order_id")
+        order_status = data.get("order_status")
+        
+        if order_status == "PAID":
+            print(f"✅ Payment confirmed via webhook for order: {order_id}")
+            return jsonify({"status": "success", "message": "Payment received. Allow PDF download."})
+        else:
+            print(f"❌ Payment not completed. Status: {order_status}")
+            return jsonify({"status": "failed", "message": "Payment not completed"})
+            
+    except Exception as e:
+        print(f"❌ Webhook processing error: {str(e)}")
+        return jsonify({"status": "error", "message": "Webhook processing failed"}), 500
 
 
 @app.route("/payment-status", methods=["POST"])
