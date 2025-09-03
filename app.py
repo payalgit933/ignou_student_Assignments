@@ -14,7 +14,7 @@ app.secret_key = 'your-secret-key-change-this-in-production'  # Change this!
 CORS(app)  # Enable CORS for all routes
 
 # 🔑 Put your real creds here (keep them secret!)
-MERCHANT_ID = "M23KH53VIZWI6"       # your merchant id
+MERCHANT_ID = "SU2508071750271559854082"       # your merchant id
 SALT_KEY = "4d87df48-54a4-4f61-9137-a7ccd7b80ea1"   # your API key (Salt Key)
 SALT_INDEX = "1"                 # version (salt index)
 
@@ -638,3 +638,4 @@ def get_payment_status(transaction_id):
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
+
