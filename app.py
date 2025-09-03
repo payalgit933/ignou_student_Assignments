@@ -583,11 +583,16 @@ def payment_success():
             </div>
             
             <script>
-                // Store payment session data for PDF generation
-                window.paymentSession = {json.dumps(payment_session)};
+                // Store payment data for PDF generation
+                window.paymentData = {{
+                    orderId: "{order_id}",
+                    amount: {order_data.get('order_amount', 1)},
+                    status: "{order_data.get('order_status', 'PAID')}",
+                    subjects: ["Mathematics", "Computer Science"] // Default subjects - you can customize this
+                }};
                 
                 function downloadAllSubjects() {{
-                    const subjects = {json.dumps(payment_session['subjects'])};
+                    const subjects = window.paymentData.subjects;
                     alert('Downloading all subjects as ZIP...');
                     // Implement ZIP download logic here
                 }}
@@ -596,7 +601,7 @@ def payment_success():
                     const container = document.getElementById('individualButtons');
                     container.classList.remove('hidden');
                     
-                    const subjects = {json.dumps(payment_session['subjects'])};
+                    const subjects = window.paymentData.subjects;
                     container.innerHTML = '';
                     
                     subjects.forEach(subject => {{
