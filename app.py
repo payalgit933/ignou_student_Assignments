@@ -471,6 +471,7 @@ def initiate_payment():
             return jsonify({
                 "success": True,
                 "paymentUrl": payment_url,
+                "paymentSessionId": payment_session_id,
                 "transactionId": order_id,
                 "amount": amount_rupees,
                 "subjects": subjects
