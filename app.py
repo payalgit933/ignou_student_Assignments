@@ -71,6 +71,45 @@ def test_payment():
         "payment_sessions_count": len(getattr(app, 'payment_sessions', {}))
     })
 
+# Check Cashfree account configuration
+@app.route("/check-cashfree-config")
+def check_cashfree_config():
+    try:
+        # Check account configuration
+        headers = {
+            "x-client-id": CASHFREE_APP_ID,
+            "x-client-secret": CASHFREE_SECRET_KEY,
+            "x-api-version": "2022-09-01",
+            "Content-Type": "application/json"
+        }
+        
+        # Try to get account info
+        account_url = "https://api.cashfree.com/pg/merchants/me"
+        response = requests.get(account_url, headers=headers)
+        
+        return jsonify({
+            "success": True,
+            "message": "Cashfree account configuration check",
+            "status_code": response.status_code,
+            "account_info": response.json() if response.status_code == 200 else response.text,
+            "credentials": {
+                "app_id": CASHFREE_APP_ID,
+                "secret_key_length": len(CASHFREE_SECRET_KEY),
+                "api_url": CASHFREE_BASE_URL
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "credentials": {
+                "app_id": CASHFREE_APP_ID,
+                "secret_key_length": len(CASHFREE_SECRET_KEY),
+                "api_url": CASHFREE_BASE_URL
+            }
+        }), 500
+
 # Test Cashfree credentials route
 @app.route("/test-cashfree-credentials")
 def test_cashfree_credentials():
@@ -344,6 +383,25 @@ def initiate_payment():
 
         # ✅ Create unique orderId
         order_id = f"ORD{int(time.time())}"
+        
+        # Validate required data
+        customer_email = data.get("emailId", "test@example.com")
+        customer_phone = data.get("mobileNumber", "9999999999")
+        
+        # Ensure valid email format
+        if not customer_email or "@" not in customer_email:
+            customer_email = "heypayal12345@gmail.com"
+        
+        # Ensure valid phone format (10 digits minimum)
+        if not customer_phone or len(customer_phone.replace("+", "").replace("-", "").replace(" ", "")) < 10:
+            customer_phone = "9334273197"
+        
+        print(f"🔍 Payment data validation:")
+        print(f"   Student: {student_name}")
+        print(f"   Email: {customer_email}")
+        print(f"   Phone: {customer_phone}")
+        print(f"   Amount: ₹{amount_rupees}")
+        print(f"   Order ID: {order_id}")
 
         payload = {
             "order_id": order_id,
@@ -352,8 +410,8 @@ def initiate_payment():
             "customer_details": {
                 "customer_id": f"CUST{int(time.time())}",
                 "customer_name": student_name,
-                "customer_email": data.get("emailId", "test@example.com"),
-                "customer_phone": data.get("mobileNumber", "9999999999")
+                "customer_email": customer_email,
+                "customer_phone": customer_phone
             },
             "order_meta": {
                 "return_url": "https://ignou-assignment-portal.onrender.com/payment-success?order_id={order_id}",
