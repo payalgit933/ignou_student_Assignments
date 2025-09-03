@@ -588,19 +588,39 @@ def payment_success():
                     orderId: "{order_id}",
                     amount: {order_data.get('order_amount', 1)},
                     status: "{order_data.get('order_status', 'PAID')}",
-                    subjects: ["Mathematics", "Computer Science"] // Default subjects - you can customize this
+                    subjects: ["Mathematics", "Computer Science", "Physics", "Chemistry", "Economics", "Biology"] // All available subjects
+                }};
+                
+                // Store form data for PDF generation (if available)
+                window.formData = {{
+                    studentName: "Student Name",
+                    enrollmentNumber: "{order_id}",
+                    programSelection: "BCA",
+                    courseCode: "BCS-053",
+                    studyCenterCode: "1234",
+                    studyCenterAddress: "Delhi Study Center",
+                    examType: "Yearly",
+                    yearSelection: "2025",
+                    mediumSelection: "English",
+                    mobileNumber: "9999999999",
+                    emailId: "test@example.com"
                 }};
                 
                 function downloadAllSubjects() {{
                     const subjects = window.paymentData.subjects;
                     alert('Downloading all subjects as ZIP...');
                     
-                    // Download each subject individually
-                    subjects.forEach((subject, index) => {{
-                        setTimeout(() => {{
-                            downloadSingleSubject(subject);
-                        }}, index * 1000); // Delay each download by 1 second
-                    }});
+                    // Use your existing downloadAllSubjectsZip function
+                    if (typeof downloadAllSubjectsZip === 'function') {{
+                        downloadAllSubjectsZip();
+                    }} else {{
+                        // Fallback: download each subject individually
+                        subjects.forEach((subject, index) => {{
+                            setTimeout(() => {{
+                                downloadSingleSubject(subject);
+                            }}, index * 1000);
+                        }});
+                    }}
                 }}
                 
                 function downloadIndividualSubjects() {{
@@ -621,33 +641,26 @@ def payment_success():
                 
                 function downloadSingleSubject(subject) {{
                     try {{
-                        // Create a simple PDF with assignment details
-                        const {{ jsPDF }} = window.jspdf;
-                        const doc = new jsPDF();
-                        
-                        // Add content to PDF
-                        doc.setFontSize(20);
-                        doc.text('IGNOU Assignment', 20, 30);
-                        
-                        doc.setFontSize(16);
-                        doc.text(`Subject: ${{subject}}`, 20, 50);
-                        doc.text(`Order ID: ${{window.paymentData.orderId}}`, 20, 70);
-                        doc.text(`Amount Paid: ₹${{window.paymentData.amount}}`, 20, 90);
-                        doc.text(`Status: ${{window.paymentData.status}}`, 20, 110);
-                        doc.text(`Date: ${{new Date().toLocaleDateString()}}`, 20, 130);
-                        
-                        // Add some assignment content
-                        doc.setFontSize(12);
-                        doc.text('Assignment Questions:', 20, 160);
-                        doc.text('1. Explain the basic concepts of the subject.', 20, 180);
-                        doc.text('2. Discuss the practical applications.', 20, 200);
-                        doc.text('3. Provide examples and case studies.', 20, 220);
-                        
-                        // Save the PDF
-                        const fileName = `Assignment_${{subject}}_${{window.paymentData.orderId}}.pdf`;
-                        doc.save(fileName);
-                        
-                        console.log(`PDF downloaded: ${{fileName}}`);
+                        // Use your existing downloadPDF function with the subject
+                        if (typeof downloadPDF === 'function') {{
+                            downloadPDF(subject);
+                        }} else {{
+                            // Fallback to simple PDF generation
+                            const {{ jsPDF }} = window.jspdf;
+                            const doc = new jsPDF();
+                            
+                            doc.setFontSize(20);
+                            doc.text('IGNOU Assignment', 20, 30);
+                            doc.setFontSize(16);
+                            doc.text(`Subject: ${{subject}}`, 20, 50);
+                            doc.text(`Order ID: ${{window.paymentData.orderId}}`, 20, 70);
+                            doc.text(`Amount Paid: ₹${{window.paymentData.amount}}`, 20, 90);
+                            doc.text(`Status: ${{window.paymentData.status}}`, 20, 110);
+                            doc.text(`Date: ${{new Date().toLocaleDateString()}}`, 20, 130);
+                            
+                            const fileName = `Assignment_${{subject}}_${{window.paymentData.orderId}}.pdf`;
+                            doc.save(fileName);
+                        }}
                         
                     }} catch (error) {{
                         console.error('PDF generation failed:', error);
