@@ -594,7 +594,13 @@ def payment_success():
                 function downloadAllSubjects() {{
                     const subjects = window.paymentData.subjects;
                     alert('Downloading all subjects as ZIP...');
-                    // Implement ZIP download logic here
+                    
+                    // Download each subject individually
+                    subjects.forEach((subject, index) => {{
+                        setTimeout(() => {{
+                            downloadSingleSubject(subject);
+                        }}, index * 1000); // Delay each download by 1 second
+                    }});
                 }}
                 
                 function downloadIndividualSubjects() {{
@@ -614,8 +620,39 @@ def payment_success():
                 }}
                 
                 function downloadSingleSubject(subject) {{
-                    alert(`Downloading assignment for ${{subject}}...`);
-                    // Implement individual PDF download logic here
+                    try {{
+                        // Create a simple PDF with assignment details
+                        const {{ jsPDF }} = window.jspdf;
+                        const doc = new jsPDF();
+                        
+                        // Add content to PDF
+                        doc.setFontSize(20);
+                        doc.text('IGNOU Assignment', 20, 30);
+                        
+                        doc.setFontSize(16);
+                        doc.text(`Subject: ${{subject}}`, 20, 50);
+                        doc.text(`Order ID: ${{window.paymentData.orderId}}`, 20, 70);
+                        doc.text(`Amount Paid: ₹${{window.paymentData.amount}}`, 20, 90);
+                        doc.text(`Status: ${{window.paymentData.status}}`, 20, 110);
+                        doc.text(`Date: ${{new Date().toLocaleDateString()}}`, 20, 130);
+                        
+                        // Add some assignment content
+                        doc.setFontSize(12);
+                        doc.text('Assignment Questions:', 20, 160);
+                        doc.text('1. Explain the basic concepts of the subject.', 20, 180);
+                        doc.text('2. Discuss the practical applications.', 20, 200);
+                        doc.text('3. Provide examples and case studies.', 20, 220);
+                        
+                        // Save the PDF
+                        const fileName = `Assignment_${{subject}}_${{window.paymentData.orderId}}.pdf`;
+                        doc.save(fileName);
+                        
+                        console.log(`PDF downloaded: ${{fileName}}`);
+                        
+                    }} catch (error) {{
+                        console.error('PDF generation failed:', error);
+                        alert('PDF generation failed. Please try again.');
+                    }}
                 }}
             </script>
         </body>
