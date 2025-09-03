@@ -71,6 +71,66 @@ def test_payment():
         "payment_sessions_count": len(getattr(app, 'payment_sessions', {}))
     })
 
+# Test Cashfree credentials route
+@app.route("/test-cashfree-credentials")
+def test_cashfree_credentials():
+    try:
+        # Test with minimal payload
+        test_payload = {
+            "order_id": f"TEST{int(time.time())}",
+            "order_amount": 1,  # ₹1
+            "order_currency": "INR",
+            "customer_details": {
+                "customer_id": f"TESTUSER{int(time.time())}",
+                "customer_name": "Test User",
+                "customer_email": "test@example.com",
+                "customer_phone": "9999999999"
+            },
+            "order_meta": {
+                "return_url": "https://yourdomain.com/payment-success",
+                "notify_url": "https://yourdomain.com/payment-callback"
+            }
+        }
+        
+        headers = {
+            "x-client-id": CASHFREE_APP_ID,
+            "x-client-secret": CASHFREE_SECRET_KEY,
+            "x-api-version": "2022-09-01",
+            "Content-Type": "application/json"
+        }
+        
+        print(f"🧪 Testing Cashfree credentials...")
+        print(f"🧪 APP_ID: {CASHFREE_APP_ID}")
+        print(f"🧪 SECRET_KEY: {CASHFREE_SECRET_KEY[:10]}...{CASHFREE_SECRET_KEY[-10:]}")
+        print(f"🧪 API_URL: {CASHFREE_BASE_URL}")
+        print(f"🧪 Test payload: {test_payload}")
+        
+        # Make test request
+        response = requests.post(CASHFREE_BASE_URL, headers=headers, json=test_payload)
+        
+        return jsonify({
+            "success": True,
+            "message": "Cashfree credentials test completed",
+            "status_code": response.status_code,
+            "response": response.text[:500] if response.text else "No response text",
+            "credentials": {
+                "app_id": CASHFREE_APP_ID,
+                "secret_key_length": len(CASHFREE_SECRET_KEY),
+                "api_url": CASHFREE_BASE_URL
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "credentials": {
+                "app_id": CASHFREE_APP_ID,
+                "secret_key_length": len(CASHFREE_SECRET_KEY),
+                "api_url": CASHFREE_BASE_URL
+            }
+        }), 500
+
 # Test PhonePe credentials route
 @app.route("/test-phonepe-credentials")
 def test_phonepe_credentials():
@@ -308,20 +368,56 @@ def initiate_payment():
             "Content-Type": "application/json"
         }
 
+        print(f"🔍 Cashfree API Request:")
+        print(f"URL: {CASHFREE_BASE_URL}")
+        print(f"Headers: {headers}")
+        print(f"Payload: {payload}")
+        
         response = requests.post(CASHFREE_BASE_URL, headers=headers, json=payload)
+        
+        print(f"📡 Cashfree API Response:")
+        print(f"Status Code: {response.status_code}")
+        print(f"Response Headers: {dict(response.headers)}")
+        print(f"Response Text: {response.text}")
 
         if response.status_code != 200:
             return jsonify({"success": False, "error": f"Cashfree API error: {response.text}"}), 400
 
-        res_data = response.json()
-
-        return jsonify({
-            "success": True,
-            "paymentUrl": res_data["payment_link"],
-            "transactionId": order_id,
-            "amount": amount_rupees,
-            "subjects": subjects
-        })
+        try:
+            res_data = response.json()
+            print(f"📊 Parsed Response Data: {res_data}")
+            
+            # Check for payment link in various possible field names
+            payment_url = None
+            possible_fields = ["payment_link", "payment_url", "link", "url", "checkout_url"]
+            
+            for field in possible_fields:
+                if field in res_data:
+                    payment_url = res_data[field]
+                    print(f"✅ Found payment URL in field '{field}': {payment_url}")
+                    break
+            
+            if not payment_url:
+                print(f"❌ No payment URL found in response. Available keys: {list(res_data.keys())}")
+                return jsonify({
+                    "success": False, 
+                    "error": f"Payment link not found in response. Available fields: {list(res_data.keys())}. Response: {res_data}"
+                }), 400
+            
+            return jsonify({
+                "success": True,
+                "paymentUrl": payment_url,
+                "transactionId": order_id,
+                "amount": amount_rupees,
+                "subjects": subjects
+            })
+            
+        except json.JSONDecodeError as e:
+            print(f"❌ Failed to parse JSON response: {e}")
+            return jsonify({
+                "success": False, 
+                "error": f"Invalid JSON response from Cashfree: {response.text}"
+            }), 400
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
