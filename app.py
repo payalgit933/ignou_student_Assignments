@@ -87,8 +87,8 @@ def test_cashfree_credentials():
                 "customer_phone": "9999999999"
             },
             "order_meta": {
-                "return_url": "https://yourdomain.com/payment-success",
-                "notify_url": "https://yourdomain.com/payment-callback"
+                "return_url": "https://your-render-app-url.onrender.com/payment-success",
+                "notify_url": "https://your-render-app-url.onrender.com/payment-callback"
             }
         }
         
@@ -356,8 +356,8 @@ def initiate_payment():
                 "customer_phone": data.get("mobileNumber", "9999999999")
             },
             "order_meta": {
-                "return_url": "https://yourdomain.com/payment-success?order_id={order_id}",
-                "notify_url": "https://yourdomain.com/payment-callback"
+                "return_url": "https://ignou-assignment-portal.onrender.com/payment-success?order_id={order_id}",
+                "notify_url": "https://ignou-assignment-portal.onrender.com/payment-callback"
             }
         }
 
