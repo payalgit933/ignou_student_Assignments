@@ -437,8 +437,8 @@ def initiate_payment():
         print(f"Status Code: {response.status_code}")
         print(f"Response Headers: {dict(response.headers)}")
         print(f"Response Text: {response.text}")
-            
-            if response.status_code != 200:
+        
+        if response.status_code != 200:
             return jsonify({"success": False, "error": f"Cashfree API error: {response.text}"}), 400
             
         try:
