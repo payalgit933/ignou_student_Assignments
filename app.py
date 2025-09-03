@@ -454,6 +454,13 @@ def initiate_payment():
                 payment_url = f"https://payments.cashfree.com/order/#/{payment_session_id}"
                 print(f"✅ Constructed payment URL: {payment_url}")
                 
+                # Add warning about potential account issues
+                print(f"⚠️  If payment page shows error, check Cashfree dashboard for:")
+                print(f"   - KYC completion status")
+                print(f"   - Business verification")
+                print(f"   - Bank account verification")
+                print(f"   - Account activation status")
+                
             else:
                 print(f"❌ No payment_session_id found in response. Available keys: {list(res_data.keys())}")
                 return jsonify({
