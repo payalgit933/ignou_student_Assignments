@@ -3,6 +3,7 @@
 import base64
 import hashlib
 import json
+import os
 import time
 from flask import Flask, request, jsonify, redirect, send_from_directory, session
 from flask_cors import CORS
@@ -13,9 +14,9 @@ app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this-in-production'  # Change this!
 CORS(app)  # Enable CORS for all routes
 
-# 🔑 Put your real creds here (keep them secret!)
-CASHFREE_APP_ID = "your_sandbox_app_id"
-CASHFREE_SECRET_KEY = "your_sandbox_secret_key"
+# 🔑 Production credentials from environment variables
+CASHFREE_APP_ID = os.getenv('CASHFREE_APP_ID', 'your_production_app_id')
+CASHFREE_SECRET_KEY = os.getenv('CASHFREE_SECRET_KEY', 'your_production_secret_key')
 CASHFREE_BASE_URL = "https://api.cashfree.com/pg/orders"  # Production URL
 
 # PhonePe sandbox URL
@@ -550,4 +551,3 @@ def get_payment_status(transaction_id):
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
-
