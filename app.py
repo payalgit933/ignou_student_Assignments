@@ -14,9 +14,9 @@ app.secret_key = 'your-secret-key-change-this-in-production'  # Change this!
 CORS(app)  # Enable CORS for all routes
 
 # 🔑 Put your real creds here (keep them secret!)
-MERCHANT_ID = "SU2508071750271559854082"       # your merchant id
-SALT_KEY = "4d87df48-54a4-4f61-9137-a7ccd7b80ea1"   # your API key (Salt Key)
-SALT_INDEX = "1"                 # version (salt index)
+CASHFREE_APP_ID = "7507092ba19a870910c76c41e7907057"
+CASHFREE_SECRET_KEY = "cfsk_ma_prod_1f807cc5d4fc4acb10819c59fa44d78c_900abc29"
+CASHFREE_BASE_URL = "https://sandbox.cashfree.com/pg/orders"  # use prod URL later
 
 # PhonePe sandbox URL
 PHONEPE_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay"
@@ -272,145 +272,57 @@ def dashboard():
 def initiate_payment():
     try:
         data = request.json
-        print(f"🔍 Payment initiation request data: {data}")
-        
-        # Check if data is empty
-        if not data:
-            print("❌ No data received")
-            return jsonify({"success": False, "error": "No data received"}), 400
-        
         subjects = data.get("subjects", [])
         student_name = data.get("studentName", "")
         enrollment = data.get("enrollmentNumber", "")
-        
-        print(f"📚 Subjects: {subjects}")
-        print(f"👤 Student: {student_name}")
-        print(f"🆔 Enrollment: {enrollment}")
-        
-        # Check if subjects is empty or None
-        if not subjects or len(subjects) == 0:
-            print("❌ No subjects selected")
-            return jsonify({"success": False, "error": "No subjects selected"}), 400
-        
-        # Check if required fields are present
-        if not student_name or student_name.strip() == "":
-            print("❌ Student name is missing")
-            return jsonify({"success": False, "error": "Student name is required"}), 400
-        
-        if not enrollment or enrollment.strip() == "":
-            print("❌ Enrollment number is missing")
-            return jsonify({"success": False, "error": "Enrollment number is required"}), 400
-        
-        print("✅ All validation passed, proceeding with payment...")
-        
-        # Calculate amount based on number of subjects (₹1 per subject)
-        amount_rupees = len(subjects)
 
-        # PhonePe-specific validations
-        if amount_rupees < 1:
-            return jsonify({"success": False, "error": "Amount must be at least ₹1"}), 400
+        if not subjects or not student_name or not enrollment:
+            return jsonify({"success": False, "error": "Missing required fields"}), 400
 
-        if amount_rupees > 1000:  # PhonePe limit
-            return jsonify({"success": False, "error": "Amount cannot exceed ₹1000"}), 400
-        # PhonePe requires specific transaction ID format (alphanumeric, no special chars)
-        merchant_txn_id = f"TXN{int(time.time())}"
-        
-        # Store payment session data
-        payment_session = {
-            "merchant_txn_id": merchant_txn_id,
-            "subjects": subjects,
-            "student_name": student_name,
-            "enrollment": enrollment,
-            "amount": amount_rupees,
-            "status": "pending",
-            "timestamp": time.time()
-        }
-        
-        if not hasattr(app, 'payment_sessions'):
-            app.payment_sessions = {}
-        app.payment_sessions[merchant_txn_id] = payment_session
-        
-        # Real PhonePe payment integration
-        print(f"🚀 Initiating real PhonePe payment: {merchant_txn_id}")
-        
-        # Calculate amount in paise (PhonePe requirement)
-        amount_paise = amount_rupees * 100
-        
-        # Get your Render URL - UPDATE THIS WITH YOUR ACTUAL RENDER URL
-        render_url = "https://ignou-assignment-portal.onrender.com"  # ✅ Your actual Render URL
-        
+        amount_rupees = len(subjects)  # ₹1 per subject
+
+        # ✅ Create unique orderId
+        order_id = f"ORD{int(time.time())}"
+
         payload = {
-            "merchantId": MERCHANT_ID,
-            "merchantTransactionId": merchant_txn_id,
-            "amount": amount_paise,
-            "merchantUserId": f"USER{int(time.time())}",
-            "redirectUrl": f"{render_url}/payment-success",
-            "redirectMode": "POST",
-            "callbackUrl": f"{render_url}/payment-callback",
-            "paymentInstrument": {"type": "PAY_PAGE"}
+            "order_id": order_id,
+            "order_amount": amount_rupees,
+            "order_currency": "INR",
+            "customer_details": {
+                "customer_id": f"CUST{int(time.time())}",
+                "customer_name": student_name,
+                "customer_email": data.get("emailId", "test@example.com"),
+                "customer_phone": data.get("mobileNumber", "9999999999")
+            },
+            "order_meta": {
+                "return_url": "https://yourdomain.com/payment-success?order_id={order_id}",
+                "notify_url": "https://yourdomain.com/payment-callback"
+            }
         }
-        
-        # Base64 encode payload
-        payload_str = json.dumps(payload)
-        payload_base64 = base64.b64encode(payload_str.encode()).decode()
-        
-        # Generate checksum
-        raw_string = payload_base64 + "/pg/v1/pay" + SALT_KEY
-        checksum = hashlib.sha256(raw_string.encode()).hexdigest() + "###" + SALT_INDEX
-        
+
         headers = {
-            "Content-Type": "application/json",
-            "X-VERIFY": checksum,
-            "accept": "application/json"
+            "x-client-id": CASHFREE_APP_ID,
+            "x-client-secret": CASHFREE_SECRET_KEY,
+            "x-api-version": "2022-09-01",
+            "Content-Type": "application/json"
         }
-        
-        print(f"📡 Calling PhonePe API with payload: {payload}")
-        
-        # Call PhonePe API
-        print(f"📡 Making request to PhonePe API: {PHONEPE_URL}")
-        print(f"📡 Request headers: {headers}")
-        print(f"📡 Request payload: {{'request': payload_base64}}")
-        
-        try:
-            response = requests.post(PHONEPE_URL, headers=headers, json={"request": payload_base64})
-            print(f"📡 PhonePe API response status: {response.status_code}")
-            print(f"📡 PhonePe API response headers: {dict(response.headers)}")
-            
-            if response.status_code != 200:
-                print(f"❌ PhonePe API returned non-200 status: {response.status_code}")
-                print(f"❌ Response text: {response.text}")
-                return jsonify({"success": False, "error": f"PhonePe API error: {response.status_code}", "details": response.text}), 400
-            
-            res_data = response.json()
-            print(f"📡 PhonePe API response: {res_data}")
-            
-            if "data" in res_data and "instrumentResponse" in res_data["data"]:
-                redirect_url = res_data["data"]["instrumentResponse"]["redirectInfo"]["url"]
-                print(f"✅ PhonePe payment initiated successfully. Redirect URL: {redirect_url}")
-                
-                return jsonify({
-                    "success": True,
-                    "paymentUrl": redirect_url,
-                    "transactionId": merchant_txn_id,
-                    "amount": amount_rupees,
-                    "subjects": subjects
-                })
-            else:
-                print(f"❌ PhonePe API error response: {res_data}")
-                error_msg = res_data.get("message", "Unknown error")
-                code = res_data.get("code", "UNKNOWN")
-                return jsonify({"success": False, "error": f"Payment initiation failed: {error_msg}", "code": code, "details": res_data}), 400
-                
-        except requests.exceptions.RequestException as e:
-            print(f"❌ Network error calling PhonePe API: {str(e)}")
-            return jsonify({"success": False, "error": f"Network error: {str(e)}"}), 500
-        except json.JSONDecodeError as e:
-            print(f"❌ Invalid JSON response from PhonePe: {str(e)}")
-            print(f"❌ Raw response: {response.text}")
-            return jsonify({"success": False, "error": "Invalid response from PhonePe"}), 500
-        
+
+        response = requests.post(CASHFREE_BASE_URL, headers=headers, json=payload)
+
+        if response.status_code != 200:
+            return jsonify({"success": False, "error": f"Cashfree API error: {response.text}"}), 400
+
+        res_data = response.json()
+
+        return jsonify({
+            "success": True,
+            "paymentUrl": res_data["payment_link"],
+            "transactionId": order_id,
+            "amount": amount_rupees,
+            "subjects": subjects
+        })
+
     except Exception as e:
-        print(f"❌ Payment initiation exception: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 # Route to handle successful payment redirect
@@ -638,5 +550,3 @@ def get_payment_status(transaction_id):
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
-
-
