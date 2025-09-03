@@ -787,7 +787,7 @@
                 </div>
 
                 <div class="button-group">
-                    <button type="submit" class="btn btn-primary">Pay & Generate Assignment</button>
+                    <button type="submit" class="btn btn-primary">Generate Assignment</button>
                 </div>
             </form>
         </div>
@@ -1153,7 +1153,7 @@
         // Form submission handler
         document.getElementById('certificateForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            initiatePaymentAndGenerateAssignment();
+            generateAssignment();
         });
 
 
@@ -1229,108 +1229,7 @@
 
 
 
-        // Payment initiation and assignment generation function
-        async function initiatePaymentAndGenerateAssignment() {
-            try {
-                const formData = new FormData(document.getElementById('certificateForm'));
-                
-                // Get selected subjects
-                const selectedSubjects = formData.getAll('subjects');
-                if (selectedSubjects.length === 0) {
-                    alert('Please select at least one subject before proceeding.');
-                    return;
-                }
-                
-                // Get required form data
-                const studentName = formData.get('studentName');
-                const enrollmentNumber = formData.get('enrollmentNumber');
-                const emailId = formData.get('emailId');
-                const mobileNumber = formData.get('mobileNumber');
-                
-                if (!studentName || !enrollmentNumber || !emailId || !mobileNumber) {
-                    alert('Please fill in all required fields before proceeding.');
-                    return;
-                }
-                
-                // Calculate amount (₹1 per subject)
-                const amount = selectedSubjects.length;
-                
-                // Show payment confirmation
-                const confirmPayment = confirm(
-                    `Payment Confirmation:\n\n` +
-                    `Selected Subjects: ${selectedSubjects.join(', ')}\n` +
-                    `Amount: ₹${amount}\n` +
-                    `Student: ${studentName}\n` +
-                    `Enrollment: ${enrollmentNumber}\n\n` +
-                    `Do you want to proceed with payment?`
-                );
-                
-                if (!confirmPayment) {
-                    return;
-                }
-                
-                // Show loading state
-                const submitButton = document.querySelector('button[type="submit"]');
-                const originalText = submitButton.textContent;
-                submitButton.textContent = '⏳ Processing Payment...';
-                submitButton.disabled = true;
-                
-                // Prepare payment data
-                const paymentData = {
-                    subjects: selectedSubjects,
-                    studentName: studentName,
-                    enrollmentNumber: enrollmentNumber,
-                    emailId: emailId,
-                    mobileNumber: mobileNumber,
-                    amount: amount
-                };
-                
-                console.log('Initiating payment with data:', paymentData);
-                
-                // Call payment initiation endpoint
-                const response = await fetch('/initiate-payment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(paymentData)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    console.log('Payment initiated successfully:', result);
-                    
-                    // Store payment data for later use
-                    window.paymentData = {
-                        transactionId: result.transactionId,
-                        amount: result.amount,
-                        subjects: result.subjects,
-                        paymentUrl: result.paymentUrl
-                    };
-                    
-                    // Redirect to payment page
-                    window.location.href = result.paymentUrl;
-                    
-                } else {
-                    console.error('Payment initiation failed:', result);
-                    alert(`Payment initiation failed: ${result.error || 'Unknown error'}`);
-                    
-                    // Reset button
-                    submitButton.textContent = originalText;
-                    submitButton.disabled = false;
-                }
-                
-            } catch (error) {
-                console.error('Error initiating payment:', error);
-                alert('An error occurred while initiating payment. Please try again.');
-                
-                // Reset button
-                const submitButton = document.querySelector('button[type="submit"]');
-                submitButton.textContent = 'Pay & Generate Assignment';
-                submitButton.disabled = false;
-            }
-        }
+
 
         // Generate assignment function (now called after payment success)
         async function generateAssignment() {
