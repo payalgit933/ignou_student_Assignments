@@ -375,7 +375,7 @@ def initiate_payment():
         subjects = data.get("subjects", [])
         student_name = data.get("studentName", "")
         enrollment = data.get("enrollmentNumber", "")
-
+        
         if not subjects or not student_name or not enrollment:
             return jsonify({"success": False, "error": "Missing required fields"}), 400
 
@@ -402,7 +402,7 @@ def initiate_payment():
         print(f"   Phone: {customer_phone}")
         print(f"   Amount: ₹{amount_rupees}")
         print(f"   Order ID: {order_id}")
-
+        
         payload = {
             "order_id": order_id,
             "order_amount": amount_rupees,
@@ -418,7 +418,7 @@ def initiate_payment():
                 "notify_url": "https://ignou-assignment-portal.onrender.com/payment-callback"
             }
         }
-
+        
         headers = {
             "x-client-id": CASHFREE_APP_ID,
             "x-client-secret": CASHFREE_SECRET_KEY,
@@ -437,10 +437,10 @@ def initiate_payment():
         print(f"Status Code: {response.status_code}")
         print(f"Response Headers: {dict(response.headers)}")
         print(f"Response Text: {response.text}")
-
-        if response.status_code != 200:
+            
+            if response.status_code != 200:
             return jsonify({"success": False, "error": f"Cashfree API error: {response.text}"}), 400
-
+            
         try:
             res_data = response.json()
             print(f"📊 Parsed Response Data: {res_data}")
@@ -467,23 +467,23 @@ def initiate_payment():
                     "success": False, 
                     "error": f"Payment session ID not found in response. Available fields: {list(res_data.keys())}. Response: {res_data}"
                 }), 400
-            
-            return jsonify({
-                "success": True,
+                
+                return jsonify({
+                    "success": True,
                 "paymentUrl": payment_url,
                 "paymentSessionId": payment_session_id,
                 "transactionId": order_id,
-                "amount": amount_rupees,
-                "subjects": subjects
-            })
-            
+                    "amount": amount_rupees,
+                    "subjects": subjects
+                })
+                
         except json.JSONDecodeError as e:
             print(f"❌ Failed to parse JSON response: {e}")
             return jsonify({
                 "success": False, 
                 "error": f"Invalid JSON response from Cashfree: {response.text}"
             }), 400
-
+        
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -606,21 +606,234 @@ def payment_success():
                     emailId: "test@example.com"
                 }};
                 
+                // Include your original PDF generation functions
+                const {{ jsPDF }} = window.jspdf;
+                const {{ PDFDocument }} = window.PDFLib;
+                
+                // Subject to PDF mapping for automatic attachment
+                const subjectPDFMapping = {{
+                    'Mathematics': 'https://raw.githubusercontent.com/payalgit933/ignou_student_Assignments/main/pdfs/BCS-53-EM-2025-26.pdf',
+                    'Computer Science': 'https://raw.githubusercontent.com/payalgit933/ignou_student_Assignments/main/pdfs/BCS-54-EM-2025-26.pdf',
+                    'Economics': 'https://raw.githubusercontent.com/payalgit933/ignou_student_Assignments/main/pdfs/BCS-53-EM-2025-26.pdf',
+                    'Physics': 'https://raw.githubusercontent.com/payalgit933/ignou_student_Assignments/main/pdfs/BCS-53-EM-2025-26.pdf',
+                    'Chemistry': 'https://raw.githubusercontent.com/payalgit933/ignou_student_Assignments/main/pdfs/BCS-53-EM-2025-26.pdf',
+                    'Biology': 'https://raw.githubusercontent.com/payalgit933/ignou_student_Assignments/main/pdfs/BCS-53-EM-2025-26.pdf'
+                }};
+                
+                // Function to merge PDFs (your original function)
+                async function mergePDFs(generatedPDFBytes, subjectName) {{
+                    try {{
+                        console.log('Starting PDF merge process...');
+                        
+                        const mergedPdf = await PDFDocument.create();
+                        const generatedPdf = await PDFDocument.load(generatedPDFBytes);
+                        const generatedPages = await mergedPdf.copyPages(generatedPdf, generatedPdf.getPageIndices());
+                        generatedPages.forEach(page => mergedPdf.addPage(page));
+                        
+                        const pdfToAttach = subjectPDFMapping[subjectName] || 'https://raw.githubusercontent.com/payalgit933/ignou_student_Assignments/main/pdfs/BCS-53-EM-2025-26.pdf';
+                        console.log(`Attaching PDF: ${{pdfToAttach}} for subject: ${{subjectName}}`);
+                        
+                        try {{
+                            const response = await fetch(pdfToAttach);
+                            if (!response.ok) {{
+                                throw new Error(`Failed to fetch ${{pdfToAttach}}: ${{response.status}}`);
+                            }}
+                            
+                            const subjectPDFBytes = await response.arrayBuffer();
+                            const subjectPdf = await PDFDocument.load(subjectPDFBytes);
+                            const subjectPages = await mergedPdf.copyPages(subjectPdf, subjectPdf.getPageIndices());
+                            subjectPages.forEach(page => mergedPdf.addPage(page));
+                            
+                            console.log(`Successfully merged ${{subjectPages.length}} pages from ${{pdfToAttach}}`);
+                        }} catch (error) {{
+                            console.warn(`Could not attach ${{pdfToAttach}}:`, error.message);
+                        }}
+                        
+                        const mergedPdfBytes = await mergedPdf.save();
+                        return mergedPdfBytes;
+                        
+                    }} catch (error) {{
+                        console.error('PDF merging failed:', error);
+                        return generatedPDFBytes;
+                    }}
+                }}
+                
+                // Your original PDF generation function
+                async function generatePDF(templateData, returnBlob = false) {{
+                    const doc = new jsPDF({{ unit: "pt", format: "a4" }});
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    const margin = 50;
+                    const lineHeight = 24;
+                    const maxWidth = pageWidth - margin * 2;
+
+                    // Outer border
+                    doc.setLineWidth(1);
+                    doc.rect(margin / 2, margin / 2, pageWidth - margin, pageHeight - margin);
+
+                    // IGNOU Logos
+                    try {{
+                        doc.addImage("https://raw.githubusercontent.com/payalgit933/ignou-logo/main/image2.jpg", "JPEG", margin - 15, margin + 15, 100, 40);
+                        doc.addImage("https://raw.githubusercontent.com/payalgit933/ignou-logo/main/image4.jpg", "JPEG", pageWidth - margin - 75, margin + 15, 80, 35);
+                    }} catch (e) {{
+                        console.warn("IGNOU logo loading failed:", e);
+                    }}
+
+                    // Header
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(14);
+                    doc.text("INDIRA GANDHI NATIONAL OPEN UNIVERSITY", pageWidth / 2, margin + 35, {{ align: "center" }});
+
+                    doc.setFontSize(11);
+                    doc.setTextColor(200, 0, 0);
+                    doc.text(`Regional Centre ${{templateData.center || "Delhi"}}`, pageWidth / 2, margin + 55, {{ align: "center" }});
+                    doc.setTextColor(0, 0, 0);
+
+                    // Title
+                    doc.setFontSize(14);
+                    doc.text("Format for Assignment Submission", pageWidth / 2, margin + 95, {{ align: "center" }});
+                    doc.line(pageWidth / 2 - 120, margin + 98, pageWidth / 2 + 120, margin + 98);
+
+                    // Exam info
+                    doc.setFontSize(11);
+                    doc.setFont("helvetica", "italic");
+                    doc.setTextColor(100, 100, 100);
+                    doc.text(`For Term End Exam June/Dec - _______ Year - ${{templateData.year || "_______"}}`, pageWidth / 2, margin + 115, {{ align: "center" }});
+                    doc.text("(Please read the instructions given below carefully before submitting assignments)", pageWidth / 2, margin + 135, {{ align: "center" }});
+                    
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFont("helvetica", "normal");
+
+                    let y = margin + 200;
+
+                    // Row helper function
+                    function addRow(num, label, value) {{
+                        const leftX = margin + 10;
+                        const labelWidth = 240;
+                        const valueWidth = maxWidth - 260;
+                        
+                        doc.setFont("helvetica", "bold");
+                        const labelText = `${{num}}. ${{label}} : `;
+                        const wrappedLabel = doc.splitTextToSize(labelText, labelWidth);
+                        doc.text(wrappedLabel, leftX, y);
+                        
+                        doc.setFont("helvetica", "normal");
+                        const wrappedValue = doc.splitTextToSize(value || "__________", valueWidth);
+                        
+                        if (wrappedValue.length > 0) {{
+                            doc.text(wrappedValue[0], leftX + 250, y);
+                        }}
+                        
+                        for (let i = 1; i < wrappedValue.length; i++) {{
+                            doc.text(wrappedValue[i], leftX + 250, y + (i * lineHeight));
+                        }}
+                        
+                        const lines = Math.max(wrappedLabel.length, wrappedValue.length);
+                        y += lineHeight * lines + 6;
+                    }}
+
+                    // Add all the form data rows
+                    addRow(1, "Name of the Student", templateData.name);
+                    addRow(2, "Enrollment Number", templateData.enrollment);
+                    addRow(3, "Programme Code", templateData.program);
+                    addRow(4, "Course Code", templateData.course);
+                    addRow(5, "Course Code", templateData.courseCode);
+                    addRow(6, "Name of the Study Centre With complete address", templateData.centerAddress);
+                    addRow(7, "Study Centre Code", templateData.centerCode);
+                    addRow(8, "Mobile Number", templateData.mobile);
+                    addRow(9, "Details if this same assignment has been submitted anywhere else also", templateData.assignmentAnyWhereElse);
+                    addRow(10, "Email ID", templateData.email);
+                    addRow(11, "Above information cross checked and correct?", templateData.crossChecked);
+
+                    // Footer
+                    const footerY = 780;
+                    const signLabelY = footerY - 40;
+                    
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Date of Submission:", margin, signLabelY);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(templateData.date || "__________", margin + 130, signLabelY);
+
+                    // Signature
+                    if (templateData.sign) {{
+                        try {{
+                            doc.addImage(templateData.sign, "PNG", pageWidth - margin - 120, signLabelY - 50, 100, 40);
+                        }} catch (e) {{
+                            console.warn("Signature image failed:", e);
+                        }}
+                    }}
+                    
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Signature of the Student", pageWidth - margin - 120, signLabelY);
+
+                    // PAGE 2: Student Photo
+                    if (templateData.photo) {{
+                        doc.addPage();
+                        doc.setLineWidth(1);
+                        doc.rect(margin / 2, margin / 2, pageWidth - margin, pageHeight - margin);
+                        
+                        try {{
+                            let imageFormat = "JPEG";
+                            if (templateData.photo.startsWith("data:image/png")) {{
+                                imageFormat = "PNG";
+                            }}
+                            
+                            const photoWidth = 400;
+                            const photoHeight = 300;
+                            const x = (pageWidth - photoWidth) / 2;
+                            const y = (pageHeight - photoHeight) / 2;
+                            
+                            doc.addImage(templateData.photo, imageFormat, x, y, photoWidth, photoHeight);
+                        }} catch (e) {{
+                            console.warn("Photo addImage failed", e);
+                        }}
+                    }}
+
+                    // Save file with merging
+                    const enrollment = templateData.enrollment || "Student";
+                    const subject = templateData.course || "General";
+                    const fileName = `${{enrollment}}_${{subject}}.pdf`;
+                    
+                    const pdfBytes = doc.output('arraybuffer');
+                    
+                    try {{
+                        const mergedPDFBytes = await mergePDFs(pdfBytes, subject);
+                        const blob = new Blob([mergedPDFBytes], {{ type: 'application/pdf' }});
+                        
+                        if (returnBlob) {{
+                            return blob;
+                        }}
+                        
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                        
+                    }} catch (error) {{
+                        console.error('PDF merging failed, downloading original:', error);
+                        
+                        if (returnBlob) {{
+                            return new Blob([doc.output('arraybuffer')], {{ type: 'application/pdf' }});
+                        }}
+                        
+                        doc.save(fileName);
+                    }}
+                }}
+                
                 function downloadAllSubjects() {{
                     const subjects = window.paymentData.subjects;
                     alert('Downloading all subjects as ZIP...');
                     
-                    // Use your existing downloadAllSubjectsZip function
-                    if (typeof downloadAllSubjectsZip === 'function') {{
-                        downloadAllSubjectsZip();
-                    }} else {{
-                        // Fallback: download each subject individually
-                        subjects.forEach((subject, index) => {{
-                            setTimeout(() => {{
-                                downloadSingleSubject(subject);
-                            }}, index * 1000);
-                        }});
-                    }}
+                    // Download each subject individually with your original format
+                    subjects.forEach((subject, index) => {{
+                        setTimeout(() => {{
+                            downloadSingleSubject(subject);
+                        }}, index * 1000);
+                    }});
                 }}
                 
                 function downloadIndividualSubjects() {{
@@ -641,26 +854,27 @@ def payment_success():
                 
                 function downloadSingleSubject(subject) {{
                     try {{
-                        // Use your existing downloadPDF function with the subject
-                        if (typeof downloadPDF === 'function') {{
-                            downloadPDF(subject);
-                        }} else {{
-                            // Fallback to simple PDF generation
-                            const {{ jsPDF }} = window.jspdf;
-                            const doc = new jsPDF();
-                            
-                            doc.setFontSize(20);
-                            doc.text('IGNOU Assignment', 20, 30);
-                            doc.setFontSize(16);
-                            doc.text(`Subject: ${{subject}}`, 20, 50);
-                            doc.text(`Order ID: ${{window.paymentData.orderId}}`, 20, 70);
-                            doc.text(`Amount Paid: ₹${{window.paymentData.amount}}`, 20, 90);
-                            doc.text(`Status: ${{window.paymentData.status}}`, 20, 110);
-                            doc.text(`Date: ${{new Date().toLocaleDateString()}}`, 20, 130);
-                            
-                            const fileName = `Assignment_${{subject}}_${{window.paymentData.orderId}}.pdf`;
-                            doc.save(fileName);
-                        }}
+                        // Use your original PDF generation with the subject
+                        const templateData = {{
+                            name: window.formData?.studentName || "Student Name",
+                            enrollment: window.paymentData.orderId,
+                            program: window.formData?.programSelection || "BCA",
+                            courseCode: window.formData?.courseCode || "BCS-053",
+                            course: subject,
+                            centerCode: window.formData?.studyCenterCode || "1234",
+                            centerAddress: window.formData?.studyCenterAddress || "Delhi Study Center",
+                            center: "Delhi",
+                            mobile: window.formData?.mobileNumber || "9999999999",
+                            email: window.formData?.emailId || "test@example.com",
+                            assignmentAnyWhereElse: "No",
+                            crossChecked: "Yes",
+                            date: new Date().toLocaleDateString('en-GB'),
+                            year: window.formData?.yearSelection || "2025",
+                            photo: null,
+                            sign: null
+                        }};
+                        
+                        generatePDF(templateData, false);
                         
                     }} catch (error) {{
                         console.error('PDF generation failed:', error);
@@ -746,7 +960,7 @@ def create_payment():
 def payment_callback():
     try:
         # Cashfree sends webhook data
-        data = request.json
+    data = request.json
         print(f"📡 Cashfree webhook received: {data}")
         
         # Extract order information
@@ -755,10 +969,10 @@ def payment_callback():
         
         if order_status == "PAID":
             print(f"✅ Payment confirmed via webhook for order: {order_id}")
-            return jsonify({"status": "success", "message": "Payment received. Allow PDF download."})
-        else:
+        return jsonify({"status": "success", "message": "Payment received. Allow PDF download."})
+    else:
             print(f"❌ Payment not completed. Status: {order_status}")
-            return jsonify({"status": "failed", "message": "Payment not completed"})
+        return jsonify({"status": "failed", "message": "Payment not completed"})
             
     except Exception as e:
         print(f"❌ Webhook processing error: {str(e)}")
