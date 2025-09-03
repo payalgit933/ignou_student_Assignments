@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
     <style>
         * {
             margin: 0;
@@ -1371,9 +1372,21 @@
                     // Store transaction ID
                     window.currentTransactionId = result.transactionId;
                     
-                    // Redirect to PhonePe payment gateway
-                    console.log('Redirecting to payment gateway:', result.paymentUrl);
-                    window.location.href = result.paymentUrl;
+                    // Initialize Cashfree SDK
+                    const cashfree = Cashfree({
+                        mode: "production"
+                    });
+                    
+                    // Open Cashfree checkout using the new SDK method
+                    console.log('Opening Cashfree checkout with session ID:', result.paymentSessionId);
+                    
+                    let checkoutOptions = {
+                        paymentSessionId: result.paymentSessionId,
+                        redirectTarget: "_self"
+                    };
+                    
+                    cashfree.checkout(checkoutOptions);
+                    
                 } else {
                     throw new Error(result.error || 'Payment initiation failed');
                 }
@@ -2048,4 +2061,3 @@
     </script>
 </body>
 </html>
-
