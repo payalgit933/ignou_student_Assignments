@@ -1324,6 +1324,16 @@
                         paymentSessionId: result.paymentSessionId
                     };
                     
+                    // Store student data in localStorage for payment success
+                    localStorage.setItem('paymentStudentData', JSON.stringify({
+                        studentName: studentName,
+                        enrollmentNumber: enrollmentNumber,
+                        emailId: emailId,
+                        mobileNumber: mobileNumber,
+                        subjects: selectedSubjects,
+                        amount: amount
+                    }));
+                    
                     // Initialize Cashfree SDK and redirect to payment
                     try {
                         const cashfree = Cashfree({
@@ -1345,6 +1355,14 @@
                     
                 } else {
                     console.error('Payment initiation failed:', result);
+                    
+                    // Check if it's an authentication error
+                    if (response.status === 401 || response.status === 403) {
+                        alert('Please log in to continue with payment.');
+                        window.location.href = '/login';
+                        return;
+                    }
+                    
                     alert(`Payment initiation failed: ${result.error || 'Unknown error'}`);
                     
                     // Reset button
@@ -2276,7 +2294,7 @@
         
         // Function to show payment success and download options
         function showPaymentSuccess(orderId) {
-            // Use server payment data if available, otherwise fallback to form data
+            // Use server payment data if available, otherwise fallback to localStorage data
             let paymentData;
             
             if (window.serverPaymentData) {
@@ -2292,25 +2310,47 @@
                     mobileNumber: window.serverPaymentData.mobileNumber || 'Not Provided'
                 };
             } else {
-                // Fallback to form data
-                const selectedSubjects = [];
-                const checkboxes = document.querySelectorAll('input[name="subjects"]:checked');
-                checkboxes.forEach(checkbox => {
-                    selectedSubjects.push(checkbox.value);
-                });
+                // Try to get data from localStorage first
+                const storedData = localStorage.getItem('paymentStudentData');
+                if (storedData) {
+                    try {
+                        const parsedData = JSON.parse(storedData);
+                        paymentData = {
+                            orderId: orderId,
+                            amount: parsedData.amount || 1,
+                            status: 'PAID',
+                            subjects: parsedData.subjects || [],
+                            studentName: parsedData.studentName || 'Not Provided',
+                            enrollmentNumber: parsedData.enrollmentNumber || 'Not Provided',
+                            emailId: parsedData.emailId || 'Not Provided',
+                            mobileNumber: parsedData.mobileNumber || 'Not Provided'
+                        };
+                    } catch (e) {
+                        console.error('Error parsing stored payment data:', e);
+                    }
+                }
                 
-                const subjectsToUse = selectedSubjects.length > 0 ? selectedSubjects : ["Mathematics"];
-                
-                paymentData = {
-                    orderId: orderId,
-                    amount: 1,
-                    status: 'PAID',
-                    subjects: subjectsToUse,
-                    studentName: 'Not Provided',
-                    enrollmentNumber: 'Not Provided',
-                    emailId: 'Not Provided',
-                    mobileNumber: 'Not Provided'
-                };
+                // Fallback to form data if localStorage data is not available
+                if (!paymentData) {
+                    const selectedSubjects = [];
+                    const checkboxes = document.querySelectorAll('input[name="subjects"]:checked');
+                    checkboxes.forEach(checkbox => {
+                        selectedSubjects.push(checkbox.value);
+                    });
+                    
+                    const subjectsToUse = selectedSubjects.length > 0 ? selectedSubjects : ["Mathematics"];
+                    
+                    paymentData = {
+                        orderId: orderId,
+                        amount: 1,
+                        status: 'PAID',
+                        subjects: subjectsToUse,
+                        studentName: 'Not Provided',
+                        enrollmentNumber: 'Not Provided',
+                        emailId: 'Not Provided',
+                        mobileNumber: 'Not Provided'
+                    };
+                }
             }
             
             // Store payment data for PDF generation
@@ -2351,7 +2391,7 @@
                 let templateData;
                 
                 if (window.paymentData && window.paymentData.studentName !== 'Not Provided') {
-                    // Use server-provided payment data
+                    // Use payment data (from server or localStorage)
                     templateData = {
                         name: window.paymentData.studentName || 'Not provided',
                         enrollment: window.paymentData.enrollmentNumber || 'Not provided',
@@ -2456,7 +2496,7 @@
                 let baseTemplateData;
                 
                 if (window.paymentData && window.paymentData.studentName !== 'Not Provided') {
-                    // Use server-provided payment data
+                    // Use payment data (from server or localStorage)
                     baseTemplateData = {
                         name: window.paymentData.studentName || 'Not provided',
                         enrollment: window.paymentData.enrollmentNumber || 'Not provided',
