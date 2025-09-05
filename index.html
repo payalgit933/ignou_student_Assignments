@@ -2248,6 +2248,12 @@
             // Show payment success message and download options
             showPaymentSuccess(orderId);
         }
+        
+        // Check if payment data is provided by server
+        {% if payment_success and payment_data %}
+        window.serverPaymentData = {{ payment_data | tojson }};
+        console.log('Server payment data:', window.serverPaymentData);
+        {% endif %}
 
         // Helper function to get enrollment number
         function getEnrollmentNumber() {
@@ -2256,23 +2262,45 @@
         
         // Function to show payment success and download options
         function showPaymentSuccess(orderId) {
-            // Get the selected subjects from the form checkboxes
-            const selectedSubjects = [];
-            const checkboxes = document.querySelectorAll('input[name="subjects"]:checked');
-            checkboxes.forEach(checkbox => {
-                selectedSubjects.push(checkbox.value);
-            });
+            // Use server payment data if available, otherwise fallback to form data
+            let paymentData;
             
-            // If no subjects selected, use default
-            const subjectsToUse = selectedSubjects.length > 0 ? selectedSubjects : ["Mathematics"];
+            if (window.serverPaymentData) {
+                // Use server-provided payment data
+                paymentData = {
+                    orderId: orderId,
+                    amount: window.serverPaymentData.amount || 1,
+                    status: window.serverPaymentData.status || 'PAID',
+                    subjects: window.serverPaymentData.subjects || [],
+                    studentName: window.serverPaymentData.studentName || 'Not Provided',
+                    enrollmentNumber: window.serverPaymentData.enrollmentNumber || 'Not Provided',
+                    emailId: window.serverPaymentData.emailId || 'Not Provided',
+                    mobileNumber: window.serverPaymentData.mobileNumber || 'Not Provided'
+                };
+            } else {
+                // Fallback to form data
+                const selectedSubjects = [];
+                const checkboxes = document.querySelectorAll('input[name="subjects"]:checked');
+                checkboxes.forEach(checkbox => {
+                    selectedSubjects.push(checkbox.value);
+                });
+                
+                const subjectsToUse = selectedSubjects.length > 0 ? selectedSubjects : ["Mathematics"];
+                
+                paymentData = {
+                    orderId: orderId,
+                    amount: 1,
+                    status: 'PAID',
+                    subjects: subjectsToUse,
+                    studentName: 'Not Provided',
+                    enrollmentNumber: 'Not Provided',
+                    emailId: 'Not Provided',
+                    mobileNumber: 'Not Provided'
+                };
+            }
             
             // Store payment data for PDF generation
-            window.paymentData = {
-                orderId: orderId,
-                amount: 1, // Default amount - can be customized
-                status: 'PAID',
-                subjects: subjectsToUse
-            };
+            window.paymentData = paymentData;
             
             // Hide the form and show download page
             document.getElementById('formSection').classList.add('hidden');
@@ -2282,7 +2310,7 @@
             generateIndividualSubjectButtons();
             
             // Show success message
-            alert(`Payment successful! You can now download your assignments for: ${subjectsToUse.join(', ')}`);
+            alert(`Payment successful! You can now download your assignments for: ${paymentData.subjects.join(', ')}`);
         }
         
         // Function to generate individual subject buttons
@@ -2305,53 +2333,77 @@
             try {
                 console.log(`Downloading PDF for subject: ${subjectName}`);
                 
-                // Collect form data for PDF generation
-                const formData = new FormData(document.getElementById('certificateForm'));
+                // Use server payment data if available, otherwise fallback to form data
+                let templateData;
                 
-                // Prepare template data with actual form values
-                const templateData = {
-                    name: formData.get('studentName') || 'Not provided',
-                    enrollment: formData.get('enrollmentNumber') || 'Not provided',
-                    program: formData.get('programSelection') || 'Not provided',
-                    courseCode: formData.get('courseCode') || 'Not provided',
-                    course: subjectName === 'student_assignment' ? 
-                        (formData.get('courseCode') || 'Not provided') : subjectName,
-                    centerAddress: formData.get('centerAddress') || 'Not provided',
-                    centerCode: formData.get('centerCode') || 'Not provided',
-                    mobile: formData.get('mobileNumber') || 'Not provided',
-                    assignmentAnyWhereElse: formData.get('assignmentAnyWhereElse') || 'Not provided',
-                    email: formData.get('email') || 'Not provided',
-                    crossChecked: formData.get('crossChecked') || 'Not provided',
-                    semester: formData.get('semesterSelection') || '',
-                    year: formData.get('yearSelection') || new Date().getFullYear().toString(),
-                    center: formData.get('regionalCentre') || 'Delhi',
-                    date: new Date().toLocaleDateString('en-GB')
-                };
-                
-                // Handle photo upload
-                const photoFile = formData.get('idCard');
-                if (photoFile && photoFile.size > 0) {
-                    try {
-                        const photoDataUrl = await fileToDataURL(photoFile);
-                        templateData.photo = photoDataUrl;
-                    } catch (e) {
-                        console.warn("Photo conversion failed:", e);
-                    }
-                }
-
-                // Handle signature upload - use transparent signature if available
-                if (window.transparentSignature) {
-                    console.log('Using transparent signature for PDF');
-                    templateData.sign = window.transparentSignature;
+                if (window.paymentData && window.paymentData.studentName !== 'Not Provided') {
+                    // Use server-provided payment data
+                    templateData = {
+                        name: window.paymentData.studentName || 'Not provided',
+                        enrollment: window.paymentData.enrollmentNumber || 'Not provided',
+                        program: 'Not provided', // Not available in payment data
+                        courseCode: 'Not provided', // Not available in payment data
+                        course: subjectName === 'student_assignment' ? 
+                            'Not provided' : subjectName,
+                        centerAddress: 'Not provided', // Not available in payment data
+                        centerCode: 'Not provided', // Not available in payment data
+                        mobile: window.paymentData.mobileNumber || 'Not provided',
+                        assignmentAnyWhereElse: 'Not provided', // Not available in payment data
+                        email: window.paymentData.emailId || 'Not provided',
+                        crossChecked: 'Not provided', // Not available in payment data
+                        semester: '', // Not available in payment data
+                        year: new Date().getFullYear().toString(),
+                        center: 'Delhi', // Default
+                        date: new Date().toLocaleDateString('en-GB')
+                    };
                 } else {
-                    console.log('No transparent signature available, using fallback');
-                    const signatureFile = formData.get('signature');
-                    if (signatureFile && signatureFile.size > 0) {
+                    // Fallback to form data
+                    const formData = new FormData(document.getElementById('certificateForm'));
+                    
+                    templateData = {
+                        name: formData.get('studentName') || 'Not provided',
+                        enrollment: formData.get('enrollmentNumber') || 'Not provided',
+                        program: formData.get('programSelection') || 'Not provided',
+                        courseCode: formData.get('courseCode') || 'Not provided',
+                        course: subjectName === 'student_assignment' ? 
+                            (formData.get('courseCode') || 'Not provided') : subjectName,
+                        centerAddress: formData.get('centerAddress') || 'Not provided',
+                        centerCode: formData.get('centerCode') || 'Not provided',
+                        mobile: formData.get('mobileNumber') || 'Not provided',
+                        assignmentAnyWhereElse: formData.get('assignmentAnyWhereElse') || 'Not provided',
+                        email: formData.get('email') || 'Not provided',
+                        crossChecked: formData.get('crossChecked') || 'Not provided',
+                        semester: formData.get('semesterSelection') || '',
+                        year: formData.get('yearSelection') || new Date().getFullYear().toString(),
+                        center: formData.get('regionalCentre') || 'Delhi',
+                        date: new Date().toLocaleDateString('en-GB')
+                    };
+                    
+                    // Handle photo upload from form
+                    const photoFile = formData.get('idCard');
+                    if (photoFile && photoFile.size > 0) {
                         try {
-                            const signatureDataUrl = await fileToDataURL(signatureFile);
-                            templateData.sign = signatureDataUrl;
+                            const photoDataUrl = await fileToDataURL(photoFile);
+                            templateData.photo = photoDataUrl;
                         } catch (e) {
-                            console.warn("Signature conversion failed:", e);
+                            console.warn("Photo conversion failed:", e);
+                        }
+                    }
+
+                    // Handle signature upload from form
+                    if (window.transparentSignature) {
+                        console.log('Using transparent signature for PDF');
+                        templateData.sign = window.transparentSignature;
+                    } else {
+                        console.log('No transparent signature available, using fallback');
+                        const signatureFile = formData.get('signature');
+                        if (signatureFile && signatureFile.size > 0) {
+                            try {
+                                const signatureDataUrl = await fileToDataURL(signatureFile);
+                                templateData.sign = signatureDataUrl;
+                            } catch (e) {
+                                console.warn("Signature conversion failed:", e);
+                            }
                         }
                     }
                 }
@@ -2386,51 +2438,73 @@
                     return;
                 }
                 
-                // Collect form data for PDF generation
-                const formData = new FormData(document.getElementById('certificateForm'));
+                // Use server payment data if available, otherwise fallback to form data
+                let baseTemplateData;
                 
-                // Prepare template data with actual form values
-                const baseTemplateData = {
-                    name: formData.get('studentName') || 'Not provided',
-                    enrollment: formData.get('enrollmentNumber') || 'Not provided',
-                    program: formData.get('programSelection') || 'Not provided',
-                    courseCode: formData.get('courseCode') || 'Not provided',
-                    centerAddress: formData.get('centerAddress') || 'Not provided',
-                    centerCode: formData.get('centerCode') || 'Not provided',
-                    mobile: formData.get('mobileNumber') || 'Not provided',
-                    assignmentAnyWhereElse: formData.get('assignmentAnyWhereElse') || 'Not provided',
-                    email: formData.get('email') || 'Not provided',
-                    crossChecked: formData.get('crossChecked') || 'Not provided',
-                    semester: formData.get('semesterSelection') || '',
-                    year: formData.get('yearSelection') || new Date().getFullYear().toString(),
-                    center: formData.get('regionalCentre') || 'Delhi',
-                    date: new Date().toLocaleDateString('en-GB')
-                };
-                
-                // Handle photo upload
-                const photoFile = formData.get('idCard');
-                if (photoFile && photoFile.size > 0) {
-                    try {
-                        const photoDataUrl = await fileToDataURL(photoFile);
-                        baseTemplateData.photo = photoDataUrl;
-                    } catch (e) {
-                        console.warn("Photo conversion failed:", e);
-                    }
-                }
-
-                // Handle signature upload - use transparent signature if available
-                if (window.transparentSignature) {
-                    console.log('Using transparent signature for PDF');
-                    baseTemplateData.sign = window.transparentSignature;
+                if (window.paymentData && window.paymentData.studentName !== 'Not Provided') {
+                    // Use server-provided payment data
+                    baseTemplateData = {
+                        name: window.paymentData.studentName || 'Not provided',
+                        enrollment: window.paymentData.enrollmentNumber || 'Not provided',
+                        program: 'Not provided', // Not available in payment data
+                        courseCode: 'Not provided', // Not available in payment data
+                        centerAddress: 'Not provided', // Not available in payment data
+                        centerCode: 'Not provided', // Not available in payment data
+                        mobile: window.paymentData.mobileNumber || 'Not provided',
+                        assignmentAnyWhereElse: 'Not provided', // Not available in payment data
+                        email: window.paymentData.emailId || 'Not provided',
+                        crossChecked: 'Not provided', // Not available in payment data
+                        semester: '', // Not available in payment data
+                        year: new Date().getFullYear().toString(),
+                        center: 'Delhi', // Default
+                        date: new Date().toLocaleDateString('en-GB')
+                    };
                 } else {
-                    console.log('No transparent signature available, using fallback');
-                    const signatureFile = formData.get('signature');
-                    if (signatureFile && signatureFile.size > 0) {
+                    // Fallback to form data
+                    const formData = new FormData(document.getElementById('certificateForm'));
+                    
+                    baseTemplateData = {
+                        name: formData.get('studentName') || 'Not provided',
+                        enrollment: formData.get('enrollmentNumber') || 'Not provided',
+                        program: formData.get('programSelection') || 'Not provided',
+                        courseCode: formData.get('courseCode') || 'Not provided',
+                        centerAddress: formData.get('centerAddress') || 'Not provided',
+                        centerCode: formData.get('centerCode') || 'Not provided',
+                        mobile: formData.get('mobileNumber') || 'Not provided',
+                        assignmentAnyWhereElse: formData.get('assignmentAnyWhereElse') || 'Not provided',
+                        email: formData.get('email') || 'Not provided',
+                        crossChecked: formData.get('crossChecked') || 'Not provided',
+                        semester: formData.get('semesterSelection') || '',
+                        year: formData.get('yearSelection') || new Date().getFullYear().toString(),
+                        center: formData.get('regionalCentre') || 'Delhi',
+                        date: new Date().toLocaleDateString('en-GB')
+                    };
+                    
+                    // Handle photo upload from form
+                    const photoFile = formData.get('idCard');
+                    if (photoFile && photoFile.size > 0) {
                         try {
-                            const signatureDataUrl = await fileToDataURL(signatureFile);
-                            baseTemplateData.sign = signatureDataUrl;
+                            const photoDataUrl = await fileToDataURL(photoFile);
+                            baseTemplateData.photo = photoDataUrl;
                         } catch (e) {
-                            console.warn("Signature conversion failed:", e);
+                            console.warn("Photo conversion failed:", e);
+                        }
+                    }
+
+                    // Handle signature upload from form
+                    if (window.transparentSignature) {
+                        console.log('Using transparent signature for PDF');
+                        baseTemplateData.sign = window.transparentSignature;
+                    } else {
+                        console.log('No transparent signature available, using fallback');
+                        const signatureFile = formData.get('signature');
+                        if (signatureFile && signatureFile.size > 0) {
+                            try {
+                                const signatureDataUrl = await fileToDataURL(signatureFile);
+                                baseTemplateData.sign = signatureDataUrl;
+                            } catch (e) {
+                                console.warn("Signature conversion failed:", e);
+                            }
                         }
                     }
                 }
