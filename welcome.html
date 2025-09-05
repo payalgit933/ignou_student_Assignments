@@ -3,16 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome - IGNOU Assignment Portal</title>
+    <title>IGNOU Assignment Portal - Welcome</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: 100vh;
         }
     </style>
 </head>
@@ -30,7 +26,7 @@
                     <a href="/login" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded text-sm transition-all">
                         Login
                     </a>
-                    <a href="/register" class="bg-white text-purple-600 hover:bg-opacity-90 px-4 py-2 rounded text-sm transition-all">
+                    <a href="/register" class="ml-2 bg-white text-purple-600 hover:bg-opacity-90 px-4 py-2 rounded text-sm transition-all">
                         Register
                     </a>
                 </div>
@@ -38,91 +34,105 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="text-center text-white">
-            <!-- Logo and Title -->
-            <div class="mb-8">
-                <div class="text-6xl font-bold mb-4">IGNOU</div>
-                <div class="text-2xl opacity-90">Assignment Portal</div>
-                <div class="text-lg opacity-80 mt-2">Generate Professional Assignments</div>
-            </div>
-
-            <!-- Description -->
-            <div class="glass-effect rounded-2xl p-8 shadow-2xl max-w-2xl mx-auto mb-8">
-                <h2 class="text-2xl font-bold mb-4">Welcome to IGNOU Assignment Portal</h2>
-                <p class="text-lg opacity-90 mb-6">
-                    Create professional, formatted assignments for your IGNOU courses. 
-                    Our system generates PDFs with proper formatting, signatures, and 
-                    all required details automatically.
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-16">
+        <div class="max-w-4xl mx-auto text-center">
+            <!-- Hero Section -->
+            <div class="mb-16">
+                <h1 class="text-5xl font-bold text-white mb-6">
+                    Welcome to IGNOU Assignment Portal
+                </h1>
+                <p class="text-xl text-white opacity-90 mb-8">
+                    Generate and download your IGNOU assignments with ease. Pay securely and get instant access to your assignment PDFs.
                 </p>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-                    <div class="text-center">
-                        <div class="text-3xl mb-2">📝</div>
-                        <h3 class="font-semibold mb-2">Easy Form Filling</h3>
-                        <p class="text-sm opacity-80">Simple form with all required fields</p>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-3xl mb-2">💳</div>
-                        <h3 class="font-semibold mb-2">Secure Payment</h3>
-                        <p class="text-sm opacity-80">PhonePe integration for safe transactions</p>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-3xl mb-2">📄</div>
-                        <h3 class="font-semibold mb-2">Instant PDFs</h3>
-                        <p class="text-sm opacity-80">Download assignments immediately after payment</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="space-y-4">
-                <div class="text-lg opacity-90 mb-4">Get started by creating an account or logging in</div>
-                
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="/register" 
-                       class="bg-white text-purple-600 py-4 px-8 rounded-lg font-semibold text-lg hover:bg-opacity-90 transition-all transform hover:scale-105">
-                        🚀 Create Account
+                    <a href="/register" class="bg-white text-purple-600 hover:bg-gray-100 font-bold py-4 px-8 rounded-lg text-lg transition-all transform hover:scale-105">
+                        Get Started
                     </a>
-                    <a href="/login" 
-                       class="bg-white bg-opacity-20 text-white py-4 px-8 rounded-lg font-semibold text-lg hover:bg-opacity-30 transition-all transform hover:scale-105">
-                        🔑 Sign In
+                    <a href="/login" class="bg-transparent border-2 border-white text-white hover:bg-white hover:text-purple-600 font-bold py-4 px-8 rounded-lg text-lg transition-all transform hover:scale-105">
+                        Login
                     </a>
                 </div>
             </div>
 
-            <!-- Features List -->
-            <div class="mt-12 glass-effect rounded-2xl p-6 shadow-2xl max-w-4xl mx-auto">
-                <h3 class="text-xl font-semibold mb-4">What You Get:</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                    <div class="flex items-center">
-                        <span class="text-green-400 mr-3">✓</span>
-                        <span>Professional PDF formatting</span>
+            <!-- Features Section -->
+            <div class="grid md:grid-cols-3 gap-8 mb-16">
+                <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg p-6 text-white">
+                    <div class="text-4xl mb-4">📝</div>
+                    <h3 class="text-xl font-bold mb-2">Easy Form Filling</h3>
+                    <p class="text-white opacity-80">Fill out your assignment details quickly with our user-friendly form interface.</p>
+                </div>
+                
+                <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg p-6 text-white">
+                    <div class="text-4xl mb-4">💳</div>
+                    <h3 class="text-xl font-bold mb-2">Secure Payment</h3>
+                    <p class="text-white opacity-80">Pay securely using Cashfree payment gateway with multiple payment options.</p>
+                </div>
+                
+                <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg p-6 text-white">
+                    <div class="text-4xl mb-4">📄</div>
+                    <h3 class="text-xl font-bold mb-2">Instant Download</h3>
+                    <p class="text-white opacity-80">Download your assignment PDFs immediately after successful payment.</p>
+                </div>
+            </div>
+
+            <!-- How It Works Section -->
+            <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg p-8 mb-16">
+                <h2 class="text-3xl font-bold text-white mb-8">How It Works</h2>
+                <div class="grid md:grid-cols-4 gap-6">
+                    <div class="text-center">
+                        <div class="bg-white text-purple-600 rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold mx-auto mb-4">1</div>
+                        <h4 class="text-white font-bold mb-2">Register/Login</h4>
+                        <p class="text-white opacity-80 text-sm">Create your account or login to get started</p>
                     </div>
-                    <div class="flex items-center">
-                        <span class="text-green-400 mr-3">✓</span>
-                        <span>Automatic signature placement</span>
+                    
+                    <div class="text-center">
+                        <div class="bg-white text-purple-600 rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold mx-auto mb-4">2</div>
+                        <h4 class="text-white font-bold mb-2">Fill Form</h4>
+                        <p class="text-white opacity-80 text-sm">Complete the assignment form with your details</p>
                     </div>
-                    <div class="flex items-center">
-                        <span class="text-green-400 mr-3">✓</span>
-                        <span>Multiple subject support</span>
+                    
+                    <div class="text-center">
+                        <div class="bg-white text-purple-600 rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold mx-auto mb-4">3</div>
+                        <h4 class="text-white font-bold mb-2">Make Payment</h4>
+                        <p class="text-white opacity-80 text-sm">Pay securely using our payment gateway</p>
                     </div>
-                    <div class="flex items-center">
-                        <span class="text-green-400 mr-3">✓</span>
-                        <span>Secure payment gateway</span>
+                    
+                    <div class="text-center">
+                        <div class="bg-white text-purple-600 rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold mx-auto mb-4">4</div>
+                        <h4 class="text-white font-bold mb-2">Download</h4>
+                        <p class="text-white opacity-80 text-sm">Download your assignment PDFs instantly</p>
                     </div>
-                    <div class="flex items-center">
-                        <span class="text-green-400 mr-3">✓</span>
-                        <span>Instant download after payment</span>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="text-green-400 mr-3">✓</span>
-                        <span>Mobile responsive design</span>
+                </div>
+            </div>
+
+            <!-- Pricing Section -->
+            <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg p-8">
+                <h2 class="text-3xl font-bold text-white mb-8">Simple Pricing</h2>
+                <div class="max-w-md mx-auto">
+                    <div class="bg-white rounded-lg p-6 text-center">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">₹1 per Subject</h3>
+                        <p class="text-gray-600 mb-4">Pay only for the subjects you need</p>
+                        <ul class="text-left text-gray-700 space-y-2">
+                            <li>✅ Mathematics</li>
+                            <li>✅ Computer Science</li>
+                            <li>✅ Physics</li>
+                            <li>✅ Chemistry</li>
+                            <li>✅ Business Studies</li>
+                            <li>✅ English</li>
+                            <li>✅ Economics</li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="bg-black bg-opacity-20 text-white text-center py-8">
+        <div class="container mx-auto px-4">
+            <p>&copy; 2024 IGNOU Assignment Portal. All rights reserved.</p>
+        </div>
+    </footer>
 </body>
 </html>
