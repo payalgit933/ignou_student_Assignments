@@ -310,65 +310,6 @@ def check_cashfree_config():
             }
         }), 500
 
-# Test Cashfree credentials route
-@app.route("/test-cashfree-credentials")
-def test_cashfree_credentials():
-    try:
-        # Test with minimal payload
-        test_payload = {
-            "order_id": f"TEST{int(time.time())}",
-            "order_amount": 1,  # ₹1
-            "order_currency": "INR",
-            "customer_details": {
-                "customer_id": f"TESTUSER{int(time.time())}",
-                "customer_name": "Test User",
-                "customer_email": "test@example.com",
-                "customer_phone": "9999999999"
-            },
-            "order_meta": {
-                "return_url": "https://ignou-assignment-portal.onrender.com/payment-success",
-                "notify_url": "https://ignou-assignment-portal.onrender.com/payment-callback"
-            }
-        }
-        
-        headers = {
-            "x-client-id": CASHFREE_APP_ID,
-            "x-client-secret": CASHFREE_SECRET_KEY,
-            "x-api-version": "2023-08-01",
-            "Content-Type": "application/json"
-        }
-        
-        print(f"🧪 Testing Cashfree credentials...")
-        print(f"🧪 APP_ID: {CASHFREE_APP_ID}")
-        print(f"🧪 SECRET_KEY: {CASHFREE_SECRET_KEY[:10]}...{CASHFREE_SECRET_KEY[-10:]}")
-        print(f"🧪 API_URL: {CASHFREE_BASE_URL}")
-        print(f"🧪 Test payload: {test_payload}")
-        
-        # Make test request
-        response = requests.post(CASHFREE_BASE_URL, headers=headers, json=test_payload)
-        
-        return jsonify({
-            "success": True,
-            "message": "Cashfree credentials test completed",
-            "status_code": response.status_code,
-            "response": response.text[:500] if response.text else "No response text",
-            "credentials": {
-                "app_id": CASHFREE_APP_ID,
-                "secret_key_length": len(CASHFREE_SECRET_KEY),
-                "api_url": CASHFREE_BASE_URL
-            }
-        })
-        
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "credentials": {
-                "app_id": CASHFREE_APP_ID,
-                "secret_key_length": len(CASHFREE_SECRET_KEY),
-                "api_url": CASHFREE_BASE_URL
-            }
-        }), 500
 
 # Route to initiate payment for assignments (now protected)
 @app.route("/initiate-payment", methods=["POST"])
