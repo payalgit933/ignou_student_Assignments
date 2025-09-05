@@ -55,18 +55,23 @@ def index():
         with open('index.html', 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # Replace template variables
-        if payment_success and payment_data:
-            content = content.replace('{% if payment_success and payment_data %}', 'if (true) {')
-            content = content.replace('{% endif %}', '}')
-            content = content.replace('{{ payment_data | tojson }}', str(payment_data).replace("'", '"'))
-        else:
-            content = content.replace('{% if payment_success and payment_data %}', 'if (false) {')
-            content = content.replace('{% endif %}', '}')
+        # Replace template variables with proper JavaScript
+        content = content.replace('{% if payment_success and payment_data %}', 'if (true) {')
+        content = content.replace('{% endif %}', '}')
+        content = content.replace('{{ payment_data | tojson }}', str(payment_data).replace("'", '"'))
         
         return content
     else:
-        return send_from_directory('.', 'index.html')
+        # For normal access, also process template variables to avoid syntax errors
+        with open('index.html', 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Replace template variables with JavaScript that won't execute
+        content = content.replace('{% if payment_success and payment_data %}', 'if (false) {')
+        content = content.replace('{% endif %}', '}')
+        content = content.replace('{{ payment_data | tojson }}', '{}')
+        
+        return content
 
 # Public landing page for unauthenticated users
 @app.route("/welcome")
