@@ -1154,6 +1154,7 @@
         // Form submission handler
         document.getElementById('certificateForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            console.log('Form submission intercepted by JavaScript');
             initiatePaymentAndGenerateAssignment();
         });
 
@@ -1235,6 +1236,16 @@
         // Payment initiation and assignment generation function
         async function initiatePaymentAndGenerateAssignment() {
             try {
+                console.log('Starting payment initiation...');
+                
+                // Check if user is authenticated
+                const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+                if (!isLoggedIn) {
+                    alert('Please log in to continue with payment.');
+                    window.location.href = '/login';
+                    return;
+                }
+                
                 const formData = new FormData(document.getElementById('certificateForm'));
                 
                 // Get selected subjects
@@ -2238,6 +2249,9 @@
         
         // Check authentication status on page load
         checkAuthStatus();
+        
+        // Add debugging for authentication
+        console.log('Authentication check completed');
         
         // Check if this is a payment success redirect
         const urlParams = new URLSearchParams(window.location.search);
