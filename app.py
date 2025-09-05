@@ -48,8 +48,12 @@ def index():
     payment_success = request.args.get('payment_success') == 'true'
     payment_data = session.get('payment_data', {}) if payment_success else {}
     
-    # User is authenticated, serve the form
-    return send_from_directory('.', 'index.html')
+    # User is authenticated, serve the form with payment data
+    if payment_success and payment_data:
+        # Pass payment data to the template
+        return render_template('index.html', payment_success=payment_success, payment_data=payment_data)
+    else:
+        return send_from_directory('.', 'index.html')
 
 # Public landing page for unauthenticated users
 @app.route("/welcome")
@@ -417,6 +421,17 @@ def initiate_payment():
                     "error": f"Payment session ID not found in response. Available fields: {list(res_data.keys())}. Response: {res_data}"
                 }), 400
             
+            # Save payment request details to session
+            session['payment_request'] = {
+                "studentName": student_name,
+                "enrollmentNumber": enrollment,
+                "emailId": customer_email,
+                "mobileNumber": customer_phone,
+                "subjects": subjects,
+                "amount": amount_rupees,
+                "order_id": order_id
+            }
+            
             return jsonify({
                 "success": True,
                 "paymentUrl": payment_url,
@@ -479,11 +494,15 @@ def payment_success():
         # Store payment data in session for use in index.html
         session['payment_success'] = True
         session['payment_data'] = {
-            'order_id': order_id,
-            'amount': order_data.get('order_amount', 1),
-            'status': order_data.get('order_status', 'PAID'),
-            'created_at': order_data.get('created_at', ''),
-            'subjects': ["Mathematics", "Computer Science"]  # Default subjects - can be customized
+            "order_id": order_id,
+            "amount": order_data.get("order_amount", 1),
+            "status": order_data.get("order_status", "PAID"),
+            "created_at": order_data.get("created_at", ""),
+            "studentName": session.get("payment_request", {}).get("studentName", "Not Provided"),
+            "enrollmentNumber": session.get("payment_request", {}).get("enrollmentNumber", "Not Provided"),
+            "emailId": session.get("payment_request", {}).get("emailId", "Not Provided"),
+            "mobileNumber": session.get("payment_request", {}).get("mobileNumber", "Not Provided"),
+            "subjects": session.get("payment_request", {}).get("subjects", [])
         }
         
         # Redirect to index.html with payment success flag
