@@ -2256,12 +2256,22 @@
         
         // Function to show payment success and download options
         function showPaymentSuccess(orderId) {
+            // Get the selected subjects from the form checkboxes
+            const selectedSubjects = [];
+            const checkboxes = document.querySelectorAll('input[name="subjects"]:checked');
+            checkboxes.forEach(checkbox => {
+                selectedSubjects.push(checkbox.value);
+            });
+            
+            // If no subjects selected, use default
+            const subjectsToUse = selectedSubjects.length > 0 ? selectedSubjects : ["Mathematics"];
+            
             // Store payment data for PDF generation
             window.paymentData = {
                 orderId: orderId,
                 amount: 1, // Default amount - can be customized
                 status: 'PAID',
-                subjects: ["Mathematics", "Computer Science"] // Default subjects - can be customized
+                subjects: subjectsToUse
             };
             
             // Hide the form and show download page
@@ -2272,7 +2282,7 @@
             generateIndividualSubjectButtons();
             
             // Show success message
-            alert('Payment successful! You can now download your assignments.');
+            alert(`Payment successful! You can now download your assignments for: ${subjectsToUse.join(', ')}`);
         }
         
         // Function to generate individual subject buttons
@@ -2295,8 +2305,59 @@
             try {
                 console.log(`Downloading PDF for subject: ${subjectName}`);
                 
-                // Generate and download the PDF for this specific subject
-                await downloadPDF(subjectName, false); // false = download directly
+                // Collect form data for PDF generation
+                const formData = new FormData(document.getElementById('certificateForm'));
+                
+                // Prepare template data with actual form values
+                const templateData = {
+                    name: formData.get('studentName') || 'Not provided',
+                    enrollment: formData.get('enrollmentNumber') || 'Not provided',
+                    program: formData.get('programSelection') || 'Not provided',
+                    courseCode: formData.get('courseCode') || 'Not provided',
+                    course: subjectName === 'student_assignment' ? 
+                        (formData.get('courseCode') || 'Not provided') : subjectName,
+                    centerAddress: formData.get('centerAddress') || 'Not provided',
+                    centerCode: formData.get('centerCode') || 'Not provided',
+                    mobile: formData.get('mobileNumber') || 'Not provided',
+                    assignmentAnyWhereElse: formData.get('assignmentAnyWhereElse') || 'Not provided',
+                    email: formData.get('email') || 'Not provided',
+                    crossChecked: formData.get('crossChecked') || 'Not provided',
+                    semester: formData.get('semesterSelection') || '',
+                    year: formData.get('yearSelection') || new Date().getFullYear().toString(),
+                    center: formData.get('regionalCentre') || 'Delhi',
+                    date: new Date().toLocaleDateString('en-GB')
+                };
+                
+                // Handle photo upload
+                const photoFile = formData.get('idCard');
+                if (photoFile && photoFile.size > 0) {
+                    try {
+                        const photoDataUrl = await fileToDataURL(photoFile);
+                        templateData.photo = photoDataUrl;
+                    } catch (e) {
+                        console.warn("Photo conversion failed:", e);
+                    }
+                }
+
+                // Handle signature upload - use transparent signature if available
+                if (window.transparentSignature) {
+                    console.log('Using transparent signature for PDF');
+                    templateData.sign = window.transparentSignature;
+                } else {
+                    console.log('No transparent signature available, using fallback');
+                    const signatureFile = formData.get('signature');
+                    if (signatureFile && signatureFile.size > 0) {
+                        try {
+                            const signatureDataUrl = await fileToDataURL(signatureFile);
+                            templateData.sign = signatureDataUrl;
+                        } catch (e) {
+                            console.warn("Signature conversion failed:", e);
+                        }
+                    }
+                }
+                
+                // Generate PDF with the collected data
+                await prepareAndDownloadPDF(templateData, false);
                 
                 console.log(`PDF downloaded successfully for ${subjectName}`);
                 
@@ -2306,8 +2367,137 @@
             }
         }
 
+        // Function to download all subjects as ZIP for payment success
+        async function downloadAllSubjectsZipForPayment() {
+            try {
+                console.log('Downloading all subjects as ZIP for payment success');
+                
+                // Show loading state
+                const button = document.getElementById('downloadAllZip');
+                const originalText = button.textContent;
+                button.textContent = '⏳ Creating ZIP...';
+                button.disabled = true;
+                
+                // Use payment data subjects
+                const subjects = window.paymentData?.subjects || [];
+                
+                if (subjects.length === 0) {
+                    alert('No subjects available for download.');
+                    return;
+                }
+                
+                // Collect form data for PDF generation
+                const formData = new FormData(document.getElementById('certificateForm'));
+                
+                // Prepare template data with actual form values
+                const baseTemplateData = {
+                    name: formData.get('studentName') || 'Not provided',
+                    enrollment: formData.get('enrollmentNumber') || 'Not provided',
+                    program: formData.get('programSelection') || 'Not provided',
+                    courseCode: formData.get('courseCode') || 'Not provided',
+                    centerAddress: formData.get('centerAddress') || 'Not provided',
+                    centerCode: formData.get('centerCode') || 'Not provided',
+                    mobile: formData.get('mobileNumber') || 'Not provided',
+                    assignmentAnyWhereElse: formData.get('assignmentAnyWhereElse') || 'Not provided',
+                    email: formData.get('email') || 'Not provided',
+                    crossChecked: formData.get('crossChecked') || 'Not provided',
+                    semester: formData.get('semesterSelection') || '',
+                    year: formData.get('yearSelection') || new Date().getFullYear().toString(),
+                    center: formData.get('regionalCentre') || 'Delhi',
+                    date: new Date().toLocaleDateString('en-GB')
+                };
+                
+                // Handle photo upload
+                const photoFile = formData.get('idCard');
+                if (photoFile && photoFile.size > 0) {
+                    try {
+                        const photoDataUrl = await fileToDataURL(photoFile);
+                        baseTemplateData.photo = photoDataUrl;
+                    } catch (e) {
+                        console.warn("Photo conversion failed:", e);
+                    }
+                }
+
+                // Handle signature upload - use transparent signature if available
+                if (window.transparentSignature) {
+                    console.log('Using transparent signature for PDF');
+                    baseTemplateData.sign = window.transparentSignature;
+                } else {
+                    console.log('No transparent signature available, using fallback');
+                    const signatureFile = formData.get('signature');
+                    if (signatureFile && signatureFile.size > 0) {
+                        try {
+                            const signatureDataUrl = await fileToDataURL(signatureFile);
+                            baseTemplateData.sign = signatureDataUrl;
+                        } catch (e) {
+                            console.warn("Signature conversion failed:", e);
+                        }
+                    }
+                }
+                
+                // Generate PDFs for all subjects
+                const pdfPromises = subjects.map(subject => {
+                    const templateData = {
+                        ...baseTemplateData,
+                        course: subject === 'student_assignment' ? 
+                            (formData.get('courseCode') || 'Not provided') : subject
+                    };
+                    return prepareAndDownloadPDF(templateData, true); // true = return blob
+                });
+                const pdfBlobs = await Promise.all(pdfPromises);
+                
+                // Create ZIP file
+                const JSZip = window.JSZip;
+                if (!JSZip) {
+                    // If JSZip is not available, download PDFs individually
+                    alert('ZIP creation not available. Downloading PDFs individually...');
+                    subjects.forEach(subject => downloadSingleSubjectForPayment(subject));
+                    return;
+                }
+                
+                const zip = new JSZip();
+                
+                // Add each PDF to the ZIP
+                subjects.forEach((subject, index) => {
+                    if (pdfBlobs[index]) {
+                        const fileName = `Assignment_${subject}_${new Date().toISOString().split('T')[0]}.pdf`;
+                        zip.file(fileName, pdfBlobs[index]);
+                    }
+                });
+                
+                // Generate and download ZIP
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(zipBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `IGNOU_Assignments_${new Date().toISOString().split('T')[0]}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                console.log('ZIP file downloaded successfully');
+                
+            } catch (error) {
+                console.error('Error creating ZIP file:', error);
+                alert('Error creating ZIP file. Please try again.');
+            } finally {
+                // Restore button state
+                const button = document.getElementById('downloadAllZip');
+                button.textContent = '📥 Download All Subjects (ZIP)';
+                button.disabled = false;
+            }
+        }
+
         // Add event listeners for download page buttons
-        document.getElementById('downloadAllZip').addEventListener('click', downloadAllSubjectsZip);
+        document.getElementById('downloadAllZip').addEventListener('click', function() {
+            // Check if this is payment success flow
+            if (window.paymentData) {
+                downloadAllSubjectsZipForPayment();
+            } else {
+                downloadAllSubjectsZip();
+            }
+        });
         document.getElementById('backToForm').addEventListener('click', function() {
             // Hide download page and show form
             document.getElementById('downloadPage').classList.add('hidden');
