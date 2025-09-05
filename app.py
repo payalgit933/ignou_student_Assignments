@@ -44,6 +44,10 @@ def index():
         session.clear()
         return redirect('/welcome')
     
+    # Check if this is a payment success redirect
+    payment_success = request.args.get('payment_success') == 'true'
+    payment_data = session.get('payment_data', {}) if payment_success else {}
+    
     # User is authenticated, serve the form
     return send_from_directory('.', 'index.html')
 
@@ -472,139 +476,18 @@ def payment_success():
         # Payment is verified as successful
         print(f"✅ Payment verified as successful for order: {order_id}")
         
-        # Return success page with download options
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Payment Successful</title>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-            <script src="https://cdn.tailwindcss.com"></script>
-        </head>
-        <body class="bg-gray-100 p-8">
-            <div class="max-w-4xl mx-auto">
-                <div class="bg-white rounded-lg shadow-lg p-8 text-center">
-                    <div class="text-green-600 text-6xl mb-4">✅</div>
-                    <h1 class="text-3xl font-bold text-gray-800 mb-4">Payment Successful!</h1>
-                    <p class="text-gray-600 mb-6">Your payment of ₹{order_data.get('order_amount', 'N/A')} has been processed successfully.</p>
-                    
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-                        <h2 class="text-xl font-semibold text-blue-800 mb-4">Payment Details</h2>
-                        <div class="text-left space-y-2">
-                            <p><strong>Order ID:</strong> {order_id}</p>
-                            <p><strong>Status:</strong> ✅ PAID</p>
-                            <p><strong>Amount:</strong> ₹{order_data.get('order_amount', 'N/A')}</p>
-                            <p><strong>Payment Method:</strong> QR Code</p>
-                            <p><strong>Transaction Time:</strong> {order_data.get('created_at', 'N/A')}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <h3 class="text-xl font-semibold text-gray-800">Download Your Assignments</h3>
-                        <p class="text-gray-600">You can now download your assignments for the selected subjects.</p>
-                        
-                        <div class="flex flex-wrap gap-4 justify-center mt-6">
-                            <button onclick="downloadAllSubjects()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
-                                📥 Download All Subjects (ZIP)
-                            </button>
-                            <button onclick="downloadIndividualSubjects()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
-                                📚 Download Individual Subjects
-                            </button>
-                        </div>
-                        
-                        <div id="individualButtons" class="hidden mt-6">
-                            <!-- Individual subject buttons will be generated here -->
-                        </div>
-                    </div>
-                    
-                    <div class="mt-8 pt-6 border-t border-gray-200">
-                        <a href="/" class="text-blue-600 hover:text-blue-800 underline">← Back to Form</a>
-                    </div>
-                </div>
-            </div>
-            
-            <script>
-                // Store payment data for PDF generation
-                window.paymentData = {{
-                    orderId: "{order_id}",
-                    amount: {order_data.get('order_amount', 1)},
-                    status: "{order_data.get('order_status', 'PAID')}",
-                    subjects: ["Mathematics", "Computer Science"] // Default subjects - you can customize this
-                }};
-                
-                function downloadAllSubjects() {{
-                    const subjects = window.paymentData.subjects;
-                    alert('Downloading all subjects as ZIP...');
-                    
-                    // Download each subject individually
-                    subjects.forEach((subject, index) => {{
-                        setTimeout(() => {{
-                            downloadSingleSubject(subject);
-                        }}, index * 1000); // Delay each download by 1 second
-                    }});
-                }}
-                
-                function downloadIndividualSubjects() {{
-                    const container = document.getElementById('individualButtons');
-                    container.classList.remove('hidden');
-                    
-                    const subjects = window.paymentData.subjects;
-                    container.innerHTML = '';
-                    
-                    subjects.forEach(subject => {{
-                        const button = document.createElement('button');
-                        button.className = 'bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors m-2';
-                        button.textContent = `📖 ${{subject}}`;
-                        button.onclick = () => downloadSingleSubject(subject);
-                        container.appendChild(button);
-                    }});
-                }}
-                
-                function downloadSingleSubject(subject) {{
-                    try {{
-                        // Create a simple PDF with assignment details
-                        const {{ jsPDF }} = window.jspdf;
-                        const doc = new jsPDF();
-                        
-                        // Add content to PDF
-                        doc.setFontSize(20);
-                        doc.text('IGNOU Assignment', 20, 30);
-                        
-                        doc.setFontSize(16);
-                        doc.text(`Subject: ${{subject}}`, 20, 50);
-                        doc.text(`Order ID: ${{window.paymentData.orderId}}`, 20, 70);
-                        doc.text(`Amount Paid: ₹${{window.paymentData.amount}}`, 20, 90);
-                        doc.text(`Status: ${{window.paymentData.status}}`, 20, 110);
-                        doc.text(`Date: ${{new Date().toLocaleDateString()}}`, 20, 130);
-                        
-                        // Add some assignment content
-                        doc.setFontSize(12);
-                        doc.text('Assignment Questions:', 20, 160);
-                        doc.text('1. Explain the basic concepts of the subject.', 20, 180);
-                        doc.text('2. Discuss the practical applications.', 20, 200);
-                        doc.text('3. Provide examples and case studies.', 20, 220);
-                        
-                        // Save the PDF
-                        const fileName = `Assignment_${{subject}}_${{window.paymentData.orderId}}.pdf`;
-                        doc.save(fileName);
-                        
-                        console.log(`PDF downloaded: ${{fileName}}`);
-                        
-                    }} catch (error) {{
-                        console.error('PDF generation failed:', error);
-                        alert('PDF generation failed. Please try again.');
-                    }}
-                }}
-            </script>
-        </body>
-        </html>
-        """
+        # Store payment data in session for use in index.html
+        session['payment_success'] = True
+        session['payment_data'] = {
+            'order_id': order_id,
+            'amount': order_data.get('order_amount', 1),
+            'status': order_data.get('order_status', 'PAID'),
+            'created_at': order_data.get('created_at', ''),
+            'subjects': ["Mathematics", "Computer Science"]  # Default subjects - can be customized
+        }
         
-        return html_content
+        # Redirect to index.html with payment success flag
+        return redirect(f"/?payment_success=true&order_id={order_id}")
         
     except Exception as e:
         print(f"❌ Error in payment success: {str(e)}")
