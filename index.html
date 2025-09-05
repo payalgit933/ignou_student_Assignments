@@ -787,7 +787,7 @@
                 </div>
 
                 <div class="button-group">
-                    <button type="submit" class="btn btn-primary">Generate Assignment</button>
+                    <button type="submit" class="btn btn-primary">Pay & Generate Assignment</button>
                 </div>
             </form>
         </div>
@@ -1153,7 +1153,7 @@
         // Form submission handler
         document.getElementById('certificateForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            generateAssignment();
+            initiatePaymentAndGenerateAssignment();
         });
 
 
@@ -1230,6 +1230,109 @@
 
 
 
+
+        // Payment initiation and assignment generation function
+        async function initiatePaymentAndGenerateAssignment() {
+            try {
+                const formData = new FormData(document.getElementById('certificateForm'));
+                
+                // Get selected subjects
+                const selectedSubjects = formData.getAll('subjects');
+                if (selectedSubjects.length === 0) {
+                    alert('Please select at least one subject before proceeding.');
+                    return;
+                }
+                
+                // Get required form data
+                const studentName = formData.get('studentName');
+                const enrollmentNumber = formData.get('enrollmentNumber');
+                const emailId = formData.get('emailId');
+                const mobileNumber = formData.get('mobileNumber');
+                
+                if (!studentName || !enrollmentNumber || !emailId || !mobileNumber) {
+                    alert('Please fill in all required fields before proceeding.');
+                    return;
+                }
+                
+                // Calculate amount (₹1 per subject)
+                const amount = selectedSubjects.length;
+                
+                // Show payment confirmation
+                const confirmPayment = confirm(
+                    `Payment Confirmation:\n\n` +
+                    `Selected Subjects: ${selectedSubjects.join(', ')}\n` +
+                    `Amount: ₹${amount}\n` +
+                    `Student: ${studentName}\n` +
+                    `Enrollment: ${enrollmentNumber}\n\n` +
+                    `Do you want to proceed with payment?`
+                );
+                
+                if (!confirmPayment) {
+                    return;
+                }
+                
+                // Show loading state
+                const submitButton = document.querySelector('button[type="submit"]');
+                const originalText = submitButton.textContent;
+                submitButton.textContent = '⏳ Processing Payment...';
+                submitButton.disabled = true;
+                
+                // Prepare payment data
+                const paymentData = {
+                    subjects: selectedSubjects,
+                    studentName: studentName,
+                    enrollmentNumber: enrollmentNumber,
+                    emailId: emailId,
+                    mobileNumber: mobileNumber,
+                    amount: amount
+                };
+                
+                console.log('Initiating payment with data:', paymentData);
+                
+                // Call payment initiation endpoint
+                const response = await fetch('/initiate-payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('Payment initiated successfully:', result);
+                    
+                    // Store payment data for later use
+                    window.paymentData = {
+                        transactionId: result.transactionId,
+                        amount: result.amount,
+                        subjects: result.subjects,
+                        paymentUrl: result.paymentUrl
+                    };
+                    
+                    // Redirect to payment page
+                    window.location.href = result.paymentUrl;
+                    
+                } else {
+                    console.error('Payment initiation failed:', result);
+                    alert(`Payment initiation failed: ${result.error || 'Unknown error'}`);
+                    
+                    // Reset button
+                    submitButton.textContent = originalText;
+                    submitButton.disabled = false;
+                }
+                
+            } catch (error) {
+                console.error('Error initiating payment:', error);
+                alert('An error occurred while initiating payment. Please try again.');
+                
+                // Reset button
+                const submitButton = document.querySelector('button[type="submit"]');
+                submitButton.textContent = 'Pay & Generate Assignment';
+                submitButton.disabled = false;
+            }
+        }
 
         // Generate assignment function (now called after payment success)
         async function generateAssignment() {
@@ -2132,111 +2235,3 @@
 
 
 
-app.py
-
-import base64
-import hashlib
-import json
-import time
-from flask import Flask, request, jsonify, redirect
-from flask_cors import CORS
-import requests
-
-app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
-
-# 🔑 Put your real creds here (keep them secret!)
-MERCHANT_ID = "M123456789"       # your merchant id
-SALT_KEY = "px2zysgmbvcxprf"   # your API key (Salt Key)
-SALT_INDEX = "1"                 # version (salt index)
-
-# PhonePe sandbox URL
-PHONEPE_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay"
-
-
-@app.route("/create-payment", methods=["POST"])
-def create_payment():
-    data = request.json
-    subject_count = data.get("subjectCount", 1)
-    amount_rupees = subject_count * 1
-    amount_paise = amount_rupees * 100   # PhonePe uses paise
-
-    merchant_txn_id = f"txn_{int(time.time())}"
-
-    payload = {
-        "merchantId": MERCHANT_ID,
-        "merchantTransactionId": merchant_txn_id,
-        "amount": amount_paise,
-        "merchantUserId": f"user_{int(time.time())}",
-        "redirectUrl": "http://localhost:5000/payment-status",   # change to your domain
-        "redirectMode": "POST",
-        "callbackUrl": "http://localhost:5000/payment-callback", # PhonePe server will call here
-        "paymentInstrument": {"type": "PAY_PAGE"}
-    }
-
-    # Base64 encode
-    payload_str = json.dumps(payload)
-    payload_base64 = base64.b64encode(payload_str.encode()).decode()
-
-    # Generate checksum
-    raw_string = payload_base64 + "/pg/v1/pay" + SALT_KEY
-    checksum = hashlib.sha256(raw_string.encode()).hexdigest() + "###" + SALT_INDEX
-
-    headers = {
-        "Content-Type": "application/json",
-        "X-VERIFY": checksum,
-        "accept": "application/json"
-    }
-
-    # Call PhonePe API
-    response = requests.post(PHONEPE_URL, headers=headers, json={"request": payload_base64})
-    res_data = response.json()
-
-    if "data" in res_data and "instrumentResponse" in res_data["data"]:
-        redirect_url = res_data["data"]["instrumentResponse"]["redirectInfo"]["url"]
-        return jsonify({
-            "success": True,
-            "paymentUrl": redirect_url,
-            "transactionId": merchant_txn_id
-        })
-    else:
-        return jsonify({"success": False, "error": "Payment init failed", "details": res_data}), 400
-
-
-@app.route("/payment-callback", methods=["POST"])
-def payment_callback():
-    data = request.json
-    status = data.get("code")
-    if status == "PAYMENT_SUCCESS":
-        # ✅ mark order paid in DB here
-        return jsonify({"status": "success", "message": "Payment received. Allow PDF download."})
-    else:
-        return jsonify({"status": "failed", "message": "Payment not completed"})
-
-
-@app.route("/payment-status", methods=["POST"])
-def payment_status():
-    # This is the redirect page after payment
-    return "Payment completed. You can now download your PDF."
-
-@app.route("/payment-status/<transaction_id>", methods=["GET"])
-def get_payment_status(transaction_id):
-    # In a real app, you'd check the database for payment status
-    # For now, we'll return a mock success response
-    return jsonify({
-        "success": True,
-        "status": "PAYMENT_SUCCESS",
-        "amount": 1,  # You might want to store this in the session
-        "subjects": ["Mathematics", "Computer Science"],  # Store this in session too
-        "userData": {
-            "mobileNumber": "9999999999",
-            "studentName": "Student",
-            "enrollmentNumber": "Unknown"
-        }
-    })
-
-
-if __name__ == "__main__":
-    app.run(port=5000, debug=True)
-
-this is asking for salt_key,salt_index,and merchant ud but i do have api key, client id, secret key of phone pay business
