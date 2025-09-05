@@ -14,16 +14,27 @@ app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this-in-production'  # Change this!
 CORS(app)  # Enable CORS for all routes
 
-# 🔑 Production credentials from environment variables
+# 🔧 Sandbox/Production Toggle
+USE_SANDBOX = os.getenv('USE_SANDBOX', 'True').lower() == 'true'  # Default to sandbox for safety
+
+# 🔑 Credentials from environment variables
 CASHFREE_APP_ID = os.getenv('CASHFREE_APP_ID', 'your_production_app_id')
 CASHFREE_SECRET_KEY = os.getenv('CASHFREE_SECRET_KEY', 'your_production_secret_key')
-CASHFREE_BASE_URL = "https://api.cashfree.com/pg/orders"  # Production URL
 
-# Debug: Print credentials status (remove in production)
-print(f"🔍 Cashfree Config Check:")
+# 🌐 Set API URL based on environment
+if USE_SANDBOX:
+    CASHFREE_BASE_URL = "https://sandbox.cashfree.com/pg/orders"
+    ENVIRONMENT = "SANDBOX"
+else:
+    CASHFREE_BASE_URL = "https://api.cashfree.com/pg/orders"
+    ENVIRONMENT = "PRODUCTION"
+
+# Debug: Print configuration status
+print(f"🔍 Cashfree Configuration:")
+print(f"   Environment: {ENVIRONMENT}")
+print(f"   Base URL: {CASHFREE_BASE_URL}")
 print(f"   APP_ID: {'✅ Set' if CASHFREE_APP_ID != 'your_production_app_id' else '❌ Using placeholder'}")
 print(f"   SECRET_KEY: {'✅ Set' if CASHFREE_SECRET_KEY != 'your_production_secret_key' else '❌ Using placeholder'}")
-print(f"   BASE_URL: {CASHFREE_BASE_URL}")
 
 # PhonePe sandbox URL
 PHONEPE_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay"
@@ -224,7 +235,7 @@ def check_cashfree_config():
         }
         
         # Try to get account info
-        account_url = "https://api.cashfree.com/pg/merchants/me"
+        account_url = f"https://api.cashfree.com/pg/merchants/{CASHFREE_APP_ID}"
         response = requests.get(account_url, headers=headers)
         
         return jsonify({
@@ -680,7 +691,9 @@ def debug_payment_error():
         },
         "api_config": {
             "base_url": CASHFREE_BASE_URL,
-            "api_version": "2022-09-01"
+            "environment": ENVIRONMENT,
+            "use_sandbox": USE_SANDBOX,
+            "api_version": "2023-08-01"
         },
         "common_issues": [
             "1. Credentials not set in environment variables",
@@ -691,6 +704,28 @@ def debug_payment_error():
         ]
     }
     return jsonify(debug_info)
+
+# Environment toggle route (for testing)
+@app.route("/toggle-environment")
+def toggle_environment():
+    """Toggle between sandbox and production (for testing only)"""
+    global USE_SANDBOX, CASHFREE_BASE_URL, ENVIRONMENT
+    
+    USE_SANDBOX = not USE_SANDBOX
+    
+    if USE_SANDBOX:
+        CASHFREE_BASE_URL = "https://sandbox.cashfree.com/pg/orders"
+        ENVIRONMENT = "SANDBOX"
+    else:
+        CASHFREE_BASE_URL = "https://api.cashfree.com/pg/orders"
+        ENVIRONMENT = "PRODUCTION"
+    
+    return jsonify({
+        "message": f"Switched to {ENVIRONMENT}",
+        "environment": ENVIRONMENT,
+        "base_url": CASHFREE_BASE_URL,
+        "use_sandbox": USE_SANDBOX
+    })
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
