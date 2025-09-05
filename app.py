@@ -727,5 +727,60 @@ def toggle_environment():
         "use_sandbox": USE_SANDBOX
     })
 
+# Test authentication with both environments
+@app.route("/test-auth-both-environments")
+def test_auth_both_environments():
+    """Test authentication with both sandbox and production"""
+    results = {}
+    
+    # Test Sandbox
+    sandbox_url = "https://sandbox.cashfree.com/pg/orders"
+    sandbox_headers = {
+        "x-client-id": CASHFREE_APP_ID,
+        "x-client-secret": CASHFREE_SECRET_KEY,
+        "x-api-version": "2023-08-01",
+        "Content-Type": "application/json"
+    }
+    
+    # Test Production
+    production_url = "https://api.cashfree.com/pg/orders"
+    production_headers = {
+        "x-client-id": CASHFREE_APP_ID,
+        "x-client-secret": CASHFREE_SECRET_KEY,
+        "x-api-version": "2023-08-01",
+        "Content-Type": "application/json"
+    }
+    
+    # Test both environments
+    for env_name, url, headers in [("SANDBOX", sandbox_url, sandbox_headers), ("PRODUCTION", production_url, production_headers)]:
+        try:
+            # Try to get account info (this will fail if auth is wrong)
+            account_url = url.replace("/pg/orders", "/pg/merchants/me")
+            response = requests.get(account_url, headers=headers, timeout=10)
+            
+            results[env_name] = {
+                "status_code": response.status_code,
+                "success": response.status_code == 200,
+                "error": response.text if response.status_code != 200 else "Authentication successful",
+                "url": account_url
+            }
+        except Exception as e:
+            results[env_name] = {
+                "status_code": "ERROR",
+                "success": False,
+                "error": str(e),
+                "url": account_url
+            }
+    
+    return jsonify({
+        "current_environment": ENVIRONMENT,
+        "current_url": CASHFREE_BASE_URL,
+        "credentials": {
+            "app_id_preview": CASHFREE_APP_ID[:8] + "..." if CASHFREE_APP_ID != 'your_production_app_id' else "❌ NOT SET",
+            "secret_key_preview": CASHFREE_SECRET_KEY[:8] + "..." if CASHFREE_SECRET_KEY != 'your_production_secret_key' else "❌ NOT SET"
+        },
+        "test_results": results
+    })
+
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
