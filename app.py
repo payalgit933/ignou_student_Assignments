@@ -19,16 +19,8 @@ CASHFREE_APP_ID = os.getenv('CASHFREE_APP_ID', 'your_production_app_id')
 CASHFREE_SECRET_KEY = os.getenv('CASHFREE_SECRET_KEY', 'your_production_secret_key')
 CASHFREE_BASE_URL = "https://api.cashfree.com/pg/orders"  # Production URL
 
-# Debug: Print configuration status
-print(f"🔍 Cashfree Production Configuration:")
-print(f"   Base URL: {CASHFREE_BASE_URL}")
-print(f"   APP_ID: {'✅ Set' if CASHFREE_APP_ID != 'your_production_app_id' else '❌ Using placeholder'}")
-print(f"   SECRET_KEY: {'✅ Set' if CASHFREE_SECRET_KEY != 'your_production_secret_key' else '❌ Using placeholder'}")
-
 # PhonePe sandbox URL
 PHONEPE_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay"
-
-
 
 # Route to serve the main HTML page
 @app.route("/")
@@ -69,6 +61,178 @@ def test():
         "status": "success",
         "timestamp": time.time()
     })
+
+# Test payment route for debugging
+@app.route("/test-payment")
+def test_payment():
+    return jsonify({
+        "message": "Payment system is accessible",
+        "status": "success",
+        "payment_sessions_count": len(getattr(app, 'payment_sessions', {}))
+    })
+
+# Check Cashfree account configuration
+@app.route("/check-cashfree-config")
+def check_cashfree_config():
+    try:
+        # Check account configuration
+        headers = {
+            "x-client-id": CASHFREE_APP_ID,
+            "x-client-secret": CASHFREE_SECRET_KEY,
+            "x-api-version": "2022-09-01",
+            "Content-Type": "application/json"
+        }
+        
+        # Try to get account info
+        account_url = "https://api.cashfree.com/pg/merchants/me"
+        response = requests.get(account_url, headers=headers)
+        
+        return jsonify({
+            "success": True,
+            "message": "Cashfree account configuration check",
+            "status_code": response.status_code,
+            "account_info": response.json() if response.status_code == 200 else response.text,
+            "credentials": {
+                "app_id": CASHFREE_APP_ID,
+                "secret_key_length": len(CASHFREE_SECRET_KEY),
+                "api_url": CASHFREE_BASE_URL
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "credentials": {
+                "app_id": CASHFREE_APP_ID,
+                "secret_key_length": len(CASHFREE_SECRET_KEY),
+                "api_url": CASHFREE_BASE_URL
+            }
+        }), 500
+
+# Test Cashfree credentials route
+@app.route("/test-cashfree-credentials")
+def test_cashfree_credentials():
+    try:
+        # Test with minimal payload
+        test_payload = {
+            "order_id": f"TEST{int(time.time())}",
+            "order_amount": 1,  # ₹1
+            "order_currency": "INR",
+            "customer_details": {
+                "customer_id": f"TESTUSER{int(time.time())}",
+                "customer_name": "Test User",
+                "customer_email": "test@example.com",
+                "customer_phone": "9999999999"
+            },
+            "order_meta": {
+                "return_url": "https://your-render-app-url.onrender.com/payment-success",
+                "notify_url": "https://your-render-app-url.onrender.com/payment-callback"
+            }
+        }
+        
+        headers = {
+            "x-client-id": CASHFREE_APP_ID,
+            "x-client-secret": CASHFREE_SECRET_KEY,
+            "x-api-version": "2022-09-01",
+            "Content-Type": "application/json"
+        }
+        
+        print(f"🧪 Testing Cashfree credentials...")
+        print(f"🧪 APP_ID: {CASHFREE_APP_ID}")
+        print(f"🧪 SECRET_KEY: {CASHFREE_SECRET_KEY[:10]}...{CASHFREE_SECRET_KEY[-10:]}")
+        print(f"🧪 API_URL: {CASHFREE_BASE_URL}")
+        print(f"🧪 Test payload: {test_payload}")
+        
+        # Make test request
+        response = requests.post(CASHFREE_BASE_URL, headers=headers, json=test_payload)
+        
+        return jsonify({
+            "success": True,
+            "message": "Cashfree credentials test completed",
+            "status_code": response.status_code,
+            "response": response.text[:500] if response.text else "No response text",
+            "credentials": {
+                "app_id": CASHFREE_APP_ID,
+                "secret_key_length": len(CASHFREE_SECRET_KEY),
+                "api_url": CASHFREE_BASE_URL
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "credentials": {
+                "app_id": CASHFREE_APP_ID,
+                "secret_key_length": len(CASHFREE_SECRET_KEY),
+                "api_url": CASHFREE_BASE_URL
+            }
+        }), 500
+
+# Test PhonePe credentials route
+@app.route("/test-phonepe-credentials")
+def test_phonepe_credentials():
+    try:
+        # Test with minimal payload
+        test_payload = {
+            "merchantId": MERCHANT_ID,
+            "merchantTransactionId": f"TEST{int(time.time())}",
+            "amount": 100,  # ₹1 in paise
+            "merchantUserId": f"TESTUSER{int(time.time())}",
+            "redirectUrl": "https://ignou-assignment-portal.onrender.com/payment-success",
+            "redirectMode": "POST",
+            "callbackUrl": "https://ignou-assignment-portal.onrender.com/payment-callback",
+            "paymentInstrument": {"type": "PAY_PAGE"}
+        }
+        
+        # Base64 encode payload
+        payload_str = json.dumps(test_payload)
+        payload_base64 = base64.b64encode(payload_str.encode()).decode()
+        
+        # Generate checksum
+        raw_string = payload_base64 + "/pg/v1/pay" + SALT_KEY
+        checksum = hashlib.sha256(raw_string.encode()).hexdigest() + "###" + SALT_INDEX
+        
+        headers = {
+            "Content-Type": "application/json",
+            "X-VERIFY": checksum,
+            "accept": "application/json"
+        }
+        
+        print(f"🧪 Testing PhonePe credentials...")
+        print(f"🧪 MERCHANT_ID: {MERCHANT_ID}")
+        print(f"🧪 SALT_KEY: {SALT_KEY[:10]}...{SALT_KEY[-10:]}")
+        print(f"🧪 SALT_INDEX: {SALT_INDEX}")
+        print(f"🧪 Test payload: {test_payload}")
+        
+        # Make test request
+        response = requests.post(PHONEPE_URL, headers=headers, json={"request": payload_base64})
+        
+        return jsonify({
+            "success": True,
+            "message": "PhonePe credentials test completed",
+            "status_code": response.status_code,
+            "response": response.text[:500] if response.text else "No response text",
+            "credentials": {
+                "merchant_id": MERCHANT_ID,
+                "salt_key_length": len(SALT_KEY),
+                "salt_index": SALT_INDEX,
+                "api_url": PHONEPE_URL
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "credentials": {
+                "merchant_id": MERCHANT_ID,
+                "salt_key_length": len(SALT_KEY),
+                "salt_index": SALT_INDEX,
+                "api_url": PHONEPE_URL
+            }
+        }), 500
 
 # Authentication routes
 @app.route("/api/register", methods=["POST"])
@@ -202,114 +366,6 @@ def dashboard():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-# Test payment route for debugging
-@app.route("/test-payment")
-def test_payment():
-    return jsonify({
-        "message": "Payment system is accessible",
-        "status": "success",
-        "payment_sessions_count": len(getattr(app, 'payment_sessions', {}))
-    })
-
-# Check Cashfree account configuration
-@app.route("/check-cashfree-config")
-def check_cashfree_config():
-    try:
-        # Check account configuration
-        headers = {
-            "x-client-id": CASHFREE_APP_ID,
-            "x-client-secret": CASHFREE_SECRET_KEY,
-            "x-api-version": "2023-08-01",
-            "Content-Type": "application/json"
-        }
-        
-        # Try to get account info
-        account_url = f"https://api.cashfree.com/pg/merchants/{CASHFREE_APP_ID}"
-        response = requests.get(account_url, headers=headers)
-        
-        return jsonify({
-            "success": True,
-            "message": "Cashfree account configuration check",
-            "status_code": response.status_code,
-            "account_info": response.json() if response.status_code == 200 else response.text,
-            "credentials": {
-                "app_id": CASHFREE_APP_ID,
-                "secret_key_length": len(CASHFREE_SECRET_KEY),
-                "api_url": CASHFREE_BASE_URL
-            }
-        })
-        
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "credentials": {
-                "app_id": CASHFREE_APP_ID,
-                "secret_key_length": len(CASHFREE_SECRET_KEY),
-                "api_url": CASHFREE_BASE_URL
-            }
-        }), 500
-
-# Test Cashfree credentials route
-@app.route("/test-cashfree-credentials")
-def test_cashfree_credentials():
-    try:
-        # Test with minimal payload
-        test_payload = {
-            "order_id": f"TEST{int(time.time())}",
-            "order_amount": 1,  # ₹1
-            "order_currency": "INR",
-            "customer_details": {
-                "customer_id": f"TESTUSER{int(time.time())}",
-                "customer_name": "Test User",
-                "customer_email": "test@example.com",
-                "customer_phone": "9999999999"
-            },
-            "order_meta": {
-                "return_url": "https://ignou-assignment-portal.onrender.com/payment-success",
-                "notify_url": "https://ignou-assignment-portal.onrender.com/payment-callback"
-            }
-        }
-        
-        headers = {
-            "x-client-id": CASHFREE_APP_ID,
-            "x-client-secret": CASHFREE_SECRET_KEY,
-            "x-api-version": "2023-08-01",
-            "Content-Type": "application/json"
-        }
-        
-        print(f"🧪 Testing Cashfree credentials...")
-        print(f"🧪 APP_ID: {CASHFREE_APP_ID}")
-        print(f"🧪 SECRET_KEY: {CASHFREE_SECRET_KEY[:10]}...{CASHFREE_SECRET_KEY[-10:]}")
-        print(f"🧪 API_URL: {CASHFREE_BASE_URL}")
-        print(f"🧪 Test payload: {test_payload}")
-        
-        # Make test request
-        response = requests.post(CASHFREE_BASE_URL, headers=headers, json=test_payload)
-        
-        return jsonify({
-            "success": True,
-            "message": "Cashfree credentials test completed",
-            "status_code": response.status_code,
-            "response": response.text[:500] if response.text else "No response text",
-            "credentials": {
-                "app_id": CASHFREE_APP_ID,
-                "secret_key_length": len(CASHFREE_SECRET_KEY),
-                "api_url": CASHFREE_BASE_URL
-            }
-        })
-        
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "credentials": {
-                "app_id": CASHFREE_APP_ID,
-                "secret_key_length": len(CASHFREE_SECRET_KEY),
-                "api_url": CASHFREE_BASE_URL
-            }
-        }), 500
-
 # Route to initiate payment for assignments (now protected)
 @app.route("/initiate-payment", methods=["POST"])
 @require_auth
@@ -323,7 +379,7 @@ def initiate_payment():
         if not subjects or not student_name or not enrollment:
             return jsonify({"success": False, "error": "Missing required fields"}), 400
 
-        amount_rupees = max(len(subjects), 1)  # Minimum ₹1, ₹1 per subject
+        amount_rupees = len(subjects)  # ₹1 per subject
 
         # ✅ Create unique orderId
         order_id = f"ORD{int(time.time())}"
@@ -366,7 +422,7 @@ def initiate_payment():
         headers = {
             "x-client-id": CASHFREE_APP_ID,
             "x-client-secret": CASHFREE_SECRET_KEY,
-            "x-api-version": "2023-08-01",
+            "x-api-version": "2022-09-01",
             "Content-Type": "application/json"
         }
 
@@ -446,7 +502,7 @@ def payment_success():
         headers = {
             "x-client-id": CASHFREE_APP_ID,
             "x-client-secret": CASHFREE_SECRET_KEY,
-            "x-api-version": "2023-08-01",
+            "x-api-version": "2022-09-01",
             "Content-Type": "application/json"
         }
         
@@ -624,6 +680,55 @@ def check_payment(transaction_id):
         "payment": payment_session
     })
 
+@app.route("/create-payment", methods=["POST"])
+def create_payment():
+    data = request.json
+    subject_count = data.get("subjectCount", 1)
+    amount_rupees = subject_count * 1
+    amount_paise = amount_rupees * 100   # PhonePe uses paise
+
+    merchant_txn_id = f"TXN{int(time.time())}"
+
+    payload = {
+        "merchantId": MERCHANT_ID,
+        "merchantTransactionId": merchant_txn_id,
+        "amount": amount_paise,
+        "merchantUserId": f"USER{int(time.time())}",
+        "redirectUrl": "https://ignou-assignment-portal.onrender.com/payment-status",   # ✅ Updated for Render
+        "redirectMode": "POST",
+        "callbackUrl": "https://ignou-assignment-portal.onrender.com/payment-callback", # ✅ Updated for Render
+        "paymentInstrument": {"type": "PAY_PAGE"}
+    }
+
+    # Base64 encode
+    payload_str = json.dumps(payload)
+    payload_base64 = base64.b64encode(payload_str.encode()).decode()
+
+    # Generate checksum
+    raw_string = payload_base64 + "/pg/v1/pay" + SALT_KEY
+    checksum = hashlib.sha256(raw_string.encode()).hexdigest() + "###" + SALT_INDEX
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-VERIFY": checksum,
+        "accept": "application/json"
+    }
+
+    # Call PhonePe API
+    response = requests.post(PHONEPE_URL, headers=headers, json={"request": payload_base64})
+    res_data = response.json()
+
+    if "data" in res_data and "instrumentResponse" in res_data["data"]:
+        redirect_url = res_data["data"]["instrumentResponse"]["redirectInfo"]["url"]
+        return jsonify({
+            "success": True,
+            "paymentUrl": redirect_url,
+            "transactionId": merchant_txn_id
+        })
+    else:
+        return jsonify({"success": False, "error": "Payment init failed", "details": res_data}), 400
+
+
 @app.route("/payment-callback", methods=["POST"])
 def payment_callback():
     try:
@@ -646,6 +751,7 @@ def payment_callback():
         print(f"❌ Webhook processing error: {str(e)}")
         return jsonify({"status": "error", "message": "Webhook processing failed"}), 500
 
+
 @app.route("/payment-status", methods=["POST"])
 def payment_status():
     # This is the redirect page after payment
@@ -667,69 +773,6 @@ def get_payment_status(transaction_id):
         }
     })
 
-# Debug route to check payment error
-@app.route("/debug-payment-error")
-def debug_payment_error():
-    """Debug route to identify payment gateway issues"""
-    debug_info = {
-        "credentials_status": {
-            "app_id_configured": CASHFREE_APP_ID != 'your_production_app_id',
-            "secret_key_configured": CASHFREE_SECRET_KEY != 'your_production_secret_key',
-            "app_id_preview": CASHFREE_APP_ID[:8] + "..." if CASHFREE_APP_ID != 'your_production_app_id' else "❌ NOT SET",
-            "secret_key_preview": CASHFREE_SECRET_KEY[:8] + "..." if CASHFREE_SECRET_KEY != 'your_production_secret_key' else "❌ NOT SET"
-        },
-        "api_config": {
-            "base_url": CASHFREE_BASE_URL,
-            "environment": "PRODUCTION",
-            "api_version": "2023-08-01"
-        },
-        "common_issues": [
-            "1. Credentials not set in environment variables",
-            "2. Using sandbox credentials in production",
-            "3. Invalid order amount (must be >= 1.00)",
-            "4. Invalid customer details",
-            "5. Network connectivity issues"
-        ]
-    }
-    return jsonify(debug_info)
-
-# Test production authentication
-@app.route("/test-production-auth")
-def test_production_auth():
-    """Test authentication with production Cashfree API"""
-    try:
-        headers = {
-            "x-client-id": CASHFREE_APP_ID,
-            "x-client-secret": CASHFREE_SECRET_KEY,
-            "x-api-version": "2023-08-01",
-            "Content-Type": "application/json"
-        }
-        
-        # Try to get account info (this will fail if auth is wrong)
-        account_url = "https://api.cashfree.com/pg/merchants/me"
-        response = requests.get(account_url, headers=headers, timeout=10)
-        
-        return jsonify({
-            "status_code": response.status_code,
-            "success": response.status_code == 200,
-            "error": response.text if response.status_code != 200 else "Authentication successful",
-            "url": account_url,
-            "credentials": {
-                "app_id_preview": CASHFREE_APP_ID[:8] + "..." if CASHFREE_APP_ID != 'your_production_app_id' else "❌ NOT SET",
-                "secret_key_preview": CASHFREE_SECRET_KEY[:8] + "..." if CASHFREE_SECRET_KEY != 'your_production_secret_key' else "❌ NOT SET"
-            }
-        })
-        
-    except Exception as e:
-        return jsonify({
-            "status_code": "ERROR",
-            "success": False,
-            "error": str(e),
-            "credentials": {
-                "app_id_preview": CASHFREE_APP_ID[:8] + "..." if CASHFREE_APP_ID != 'your_production_app_id' else "❌ NOT SET",
-                "secret_key_preview": CASHFREE_SECRET_KEY[:8] + "..." if CASHFREE_SECRET_KEY != 'your_production_secret_key' else "❌ NOT SET"
-            }
-        })
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
