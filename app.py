@@ -49,7 +49,24 @@ def index():
     payment_data = session.get('payment_data', {}) if payment_success else {}
     
     # User is authenticated, serve the form with payment data
-    return render_template('index.html', payment_success=payment_success, payment_data=payment_data)
+    if payment_success and payment_data:
+        # For payment success, we need to pass data to the template
+        # Read the file and replace template variables manually
+        with open('index.html', 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Replace template variables
+        if payment_success and payment_data:
+            content = content.replace('{% if payment_success and payment_data %}', 'if (true) {')
+            content = content.replace('{% endif %}', '}')
+            content = content.replace('{{ payment_data | tojson }}', str(payment_data).replace("'", '"'))
+        else:
+            content = content.replace('{% if payment_success and payment_data %}', 'if (false) {')
+            content = content.replace('{% endif %}', '}')
+        
+        return content
+    else:
+        return send_from_directory('.', 'index.html')
 
 # Public landing page for unauthenticated users
 @app.route("/welcome")
