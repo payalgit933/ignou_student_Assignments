@@ -49,11 +49,7 @@ def index():
     payment_data = session.get('payment_data', {}) if payment_success else {}
     
     # User is authenticated, serve the form with payment data
-    if payment_success and payment_data:
-        # Pass payment data to the template
-        return render_template('index.html', payment_success=payment_success, payment_data=payment_data)
-    else:
-        return send_from_directory('.', 'index.html')
+    return render_template('index.html', payment_success=payment_success, payment_data=payment_data)
 
 # Public landing page for unauthenticated users
 @app.route("/welcome")
