@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
     <style>
         * {
             margin: 0;
@@ -28,12 +29,14 @@
         }
 
         .form-section {
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             margin-bottom: 30px;
             transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .form-section.hidden {
@@ -42,7 +45,7 @@
 
         .form-title {
             text-align: center;
-            color: #333;
+            color: #2c3e50;
             margin-bottom: 30px;
             font-size: 24px;
             font-weight: bold;
@@ -50,7 +53,7 @@
 
         .form-subtitle {
             text-align: center;
-            color: #666;
+            color: #34495e;
             margin-bottom: 30px;
             font-size: 16px;
         }
@@ -439,14 +442,16 @@
             text-align: center;
             margin: 30px 0;
             padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .download-section h3 {
             margin-bottom: 20px;
-            color: #333;
+            color: #2c3e50;
         }
 
         /* Download Page Styles */
@@ -458,12 +463,14 @@
         }
 
         .download-option {
-            background: #f8f9fa;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
             padding: 25px;
-            border-radius: 12px;
-            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
             text-align: center;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
 
         .download-option:hover {
@@ -577,14 +584,51 @@
         }
         
         /* PDF-specific styling removed - now using jsPDF */
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
     </style>
 </head>
-<body>
+<body class="gradient-bg min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <div class="text-2xl font-bold">IGNOU</div>
+                    <div class="ml-2 text-sm opacity-90">Assignment Portal</div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- User Status -->
+                    <div id="userStatus" class="hidden">
+                        <span id="userName" class="font-medium"></span>
+                        <button id="logoutBtn" class="ml-3 bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded text-sm transition-all">
+                            Logout
+                        </button>
+                    </div>
+                    
+                    <!-- Login/Register Links -->
+                    <div id="authLinks">
+                        <a href="/login" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded text-sm transition-all">
+                            Login
+                        </a>
+                        <a href="/register" class="ml-2 bg-white text-purple-600 hover:bg-opacity-90 px-4 py-2 rounded text-sm transition-all">
+                            Register
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
     <div class="container">
         <!-- Form Section -->
         <div class="form-section" id="formSection">
             <h2 class="form-title">Student Assignment</h2>
-            <p class="form-subtitle">Please fill in all the required details</p>
+                            <p class="form-subtitle">Please fill in all the required details (some fields are optional)</p>
             <form id="certificateForm">
                 <div class="form-row">
                     <div class="form-group">
@@ -723,12 +767,12 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="mobileNumber" class="required">Mobile Number</label>
-                        <input type="tel" id="mobileNumber" name="mobileNumber" required>
+                        <label for="mobileNumber">Mobile Number (Optional)</label>
+                        <input type="tel" id="mobileNumber" name="mobileNumber">
                     </div>
                     <div class="form-group">
-                        <label for="emailId" class="required">Email ID</label>
-                        <input type="email" id="emailId" name="emailId" required>
+                        <label for="emailId">Email ID (Optional)</label>
+                        <input type="email" id="emailId" name="emailId">
                     </div>
                 </div>
 
@@ -753,14 +797,14 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="required">Has the same assignment been submitted anywhere?</label>
+                        <label>Has the same assignment been submitted anywhere? (Optional)</label>
                         <div class="radio-group">
                             <div class="radio-item">
-                                <input type="radio" id="submittedYes" name="submittedElsewhere" value="Yes" required>
+                                <input type="radio" id="submittedYes" name="submittedElsewhere" value="Yes">
                                 <label for="submittedYes">Yes</label>
                             </div>
                             <div class="radio-item">
-                                <input type="radio" id="submittedNo" name="submittedElsewhere" value="No" required>
+                                <input type="radio" id="submittedNo" name="submittedElsewhere" value="No">
                                 <label for="submittedNo">No</label>
                             </div>
                         </div>
@@ -772,14 +816,14 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="required">Cross-check confirmation: "I confirm the above details are correct."</label>
+                        <label>Cross-check confirmation: "I confirm the above details are correct." (Optional)</label>
                         <div class="radio-group">
                             <div class="radio-item">
-                                <input type="radio" id="confirmYes" name="confirmation" value="Yes" required>
+                                <input type="radio" id="confirmYes" name="confirmation" value="Yes">
                                 <label for="confirmYes">Yes</label>
                             </div>
                             <div class="radio-item">
-                                <input type="radio" id="confirmNo" name="confirmation" value="No" required>
+                                <input type="radio" id="confirmNo" name="confirmation" value="No">
                                 <label for="confirmNo">No</label>
                             </div>
                         </div>
@@ -787,7 +831,7 @@
                 </div>
 
                 <div class="button-group">
-                    <button type="submit" class="btn btn-primary">Pay & Generate Assignment</button>
+                    <button type="submit" class="btn btn-primary">Generate Assignment</button>
                 </div>
             </form>
         </div>
@@ -957,12 +1001,12 @@
         
         // Subject to PDF mapping for automatic attachment
         const subjectPDFMapping = {
-            'Mathematics': 'BCS-53-EM-2025-26.pdf',
-            'Computer Science': 'BCS-54-EM-2025-26.pdf',
-            'Economics': 'BCS-53-EM-2025-26.pdf', // Default to BCS-53 for other subjects
-            'Physics': 'BCS-53-EM-2025-26.pdf',
-            'Chemistry': 'BCS-53-EM-2025-26.pdf',
-            'Biology': 'BCS-53-EM-2025-26.pdf'
+            'Mathematics': 'https://raw.githubusercontent.com/payalgit933/ignou_student_Assignments/main/pdfs/BCS-53-EM-2025-26.pdf',
+            'Computer Science': 'https://raw.githubusercontent.com/payalgit933/ignou_student_Assignments/main/pdfs/BCS-54-EM-2025-26.pdf',
+            'Economics': 'https://raw.githubusercontent.com/payalgit933/ignou_student_Assignments/main/pdfs/BCS-53-EM-2025-26.pdf',
+            'Physics': 'https://raw.githubusercontent.com/payalgit933/ignou_student_Assignments/main/pdfs/BCS-53-EM-2025-26.pdf',
+            'Chemistry': 'https://raw.githubusercontent.com/payalgit933/ignou_student_Assignments/main/pdfs/BCS-53-EM-2025-26.pdf',
+            'Biology': 'https://raw.githubusercontent.com/payalgit933/ignou_student_Assignments/main/pdfs/BCS-53-EM-2025-26.pdf'
         };
         
         // Function to merge PDFs
@@ -1153,10 +1197,8 @@
         // Form submission handler
         document.getElementById('certificateForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            initiatePaymentAndGenerateAssignment();
+            generateAssignment();
         });
-
-
 
         // Handle exam type selection to show/hide semester number
         document.querySelectorAll('input[name="examType"]').forEach(radio => {
@@ -1225,71 +1267,95 @@
             }
         });
 
-
-
-
-
-
-
-        // Payment initiation and assignment generation function
-        async function initiatePaymentAndGenerateAssignment() {
+        // Generate assignment function - Now redirects to payment
+        async function generateAssignment() {
+            const formData = new FormData(document.getElementById('certificateForm'));
+            
+            // Get selected subjects
+            const selectedSubjects = formData.getAll('subjects');
+            console.log('📚 Selected subjects:', selectedSubjects); // Debug log
+            
+            if (selectedSubjects.length === 0) {
+                alert('Please select at least one subject before proceeding to payment.');
+                return;
+            }
+            
+            // Validate required fields (all fields that will be sent to backend)
+            const requiredFields = [
+                'studentName', 'enrollmentNumber', 'programSelection', 'courseCode', 
+                'studyCenterCode', 'studyCenterAddress', 'examType', 'yearSelection', 'mediumSelection'
+            ];
+            
+            for (const field of requiredFields) {
+                if (!formData.get(field)) {
+                    alert(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+                    return;
+                }
+            }
+            
+            // Special validation for semester number (only required if exam type is semester)
+            if (formData.get('examType') === 'Semester' && !formData.get('semesterNumber')) {
+                alert('Please fill in semester number');
+                return;
+            }
+            
+            // Check if ID card and signature are uploaded
+            const idCard = document.getElementById('idCard').files[0];
+            const signature = document.getElementById('signature').files[0];
+            
+            if (!idCard) {
+                alert('Please upload your ID Card before proceeding.');
+                return;
+            }
+            
+            if (!signature) {
+                alert('Please upload your signature before proceeding.');
+                return;
+            }
+            
+            // Show payment confirmation
+            const amount = selectedSubjects.length; // ₹1 per subject
+            const confirmPayment = confirm(
+                `Payment Summary:\n\n` +
+                `Subjects: ${selectedSubjects.join(', ')}\n` +
+                `Amount: ₹${amount}\n\n` +
+                `You will be redirected to Cashfree payment gateway.\n` +
+                `Do you want to proceed?`
+            );
+            
+            if (!confirmPayment) {
+                return;
+            }
+            
+            // Show loading state
+            const submitButton = document.querySelector('.btn.btn-primary');
+            const originalText = submitButton.textContent;
+            submitButton.textContent = '⏳ Processing...';
+            submitButton.disabled = true;
+            
             try {
-                const formData = new FormData(document.getElementById('certificateForm'));
-                
-                // Get selected subjects
-                const selectedSubjects = formData.getAll('subjects');
-                if (selectedSubjects.length === 0) {
-                    alert('Please select at least one subject before proceeding.');
-                    return;
-                }
-                
-                // Get required form data
-                const studentName = formData.get('studentName');
-                const enrollmentNumber = formData.get('enrollmentNumber');
-                const emailId = formData.get('emailId');
-                const mobileNumber = formData.get('mobileNumber');
-                
-                if (!studentName || !enrollmentNumber || !emailId || !mobileNumber) {
-                    alert('Please fill in all required fields before proceeding.');
-                    return;
-                }
-                
-                // Calculate amount (₹1 per subject)
-                const amount = selectedSubjects.length;
-                
-                // Show payment confirmation
-                const confirmPayment = confirm(
-                    `Payment Confirmation:\n\n` +
-                    `Selected Subjects: ${selectedSubjects.join(', ')}\n` +
-                    `Amount: ₹${amount}\n` +
-                    `Student: ${studentName}\n` +
-                    `Enrollment: ${enrollmentNumber}\n\n` +
-                    `Do you want to proceed with payment?`
-                );
-                
-                if (!confirmPayment) {
-                    return;
-                }
-                
-                // Show loading state
-                const submitButton = document.querySelector('button[type="submit"]');
-                const originalText = submitButton.textContent;
-                submitButton.textContent = '⏳ Processing Payment...';
-                submitButton.disabled = true;
-                
                 // Prepare payment data
                 const paymentData = {
                     subjects: selectedSubjects,
-                    studentName: studentName,
-                    enrollmentNumber: enrollmentNumber,
-                    emailId: emailId,
-                    mobileNumber: mobileNumber,
-                    amount: amount
+                    studentName: formData.get('studentName'),
+                    enrollmentNumber: formData.get('enrollmentNumber'),
+                    programSelection: formData.get('programSelection'),
+                    courseCode: formData.get('courseCode'),
+                    studyCenterCode: formData.get('studyCenterCode'),
+                    studyCenterAddress: formData.get('studyCenterAddress'),
+                    examType: formData.get('examType'),
+                    semesterNumber: formData.get('semesterNumber'),
+                    yearSelection: formData.get('yearSelection'),
+                    mediumSelection: formData.get('mediumSelection')
                 };
                 
-                console.log('Initiating payment with data:', paymentData);
+                // Store form data for later use after payment
+                window.pendingFormData = paymentData;
                 
-                // Call payment initiation endpoint
+                // Debug: Log payment data
+                console.log('🔍 Payment data being sent:', paymentData);
+                
+                // Initiate payment
                 const response = await fetch('/initiate-payment', {
                     method: 'POST',
                     headers: {
@@ -1298,340 +1364,40 @@
                     body: JSON.stringify(paymentData)
                 });
                 
+                console.log('📡 Payment response status:', response.status);
+                
                 const result = await response.json();
                 
                 if (result.success) {
-                    console.log('Payment initiated successfully:', result);
+                    // Store transaction ID
+                    window.currentTransactionId = result.transactionId;
                     
-                    // Store payment data for later use
-                    window.paymentData = {
-                        transactionId: result.transactionId,
-                        amount: result.amount,
-                        subjects: result.subjects,
-                        paymentUrl: result.paymentUrl
+                    // Initialize Cashfree SDK
+                    const cashfree = Cashfree({
+                        mode: "production"
+                    });
+                    
+                    // Open Cashfree checkout using the new SDK method
+                    console.log('Opening Cashfree checkout with session ID:', result.paymentSessionId);
+                    
+                    let checkoutOptions = {
+                        paymentSessionId: result.paymentSessionId,
+                        redirectTarget: "_self"
                     };
                     
-                    // Redirect to payment page
-                    window.location.href = result.paymentUrl;
+                    cashfree.checkout(checkoutOptions);
                     
                 } else {
-                    console.error('Payment initiation failed:', result);
-                    alert(`Payment initiation failed: ${result.error || 'Unknown error'}`);
-                    
-                    // Reset button
-                    submitButton.textContent = originalText;
-                    submitButton.disabled = false;
+                    throw new Error(result.error || 'Payment initiation failed');
                 }
                 
             } catch (error) {
-                console.error('Error initiating payment:', error);
-                alert('An error occurred while initiating payment. Please try again.');
+                console.error('Payment initiation failed:', error);
+                alert(`Payment initiation failed: ${error.message}`);
                 
                 // Reset button
-                const submitButton = document.querySelector('button[type="submit"]');
-                submitButton.textContent = 'Pay & Generate Assignment';
+                submitButton.textContent = originalText;
                 submitButton.disabled = false;
-            }
-        }
-
-        // Generate assignment function (now called after payment success)
-        async function generateAssignment() {
-            const formData = new FormData(document.getElementById('certificateForm'));
-            
-            // Update certificate fields
-            document.getElementById('certStudentName').textContent = formData.get('studentName') || '_________________';
-            document.getElementById('certEnrollmentNumber').textContent = formData.get('enrollmentNumber') || '_________________';
-            document.getElementById('certProgramSelection').textContent = formData.get('programSelection') || '_________________';
-            
-            // Handle selected subjects
-            const selectedSubjects = formData.getAll('subjects');
-            if (selectedSubjects.length > 0) {
-                document.getElementById('certSelectedSubjects').textContent = selectedSubjects.join(', ');
-            } else {
-                document.getElementById('certSelectedSubjects').textContent = '_________________';
-            }
-            document.getElementById('certStudyCenterCode').textContent = formData.get('studyCenterCode') || '_________________';
-            document.getElementById('certStudyCenterAddress').textContent = formData.get('studyCenterAddress') || '_________________';
-            
-            // Auto-update Regional Centre based on selected Study Center
-            const selectedStudyCenter = formData.get('studyCenterAddress');
-            if (selectedStudyCenter) {
-                let regionalCentre = 'KOLKATA'; // Default
-                if (selectedStudyCenter.includes('Delhi')) {
-                    regionalCentre = 'DELHI';
-                } else if (selectedStudyCenter.includes('Mumbai')) {
-                    regionalCentre = 'MUMBAI';
-                } else if (selectedStudyCenter.includes('Chennai')) {
-                    regionalCentre = 'CHENNAI';
-                } else if (selectedStudyCenter.includes('Bangalore')) {
-                    regionalCentre = 'BANGALORE';
-                } else if (selectedStudyCenter.includes('Kolkata')) {
-                    regionalCentre = 'KOLKATA';
-                }
-                document.getElementById('certRegionalCentre').textContent = regionalCentre;
-            }
-            
-            document.getElementById('certMobileNumber').textContent = formData.get('mobileNumber') || '_________________';
-            document.getElementById('certEmailId').textContent = formData.get('emailId') || '_________________';
-            // Handle submission elsewhere with details
-            const submittedElsewhere = formData.get('submittedElsewhere');
-            const submissionDetails = formData.get('submissionDetails');
-            
-            if (submittedElsewhere === 'Yes' && submissionDetails) {
-                document.getElementById('certSubmittedElsewhere').textContent = `Yes - ${submissionDetails}`;
-            } else {
-                document.getElementById('certSubmittedElsewhere').textContent = submittedElsewhere || '_________________';
-            }
-            
-            document.getElementById('certConfirmation').textContent = formData.get('confirmation') || '_________________';
-            
-            // Handle student photo (from ID Card upload)
-            const photoFile = document.getElementById('idCard').files[0];
-            if (photoFile) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const photoImg = document.getElementById('certStudentPhoto');
-                    photoImg.src = e.target.result;
-                    photoImg.classList.remove('hidden');
-                };
-                reader.readAsDataURL(photoFile);
-            }
-            
-            // Handle student signature - ensure it's processed before PDF generation
-            const signatureFile = document.getElementById('signature').files[0];
-            if (signatureFile) {
-                try {
-                    // Wait for signature conversion to complete
-                    await convertSignatureToTransparentPNG(signatureFile);
-                    const signatureImg = document.getElementById('certStudentSignature');
-                    signatureImg.src = window.transparentSignature;
-                    signatureImg.classList.remove('hidden');
-                    console.log('Signature processed and ready for PDF generation');
-                } catch (error) {
-                    console.error('Signature conversion failed:', error);
-                    // Fallback to original file if conversion fails
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const signatureImg = document.getElementById('certStudentSignature');
-                    signatureImg.src = e.target.result;
-                    signatureImg.classList.remove('hidden');
-                };
-                reader.readAsDataURL(signatureFile);
-                }
-            }
-            
-
-            
-            // Set month and year in the exam info
-            const examType = formData.get('examType');
-            let monthText = 'June/Dec';
-            let specificMonth = '_______';
-            
-            console.log('=== EXAM INFO DEBUG ===');
-            console.log('Exam type:', examType);
-            console.log('Form data examType:', formData.get('examType'));
-            console.log('Form data semesterNumber:', formData.get('semesterNumber'));
-            console.log('All form data keys:', Array.from(formData.keys()));
-            console.log('All form data values:', Array.from(formData.values()));
-            
-            if (examType === 'Yearly') {
-                monthText = 'June/Dec';
-                specificMonth = '_______';
-                console.log('Yearly exam - monthText set to:', monthText);
-            } else if (examType === 'Semester') {
-                const semesterNumber = formData.get('semesterNumber');
-                console.log('Semester exam - semesterNumber:', semesterNumber);
-                if (semesterNumber === '1' || semesterNumber === '3') {
-                    monthText = 'June/Dec';
-                    specificMonth = 'June';
-                    console.log('Semester 1 or 3 - specificMonth set to:', specificMonth);
-                } else if (semesterNumber === '2' || semesterNumber === '4') {
-                    monthText = 'June/Dec';
-                    specificMonth = 'Dec';
-                    console.log('Semester 2 or 4 - specificMonth set to:', specificMonth);
-                } else {
-                    console.log('Invalid semester number:', semesterNumber);
-                }
-            } else {
-                console.log('Invalid exam type:', examType);
-            }
-            
-            const selectedYear = formData.get('yearSelection');
-            const yearText = selectedYear || '_______';
-            console.log('Selected year:', selectedYear, 'yearText:', yearText);
-            console.log('=== END EXAM INFO DEBUG ===');
-            
-            // Update the exam info text in the certificate
-            const examInfoElement = document.querySelector('p.text-sm.text-gray-600.italic.mb-1');
-            if (examInfoElement) {
-                // Replace the entire text content with the new format
-                examInfoElement.innerHTML = `For Term End Exam ${monthText} - <span class="border-b border-gray-400 px-2" style="color: red; font-weight: bold;">${specificMonth}</span> Year - <span class="border-b border-gray-400 px-2" style="color: red; font-weight: bold;">${yearText}</span>`;
-                
-                console.log('Exam info updated:', monthText, specificMonth, yearText);
-            } else {
-                console.error('Exam info element not found');
-            }
-            
-            // Set submission date to current date
-            const today = new Date();
-            const day = String(today.getDate()).padStart(2, '0');
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const year = today.getFullYear();
-            const currentDate = `${day}-${month}-${year}`;
-            
-            // Debug: Check if date element exists and set the date
-            const dateElement = document.getElementById('certSubmissionDate');
-            if (dateElement) {
-                dateElement.textContent = currentDate;
-                console.log('Date set to:', currentDate);
-            } else {
-                console.error('Date element not found');
-            }
-            
-            // Show the download page instead of generating PDFs immediately
-            console.log('Showing download page for subjects:', selectedSubjects);
-            
-            if (selectedSubjects.length === 0) {
-                alert('Please select at least one subject before generating the assignment.');
-                return;
-            }
-            
-            // Hide the form and show the download page
-            document.getElementById('formSection').classList.add('hidden');
-            document.getElementById('downloadPage').classList.remove('hidden');
-            
-            // Generate individual subject buttons
-            generateIndividualSubjectButtons(selectedSubjects);
-            
-            // Store selected subjects and form data for later use
-            window.selectedSubjects = selectedSubjects;
-            window.formData = formData;
-        }
-
-        // Generate individual subject buttons for the download page
-        function generateIndividualSubjectButtons(subjects) {
-            console.log('Generating individual subject buttons for:', subjects);
-            const container = document.getElementById('individualSubjectButtons');
-            
-            if (!container) {
-                console.error('Individual subject buttons container not found');
-                return;
-            }
-            
-            container.innerHTML = '';
-            
-            subjects.forEach((subject, index) => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'subject-btn';
-                button.textContent = `📖 ${subject}`;
-                button.onclick = () => downloadSingleSubject(subject);
-                container.appendChild(button);
-                console.log(`Created button for: ${subject}`);
-            });
-        }
-
-        // Download single subject PDF
-        async function downloadSingleSubject(subjectName) {
-            try {
-                console.log(`Downloading PDF for subject: ${subjectName}`);
-                
-                // Show loading state
-                const button = event.target;
-                const originalText = button.textContent;
-                button.textContent = '⏳ Generating...';
-                button.disabled = true;
-                
-                // Generate and download the PDF for this specific subject
-                await downloadPDF(subjectName);
-                
-                // Reset button
-                button.textContent = originalText;
-                button.disabled = false;
-                
-                console.log(`PDF downloaded successfully for: ${subjectName}`);
-                
-            } catch (error) {
-                console.error(`Failed to download PDF for ${subjectName}:`, error);
-                alert(`Failed to download PDF for ${subjectName}. Please try again.`);
-                
-                // Reset button on error
-                const button = event.target;
-                button.textContent = originalText;
-                button.disabled = false;
-            }
-        }
-
-        // Download all subjects as ZIP
-        async function downloadAllSubjectsZip() {
-            try {
-                console.log('Downloading all subjects as ZIP');
-                
-                // Show loading state
-                const button = document.getElementById('downloadAllZip');
-                const originalText = button.textContent;
-                button.textContent = '⏳ Creating ZIP...';
-                button.disabled = true;
-                
-                const subjects = window.selectedSubjects || [];
-                
-                if (subjects.length === 0) {
-                    alert('No subjects selected. Please go back and select subjects.');
-                    return;
-                }
-                
-                // Generate PDFs for all subjects
-                const pdfPromises = subjects.map(subject => downloadPDF(subject, true)); // true = return blob instead of downloading
-                const pdfBlobs = await Promise.all(pdfPromises);
-                
-                // Create ZIP file
-                const JSZip = window.JSZip;
-                if (!JSZip) {
-                    // If JSZip is not available, download PDFs individually
-                    alert('ZIP creation not available. Downloading PDFs individually...');
-                    subjects.forEach(subject => downloadPDF(subject));
-                    return;
-                }
-                
-                const zip = new JSZip();
-                
-                // Add each PDF to the ZIP
-                subjects.forEach((subject, index) => {
-                    if (pdfBlobs[index]) {
-                        const fileName = `Assignment_${subject}_${new Date().toISOString().split('T')[0]}.pdf`;
-                        zip.file(fileName, pdfBlobs[index]);
-                    }
-                });
-                
-                // Generate and download ZIP
-                const zipBlob = await zip.generateAsync({ type: 'blob' });
-                const url = URL.createObjectURL(zipBlob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `All_Subjects_Assignment_${new Date().toISOString().split('T')[0]}.zip`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                
-                console.log('ZIP file downloaded successfully');
-                
-                // Reset button
-                button.textContent = originalText;
-                button.disabled = false;
-                
-            } catch (error) {
-                console.error('Failed to create ZIP:', error);
-                alert('Failed to create ZIP file. Downloading PDFs individually...');
-                
-                // Fallback to individual downloads
-                const subjects = window.selectedSubjects || [];
-                subjects.forEach(subject => downloadPDF(subject));
-                
-                // Reset button
-                const button = document.getElementById('downloadAllZip');
-                button.textContent = originalText;
-                button.disabled = false;
             }
         }
 
@@ -2226,12 +1992,72 @@
             document.getElementById('downloadPage').classList.add('hidden');
             document.getElementById('formSection').classList.remove('hidden');
         });
+
+        // User authentication functions
+        function checkAuthStatus() {
+            const userData = localStorage.getItem('userData');
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            
+            if (userData && isLoggedIn === 'true') {
+                try {
+                    const user = JSON.parse(userData);
+                    showUserStatus(user);
+                } catch (e) {
+                    console.error('Error parsing user data:', e);
+                    clearUserData();
+                }
+            } else {
+                showAuthLinks();
+            }
+        }
+
+        function showUserStatus(user) {
+            document.getElementById('userStatus').classList.remove('hidden');
+            document.getElementById('authLinks').classList.add('hidden');
+            document.getElementById('userName').textContent = `Welcome, ${user.name}`;
+        }
+
+        function showAuthLinks() {
+            document.getElementById('userStatus').classList.add('hidden');
+            document.getElementById('authLinks').classList.remove('hidden');
+        }
+
+        function clearUserData() {
+            localStorage.removeItem('userData');
+            localStorage.removeItem('isLoggedIn');
+            showAuthLinks();
+        }
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            try {
+                const response = await fetch('/api/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    clearUserData();
+                    // Redirect to login page
+                    window.location.href = '/login';
+                } else {
+                    console.error('Logout failed');
+                    clearUserData();
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+                clearUserData();
+                window.location.href = '/login';
+            }
+        });
+
+        // Check authentication status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+        });
     </script>
 </body>
 </html>
-
-
-
-
-
-

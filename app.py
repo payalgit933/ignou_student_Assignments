@@ -19,6 +19,9 @@ CASHFREE_APP_ID = os.getenv('CASHFREE_APP_ID', 'your_production_app_id')
 CASHFREE_SECRET_KEY = os.getenv('CASHFREE_SECRET_KEY', 'your_production_secret_key')
 CASHFREE_BASE_URL = "https://api.cashfree.com/pg/orders"  # Production URL
 
+# PhonePe sandbox URL
+PHONEPE_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay"
+
 # Route to serve the main HTML page
 @app.route("/")
 def index():
