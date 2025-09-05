@@ -19,6 +19,12 @@ CASHFREE_APP_ID = os.getenv('CASHFREE_APP_ID', 'your_production_app_id')
 CASHFREE_SECRET_KEY = os.getenv('CASHFREE_SECRET_KEY', 'your_production_secret_key')
 CASHFREE_BASE_URL = "https://api.cashfree.com/pg/orders"  # Production URL
 
+# Debug: Print credentials status (remove in production)
+print(f"🔍 Cashfree Config Check:")
+print(f"   APP_ID: {'✅ Set' if CASHFREE_APP_ID != 'your_production_app_id' else '❌ Using placeholder'}")
+print(f"   SECRET_KEY: {'✅ Set' if CASHFREE_SECRET_KEY != 'your_production_secret_key' else '❌ Using placeholder'}")
+print(f"   BASE_URL: {CASHFREE_BASE_URL}")
+
 # PhonePe sandbox URL
 PHONEPE_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay"
 
@@ -213,7 +219,7 @@ def check_cashfree_config():
         headers = {
             "x-client-id": CASHFREE_APP_ID,
             "x-client-secret": CASHFREE_SECRET_KEY,
-            "x-api-version": "2022-09-01",
+            "x-api-version": "2023-08-01",
             "Content-Type": "application/json"
         }
         
@@ -268,7 +274,7 @@ def test_cashfree_credentials():
         headers = {
             "x-client-id": CASHFREE_APP_ID,
             "x-client-secret": CASHFREE_SECRET_KEY,
-            "x-api-version": "2022-09-01",
+            "x-api-version": "2023-08-01",
             "Content-Type": "application/json"
         }
         
@@ -317,7 +323,7 @@ def initiate_payment():
         if not subjects or not student_name or not enrollment:
             return jsonify({"success": False, "error": "Missing required fields"}), 400
 
-        amount_rupees = len(subjects)  # ₹1 per subject
+        amount_rupees = max(len(subjects), 1)  # Minimum ₹1, ₹1 per subject
 
         # ✅ Create unique orderId
         order_id = f"ORD{int(time.time())}"
@@ -360,7 +366,7 @@ def initiate_payment():
         headers = {
             "x-client-id": CASHFREE_APP_ID,
             "x-client-secret": CASHFREE_SECRET_KEY,
-            "x-api-version": "2022-09-01",
+            "x-api-version": "2023-08-01",
             "Content-Type": "application/json"
         }
 
@@ -440,7 +446,7 @@ def payment_success():
         headers = {
             "x-client-id": CASHFREE_APP_ID,
             "x-client-secret": CASHFREE_SECRET_KEY,
-            "x-api-version": "2022-09-01",
+            "x-api-version": "2023-08-01",
             "Content-Type": "application/json"
         }
         
@@ -660,6 +666,31 @@ def get_payment_status(transaction_id):
             "enrollmentNumber": "Unknown"
         }
     })
+
+# Debug route to check payment error
+@app.route("/debug-payment-error")
+def debug_payment_error():
+    """Debug route to identify payment gateway issues"""
+    debug_info = {
+        "credentials_status": {
+            "app_id_configured": CASHFREE_APP_ID != 'your_production_app_id',
+            "secret_key_configured": CASHFREE_SECRET_KEY != 'your_production_secret_key',
+            "app_id_preview": CASHFREE_APP_ID[:8] + "..." if CASHFREE_APP_ID != 'your_production_app_id' else "❌ NOT SET",
+            "secret_key_preview": CASHFREE_SECRET_KEY[:8] + "..." if CASHFREE_SECRET_KEY != 'your_production_secret_key' else "❌ NOT SET"
+        },
+        "api_config": {
+            "base_url": CASHFREE_BASE_URL,
+            "api_version": "2022-09-01"
+        },
+        "common_issues": [
+            "1. Credentials not set in environment variables",
+            "2. Using sandbox credentials in production",
+            "3. Invalid order amount (must be >= 1.00)",
+            "4. Invalid customer details",
+            "5. Network connectivity issues"
+        ]
+    }
+    return jsonify(debug_info)
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
