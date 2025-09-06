@@ -468,6 +468,9 @@ def initiate_payment():
                 "examType": exam_type,
                 "semesterNumber": semester_number,
                 "yearSelection": year_selection,
+                "submittedElsewhere": data.get("submittedElsewhere", ""),
+                "submissionDetails": data.get("submissionDetails", ""),
+                "confirmation": data.get("confirmation", ""),
                 "subjects": subjects,
                 "amount": amount_rupees,
                 "order_id": order_id
@@ -534,24 +537,37 @@ def payment_success():
         
         # Store payment data in session for use in index.html
         session['payment_success'] = True
+        payment_request = session.get("payment_request", {})
         session['payment_data'] = {
             "order_id": order_id,
             "amount": order_data.get("order_amount", 1),
             "status": order_data.get("order_status", "PAID"),
             "created_at": order_data.get("created_at", ""),
-            "studentName": session.get("payment_request", {}).get("studentName", "Not Provided"),
-            "enrollmentNumber": session.get("payment_request", {}).get("enrollmentNumber", "Not Provided"),
-            "emailId": session.get("payment_request", {}).get("emailId", "Not Provided"),
-            "mobileNumber": session.get("payment_request", {}).get("mobileNumber", "Not Provided"),
-            "programmeCode": session.get("payment_request", {}).get("programmeCode", "Not Provided"),
-            "courseCode": session.get("payment_request", {}).get("courseCode", "Not Provided"),
-            "studyCenterCode": session.get("payment_request", {}).get("studyCenterCode", "Not Provided"),
-            "studyCenterName": session.get("payment_request", {}).get("studyCenterName", "Not Provided"),
-            "mediumSelection": session.get("payment_request", {}).get("mediumSelection", "Not Provided"),
-            "examType": session.get("payment_request", {}).get("examType", "Not Provided"),
-            "semesterNumber": session.get("payment_request", {}).get("semesterNumber", "Not Provided"),
-            "yearSelection": session.get("payment_request", {}).get("yearSelection", "Not Provided"),
-            "subjects": session.get("payment_request", {}).get("subjects", [])
+            # Student Information
+            "studentName": payment_request.get("studentName", "Not Provided"),
+            "enrollmentNumber": payment_request.get("enrollmentNumber", "Not Provided"),
+            "emailId": payment_request.get("emailId", "Not Provided"),
+            "mobileNumber": payment_request.get("mobileNumber", "Not Provided"),
+            # Program and Course Information
+            "programmeCode": payment_request.get("programmeCode", "Not Provided"),
+            "courseCode": payment_request.get("courseCode", "Not Provided"),
+            # Study Center Information
+            "studyCenterCode": payment_request.get("studyCenterCode", "Not Provided"),
+            "studyCenterName": payment_request.get("studyCenterName", "Not Provided"),
+            # Academic Information
+            "mediumSelection": payment_request.get("mediumSelection", "Not Provided"),
+            "examType": payment_request.get("examType", "Not Provided"),
+            "semesterNumber": payment_request.get("semesterNumber", "Not Provided"),
+            "yearSelection": payment_request.get("yearSelection", "Not Provided"),
+            # Assignment Information
+            "submittedElsewhere": payment_request.get("submittedElsewhere", "Not Provided"),
+            "submissionDetails": payment_request.get("submissionDetails", "Not Provided"),
+            "confirmation": payment_request.get("confirmation", "Not Provided"),
+            # Selected Subjects
+            "subjects": payment_request.get("subjects", []),
+            # File uploads (these will be added by the frontend)
+            "idCardPhoto": None,
+            "signaturePhoto": None
         }
         
         # Redirect to index.html with payment success flag
