@@ -1,3001 +1,823 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Assignment Form</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+# app.py
+
+import base64
+import hashlib
+import json
+import os
+import time
+from flask import Flask, request, jsonify, redirect, send_from_directory, session, send_file
+from flask_cors import CORS
+import requests
+from database import db
+
+app = Flask(__name__)
+app.secret_key = 'your-secret-key-change-this-in-production'  # Change this!
+CORS(app)  # Enable CORS for all routes
+
+# 🔑 Production credentials from environment variables
+CASHFREE_APP_ID = os.getenv('CASHFREE_APP_ID', 'your_production_app_id')
+CASHFREE_SECRET_KEY = os.getenv('CASHFREE_SECRET_KEY', 'your_production_secret_key')
+CASHFREE_BASE_URL = "https://api.cashfree.com/pg/orders"  # Production URL
+
+# Debug: Print configuration status
+print(f"🔍 Cashfree Production Configuration:")
+print(f"   Base URL: {CASHFREE_BASE_URL}")
+print(f"   APP_ID: {'✅ Set' if CASHFREE_APP_ID != 'your_production_app_id' else '❌ Using placeholder'}")
+print(f"   SECRET_KEY: {'✅ Set' if CASHFREE_SECRET_KEY != 'your_production_secret_key' else '❌ Using placeholder'}")
+
+# PhonePe sandbox URL
+PHONEPE_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay"
 
 
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            padding: 20px;
-        }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .form-section {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-            transition: all 0.3s ease;
-        }
-
-        .form-section.hidden {
-            display: none;
-        }
-
-        .form-title {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .form-subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 16px;
-        }
-
-        .form-row {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .form-group {
-            flex: 1;
-            min-width: 250px;
-        }
-
-        .form-group.full-width {
-            flex: 1 1 100%;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #555;
-        }
-
-        .form-group label.required::after {
-            content: " *";
-            color: #e74c3c;
-        }
-
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: #4CAF50;
-        }
-
-        .form-group input[type="file"] {
-            padding: 8px;
-            border: 2px dashed #ddd;
-            background-color: #f9f9f9;
-        }
-
-        .checkbox-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 10px;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 150px;
-        }
-
-        .checkbox-item input[type="checkbox"] {
-            width: auto;
-            margin: 0;
-        }
-
-        .checkbox-item label {
-            margin: 0;
-            font-weight: normal;
-            color: #333;
-        }
-
-        .radio-group {
-            display: flex;
-            gap: 20px;
-            margin-top: 10px;
-        }
-
-        .radio-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .radio-item input[type="radio"] {
-            width: auto;
-            margin: 0;
-        }
-
-        .radio-item label {
-            margin: 0;
-            font-weight: normal;
-            color: #333;
-        }
-
-        .selected-subjects {
-            background-color: #e8f5e8;
-            padding: 15px;
-            border-radius: 6px;
-            margin-top: 10px;
-            border-left: 4px solid #4CAF50;
-        }
-
-        .selected-subjects strong {
-            color: #2e7d32;
-        }
-
-        .button-group {
-            text-align: center;
-            margin-top: 30px;
-        }
-
-        .btn {
-            padding: 15px 30px;
-            margin: 0 10px;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #45a049;
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background-color: #2196F3;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #1976D2;
-            transform: translateY(-2px);
-        }
-
-        .certificate {
-            background: white;
-            padding: 40px;
-            margin: 0;
-            border: 1px solid #000000;
-            font-family: Arial, sans-serif;
-            width: 210mm;
-            min-height: 297mm;
-            margin: 0 auto;
-        }
-
-        .certificate-header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-        }
-
-        .university-name {
-            font-size: 20px;
-            font-weight: bold;
-            color: #000000;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            white-space: nowrap;
-        }
-
-        .regional-center {
-            font-family: Calibri, sans-serif;
-            font-size: 16px;
-            font-weight: bold;
-            color: #FF0000;
-            margin-bottom: 0;
-            text-decoration: none;
-        }
-
-        .certificate-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #000000;
-            margin-bottom: 8px;
-            margin-left: 0;
-        }
-
-        .logo-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 0;
-            padding: 0;
-            gap: 0;
-            width: 100%;
-            margin-left: -20px;
-        }
-
-        .logo-section img {
-            width: 130px;
-            height: 130px;
-            object-fit: contain;
-            flex-shrink: 0;
-        }
-
-        .header-text {
-            text-align: center;
-            flex: 1;
-            margin: 0 5px;
-            width: 100%;
-        }
-
-        .certificate-content {
-            margin: 15px 0;
-        }
+# Route to serve the main HTML page
+@app.route("/")
+def index():
+    # Check if user is authenticated
+    user_token = session.get('user_token')
+    if not user_token:
+        return redirect('/welcome')
+    
+    # Verify session is still valid
+    result = db.verify_session(user_token)
+    if not result["success"]:
+        session.clear()
+        return redirect('/welcome')
+    
+    # Check if this is a payment success redirect
+    payment_success = request.args.get('payment_success') == 'true'
+    payment_data = session.get('payment_data', {}) if payment_success else {}
+    
+    # User is authenticated, serve the form with payment data
+    if payment_success and payment_data:
+        # For payment success, we need to pass data to the template
+        # Read the file and replace template variables manually
+        with open('index.html', 'r', encoding='utf-8') as f:
+            content = f.read()
         
-        /* A4 specific adjustments */
-        @page {
-            size: A4;
-            margin: 15mm;
-        }
+        # Replace template variables with proper JavaScript
+        content = content.replace('{% if payment_success and payment_data %}', 'if (true) {')
+        content = content.replace('{% endif %}', '}')
+        content = content.replace('{{ payment_data | tojson }}', str(payment_data).replace("'", '"'))
+        
+        return content
+    else:
+        # For normal access, also process template variables to avoid syntax errors
+        with open('index.html', 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Replace template variables with JavaScript that won't execute
+        content = content.replace('{% if payment_success and payment_data %}', 'if (false) {')
+        content = content.replace('{% endif %}', '}')
+        content = content.replace('{{ payment_data | tojson }}', '{}')
+        
+        return content
 
-        .info-row {
-            display: flex;
-            margin-bottom: 20px;
-            align-items: center;
-        }
+# Public landing page for unauthenticated users
+@app.route("/welcome")
+def welcome():
+    return send_from_directory('.', 'welcome.html')
 
-        .info-label {
-            font-weight: bold;
-            color: #333;
-            min-width: 200px;
-            font-size: 16px;
-        }
+# Route to serve static files (PDFs, images, etc.)
+@app.route('/pdfs/<filename>')
+def serve_pdf(filename):
+    return send_from_directory('.', filename)
 
-        .info-value {
-            color: #666;
-            font-size: 16px;
-            border-bottom: 1px solid #ddd;
-            padding: 5px 10px;
-            min-width: 300px;
-        }
+@app.route('/images/<filename>')
+def serve_image(filename):
+    return send_from_directory('.', filename)
 
-        .signature-section {
-            margin-top: 60px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
+# Test route to verify server is working
+@app.route("/test")
+def test():
+    return jsonify({
+        "message": "Flask server is running!",
+        "status": "success",
+        "timestamp": time.time()
+    })
 
-        .signature-box {
-            text-align: center;
-            flex: 1;
-        }
-
-        .signature-line {
-            width: 200px;
-            height: 2px;
-            background-color: #333;
-            margin: 10px auto;
-        }
-
-        .date-section {
-            text-align: center;
-            margin-top: 40px;
-        }
-
-        .photo-placeholder {
-            width: 120px;
-            height: 150px;
-            border: 2px dashed #ccc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-            font-size: 14px;
-            margin: 20px auto;
-            page-break-before: always;
-        }
-
-        .exam-info {
-            text-align: center;
-            font-size: 14px;
-            color: #666;
-            font-style: italic;
-            margin-bottom: 20px;
-            margin-left: 0;
-        }
-
-        .instructions {
-            text-align: center;
-            font-size: 14px;
-            color: #666;
-            font-style: italic;
-            margin-bottom: 10px;
-            margin-left: 0;
-        }
-
-        .assignment-details {
-            margin: 10px 0;
-            margin-left: 0;
-        }
-
-        .detail-row {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 12px;
-            line-height: 1.5;
-            font-size: 15px;
-        }
-
-        .detail-number {
-            font-weight: bold;
-            color: #000000;
-            min-width: 25px;
-            margin-right: 8px;
-        }
-
-        .detail-label {
-            font-weight: bold;
-            color: #000000;
-            min-width: 280px;
-            margin-right: 8px;
-        }
-
-        .detail-separator {
-            color: #000000;
-            margin-right: 8px;
-        }
-
-        .detail-value {
-            color: #000000;
-            padding: 2px 8px;
-            min-width: 180px;
-        }
-
-        .course-note {
-            font-size: 12px;
-            color: #666;
-            font-style: italic;
-            margin: 5px 0 15px 33px;
-        }
-
-        .submission-section {
-            margin-top: 60px;
-            padding-top: 20px;
-        }
-
-        .date-signature-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0;
-        }
-
-        .date-label {
-            font-weight: bold;
-            color: #000000;
-        }
-
-        .date-value {
-            color: #000000;
-            padding: 2px 8px;
-            min-width: 100px;
-        }
-
-        .signature-label {
-            color: #000000;
-            font-weight: bold;
-        }
-
-        /* Hidden canvas for signature processing */
-        #signatureCanvas {
-            display: none;
-        }
-
-
-
-        .download-section {
-            text-align: center;
-            margin: 30px 0;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .download-section h3 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        /* Download Page Styles */
-        .download-options {
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-            margin-top: 30px;
-        }
-
-        .download-option {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 12px;
-            border: 2px solid #e9ecef;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .download-option:hover {
-            border-color: #4CAF50;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .download-option h3 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 20px;
-        }
-
-        .download-option p {
-            color: #6c757d;
-            margin-bottom: 20px;
-            font-size: 16px;
-        }
-
-        .subject-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .subject-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 25px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 200px;
-        }
-
-        .subject-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        .download-all-btn {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            font-size: 18px;
-            padding: 20px 30px;
-            min-width: 300px;
-        }
-
-        .download-all-btn:hover {
-            background: linear-gradient(135deg, #45a049 0%, #388e3c 100%);
-        }
-
-        @media print {
-            .form-section, .button-group, .download-section {
-                display: none;
-            }
-            .certificate {
-                box-shadow: none;
-                border: 1px solid #000000;
-                margin: 0;
-                padding: 40px;
-                width: 210mm;
-                height: 297mm;
-                page-break-after: always;
-            }
+# Authentication routes
+@app.route("/api/register", methods=["POST"])
+def register():
+    try:
+        data = request.json
+        name = data.get("name")
+        email = data.get("email")
+        mobile = data.get("mobile")
+        password = data.get("password")
+        
+        if not all([name, email, mobile, password]):
+            return jsonify({"success": False, "error": "All fields are required"}), 400
+        
+        if len(password) < 6:
+            return jsonify({"success": False, "error": "Password must be at least 6 characters"}), 400
+        
+        result = db.register_user(name, email, mobile, password)
+        
+        if result["success"]:
+            return jsonify(result), 201
+        else:
+            return jsonify(result), 400
             
-            body {
-                margin: 0;
-                padding: 0;
-            }
-        }
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
-        @media (max-width: 768px) {
-            .form-row {
-                flex-direction: column;
-            }
-            .certificate {
-                padding: 30px;
-                margin: 40px;
-            }
-            .logo-section img {
-                width: 110px;
-                height: 110px;
-            }
-            .university-name {
-                font-size: 16px;
-            }
-            .regional-center {
-                font-size: 14px;
-            }
-            .detail-row {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .detail-label {
-                min-width: auto;
-                margin-bottom: 5px;
-            }
-            .detail-value {
-                min-width: auto;
-                width: 100%;
-            }
-            .radio-group, .checkbox-group {
-                flex-direction: column;
-                gap: 10px;
-            }
-        }
+@app.route("/api/login", methods=["POST"])
+def login():
+    try:
+        data = request.json
+        email = data.get("email")
+        password = data.get("password")
         
-        /* PDF-specific styling removed - now using jsPDF */
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Form Section -->
-        <div class="form-section" id="formSection">
-            <h2 class="form-title">Student Assignment</h2>
-            <p class="form-subtitle">Please fill in all the required details</p>
-            <form id="certificateForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="studentName" class="required">Full Name of Student</label>
-                        <input type="text" id="studentName" name="studentName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="enrollmentNumber" class="required">Enrollment Number</label>
-                        <input type="text" id="enrollmentNumber" name="enrollmentNumber" required>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="programSelection" class="required">Program Selection</label>
-                        <select id="programSelection" name="programSelection" required>
-                            <option value="">Select Program</option>
-                            <option value="MBA">MBA</option>
-                            <option value="BBA">BBA</option>
-                            <option value="MCA">MCA</option>
-                            <option value="BCA">BCA</option>
-                            <option value="B.Tech">B.Tech</option>
-                            <option value="M.Tech">M.Tech</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="semesterYear" class="required">Semester/Year</label>
-                        <select id="semesterYear" name="semesterYear" required>
-                            <option value="">Select program first</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="courseCode" class="required">Course Code</label>
-                        <select id="courseCode" name="courseCode" required>
-                            <option value="">Select semester/year first</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="mediumSelection" class="required">Medium Selection</label>
-                        <select id="mediumSelection" name="mediumSelection" required>
-                            <option value="">Select Medium</option>
-                            <option value="English">English</option>
-                            <option value="Hindi">Hindi</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="studyCenterCode" class="required">Study Center Code</label>
-                        <input type="text" id="studyCenterCode" name="studyCenterCode" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="studyCenterAddress" class="required">Name of Study Center with Complete Address</label>
-                        <select id="studyCenterAddress" name="studyCenterAddress" required>
-                            <option value="">Select a study center</option>
-                            <option value="Kolkata Main Center">Kolkata Main Center</option>
-                            <option value="Delhi Study Center">Delhi Study Center</option>
-                            <option value="Mumbai Study Center">Mumbai Study Center</option>
-                            <option value="Chennai Study Center">Chennai Study Center</option>
-                            <option value="Bangalore Study Center">Bangalore Study Center</option>
-                        </select>
-                    </div>
-
-
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="examType" class="required">Exam Type Selection</label>
-                        <div class="radio-group">
-                            <div class="radio-item">
-                                <input type="radio" id="examYearly" name="examType" value="Yearly" required>
-                                <label for="examYearly">Yearly</label>
-                            </div>
-                            <div class="radio-item">
-                                <input type="radio" id="examSemester" name="examType" value="Semester" required>
-                                <label for="examSemester">Semester</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="yearSelection" class="required">Year Selection</label>
-                        <select id="yearSelection" name="yearSelection" required>
-                            <option value="">Select year</option>
-                            <option value="2024">2024</option>
-                            <option value="2025">2025</option>
-                            <option value="2026">2026</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group full-width">
-                        <label class="required">Subjects Selection</label>
-                        <div class="checkbox-group" id="subjectsContainer">
-                            <p class="text-gray-600 italic">Please select program, semester/year, and course code first</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="mobileNumber" class="required">Mobile Number</label>
-                        <input type="tel" id="mobileNumber" name="mobileNumber" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="emailId" class="required">Email ID</label>
-                        <input type="email" id="emailId" name="emailId" required>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="idCard" class="required">Upload ID Card (JPG, PNG, WebP, AVIF)</label>
-                        <input type="file" id="idCard" name="idCard" accept=".jpg,.jpeg,.png,.webp,.avif" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="signature" class="required">Upload Signature (JPG, PNG, WebP, AVIF)</label>
-                        <input type="file" id="signature" name="signature" accept=".jpg,.jpeg,.png,.webp,.avif" required>
-                        <!-- Hidden canvas for signature processing -->
-                        <canvas id="signatureCanvas" style="display: none;"></canvas>
-                        
-
-                        
-
-                        
-
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="required">Has the same assignment been submitted anywhere?</label>
-                        <div class="radio-group">
-                            <div class="radio-item">
-                                <input type="radio" id="submittedYes" name="submittedElsewhere" value="Yes" required>
-                                <label for="submittedYes">Yes</label>
-                            </div>
-                            <div class="radio-item">
-                                <input type="radio" id="submittedNo" name="submittedElsewhere" value="No" required>
-                                <label for="submittedNo">No</label>
-                            </div>
-                        </div>
-                        
-                        <!-- Additional details input area (shown when Yes is selected) -->
-                        <div id="submissionDetailsArea" style="display: none; margin-top: 15px;">
-                            <label for="submissionDetails" style="font-size: 14px; color: #666;">Please provide details about where and when the assignment was submitted:</label>
-                            <textarea id="submissionDetails" name="submissionDetails" rows="3" placeholder="Enter details about previous submission (e.g., Study Centre, Date, etc.)" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; margin-top: 8px; resize: vertical;"></textarea>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="required">Cross-check confirmation: "I confirm the above details are correct."</label>
-                        <div class="radio-group">
-                            <div class="radio-item">
-                                <input type="radio" id="confirmYes" name="confirmation" value="Yes" required>
-                                <label for="confirmYes">Yes</label>
-                            </div>
-                            <div class="radio-item">
-                                <input type="radio" id="confirmNo" name="confirmation" value="No" required>
-                                <label for="confirmNo">No</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="button-group">
-                    <button type="submit" class="btn btn-primary">Pay & Generate Assignment</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Certificate Section - Hidden (only used for PDF generation) -->
-        <div id="pdfWrapper" class="hidden">
-            <div id="certificateContainer" class="w-[210mm] h-[297mm] flex items-center justify-center">
-                <div class="p-10 text-center border border-gray-300 bg-white shadow-lg">
-                    <div id="certificate">
-                        <!-- Header Row: Logos + Title -->
-                        <div class="flex justify-between items-center mb-6 w-full">
-                            <img src="https://raw.githubusercontent.com/payalgit933/ignou-logo/main/image2.jpg" alt="IGNOU Hindi Logo" class="w-[90px] h-[90px] object-contain flex-shrink-0">
-                            <div class="text-center flex-1 px-4">
-                                <h1 class="text-xl font-bold uppercase tracking-wide mb-2">INDIRA GANDHI NATIONAL OPEN UNIVERSITY</h1>
-                                <h2 class="text-base font-bold text-red-600">Regional Centre <span id="certRegionalCentre">KOLKATA</span></h2>
-                            </div>
-                            <img src="https://raw.githubusercontent.com/payalgit933/ignou-logo/main/image4.jpg" alt="IGNOU English Logo" class="w-[90px] h-[90px] object-contain flex-shrink-0">
-                        </div>
-
-                        <!-- Title Block -->
-                        <div class="text-center mb-8">
-                            <h3 class="text-lg font-bold underline mb-2">Format for Assignment Submission</h3>
-                            <p class="text-sm text-gray-600 italic mb-1">For Term End Exam June/December <span class="border-b border-gray-400 px-2">_____</span> (Year) <span class="border-b border-gray-400 px-2">_____</span></p>
-                            <p class="text-sm text-gray-600 italic">(Please read the instructions given below carefully before submitting assignments)</p>
-                        </div>
-
-                        <!-- Body Content: Two-column grid -->
-                        <div class="space-y-3 mb-8 ml-8">
-                            <div class="flex items-start">
-                                <span class="font-bold text-base w-8">1.</span>
-                                <span class="font-bold text-base w-80">Name of the Student</span>
-                                <span class="text-base mx-2">:</span>
-                                <span class="text-base border-b border-gray-400 px-2" id="certStudentName">_____</span>
-                            </div>
-                            
-                            <div class="flex items-start">
-                                <span class="font-bold text-base w-8">2.</span>
-                                <span class="font-bold text-base w-80">Enrollment Number</span>
-                                <span class="text-base mx-2">:</span>
-                                <span class="text-base border-b border-gray-400 px-2" id="certEnrollmentNumber">_____</span>
-                            </div>
-                            
-                            <div class="flex items-start">
-                                <span class="font-bold text-base w-8">3.</span>
-                                <span class="font-bold text-base w-80">Programme Code</span>
-                                <span class="text-base mx-2">:</span>
-                                <span class="text-base border-b border-gray-400 px-2" id="certProgramSelection">_____</span>
-                            </div>
-                            
-                            <div class="flex items-start">
-                                <span class="font-bold text-base w-8">4.</span>
-                                <span class="font-bold text-base w-80">Course Code</span>
-                                <span class="text-base mx-2">:</span>
-                                <span class="text-base border-b border-gray-400 px-2" id="certCourseCode">_____</span>
-                            </div>
-                            
-                            <div class="flex items-start">
-                                <span class="font-bold text-base w-8">5.</span>
-                                <span class="font-bold text-base w-80">Selected Subjects</span>
-                                <span class="text-base mx-2">:</span>
-                                <span class="text-base border-b border-gray-400 px-2" id="certSelectedSubjects">_____</span>
-                            </div>
-                            
-                            <div class="flex items-start">
-                                <span class="font-bold text-base w-8">6.</span>
-                                <span class="font-bold text-base w-80">Study Centre Code</span>
-                                <span class="text-base mx-2">:</span>
-                                <span class="text-base border-b border-gray-400 px-2" id="certStudyCenterCode">_____</span>
-                            </div>
-                            
-                            <div class="flex items-start">
-                                <span class="font-bold text-base w-8">7.</span>
-                                <span class="font-bold text-base w-80">Name of the Study Centre With complete address</span>
-                                <span class="text-base mx-2">:</span>
-                                <span class="text-base border-b border-gray-400 px-2" id="certStudyCenterAddress">_____</span>
-                            </div>
-                            
-                            <div class="flex items-start">
-                                <span class="font-bold text-base w-8">8.</span>
-                                <span class="font-bold text-base w-80">Mobile Number</span>
-                                <span class="text-base mx-2">:</span>
-                                <span class="text-base border-b border-gray-400 px-2" id="certMobileNumber">_____</span>
-                            </div>
-                            
-                            <div class="flex items-start">
-                                <span class="font-bold text-base w-8">9.</span>
-                                <span class="font-bold text-base w-80">E-mail ID</span>
-                                <span class="text-base mx-2">:</span>
-                                <span class="text-base border-b border-gray-400 px-2" id="certEmailId">_____</span>
-                            </div>
-                            
-                            <div class="flex items-start">
-                                <span class="font-bold text-base w-8">10.</span>
-                                <span class="font-bold text-base w-80">Details if this same assignment has been submitted anywhere else also</span>
-                                <span class="text-base mx-2">:</span>
-                                <span class="text-base border-b border-gray-400 px-2" id="certSubmittedElsewhere">_____</span>
-                            </div>
-                            
-                            <div class="flex items-start">
-                                <span class="font-bold text-base w-8">11.</span>
-                                <span class="font-bold text-base w-80">Above information is cross checked and it is correct: Yes/No</span>
-                                <span class="text-base mx-2">:</span>
-                                <span class="text-base border-b border-gray-400 px-2" id="certConfirmation">_____</span>
-                            </div>
-                        </div>
-
-                        <!-- Footer: Date and Signature -->
-                        <div class="flex justify-between items-end pt-16 border-t border-gray-300">
-                            <span class="font-bold text-base">Date of Submission: <span class="border-b border-gray-400 px-2" id="certSubmissionDate">_____</span></span>
-                            <div class="text-center">
-                                <img id="certStudentSignature" src="" alt="Student Signature" class="w-32 h-20 object-contain border border-gray-300 hidden mb-2">
-                                <span class="font-bold text-base block">(Signature of the student)</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Second Page: Student Photo -->
-                    <div class="page-break-before-always mt-8">
-                        <div class="text-center">
-                            <div class="flex justify-center">
-                                <img id="certStudentPhoto" src="" alt="Student Photo" class="w-48 h-64 object-cover border-2 border-gray-400 rounded-lg hidden">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        </div>
-
-        <!-- Download Section - New Page After Form Submission -->
-        <div id="downloadPage" class="form-section hidden">
-            <div class="text-center">
-                <h2 class="form-title">Assignment Generated Successfully!</h2>
-                <p class="form-subtitle">Choose your download option below</p>
-            </div>
+        if not email or not password:
+            return jsonify({"success": False, "error": "Email and password are required"}), 400
+        
+        result = db.login_user(email, password)
+        
+        if result["success"]:
+            session['user_token'] = result['session_token']
+            session['user_data'] = result['user']
+            return jsonify(result)
+        else:
+            return jsonify(result), 401
             
-            <div class="download-options">
-                <!-- Download All Subjects as ZIP -->
-                <div class="download-option">
-                    <h3>📦 Download All Subjects</h3>
-                    <p>Get all selected subjects in a single ZIP file</p>
-                    <button id="downloadAllZip" class="btn btn-primary download-all-btn">
-                        📥 Download All Subjects (ZIP)
-                    </button>
-                </div>
-                
-                <!-- Individual Subject Downloads -->
-                <div class="download-option">
-                    <h3>📚 Individual Subject Downloads</h3>
-                    <p>Download specific subject assignments</p>
-                    <div id="individualSubjectButtons" class="subject-buttons">
-                        <!-- Individual subject buttons will be generated here -->
-                    </div>
-                </div>
-                
-                <!-- Back to Form -->
-                <div class="download-option">
-                    <button id="backToForm" class="btn btn-secondary">
-                        ← Back to Form
-                    </button>
-                </div>
-            </div>
-        </div>
-        </div>
-    </div>
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
-    <script>
-        // Global variable to store the transparent signature PNG
-        window.transparentSignature = null;
+@app.route("/api/logout", methods=["POST"])
+def logout():
+    try:
+        user_token = session.get('user_token')
+        if user_token:
+            db.logout_user(user_token)
+            session.clear()
+        return jsonify({"success": True, "message": "Logged out successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/profile")
+def get_profile():
+    try:
+        user_token = session.get('user_token')
+        if not user_token:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
         
-        // Remove.bg API configuration
-        window.removeBgApiKey = 'px2zysgmbvcxprf'; // Stored API key
+        result = db.verify_session(user_token)
+        if result["success"]:
+            return jsonify(result)
+        else:
+            session.clear()
+            return jsonify({"success": False, "error": "Session expired"}), 401
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Protected route decorator
+def require_auth(f):
+    def decorated_function(*args, **kwargs):
+        user_token = session.get('user_token')
+        if not user_token:
+            return jsonify({"success": False, "error": "Authentication required"}), 401
         
-        // Subject to PDF mapping for automatic attachment - using secure endpoint
-        const subjectPDFMapping = {
-            'Mathematics': '/get-pdf/MMPC-001',
-            'Computer Science': '/get-pdf/MMPC-002',
-            'Economics': '/get-pdf/MMPC-003',
-            'Physics': '/get-pdf/MMPC-004',
-            'Chemistry': '/get-pdf/MMPC-005',
-            'Biology': '/get-pdf/MMPC-006',
-            'Business Studies': '/get-pdf/MMPC-007',
-            'English': '/get-pdf/MMPC-008'
-        };
+        result = db.verify_session(user_token)
+        if not result["success"]:
+            session.clear()
+            return jsonify({"success": False, "error": "Session expired"}), 401
         
-        // Function to merge PDFs
-        async function mergePDFs(generatedPDFBytes, subjectName) {
-            try {
-                console.log('Starting PDF merge process...');
-                console.log('PDFLib available:', typeof PDFLib);
-                console.log('Subject name:', subjectName);
-                
-                // Wait for PDFLib to be available
-                let attempts = 0;
-                while (typeof PDFLib === 'undefined' && attempts < 10) {
-                    console.log(`Waiting for PDFLib to load... attempt ${attempts + 1}`);
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    attempts++;
-                }
-                
-                if (typeof PDFLib === 'undefined') {
-                    throw new Error('PDFLib library not loaded after waiting');
-                }
-                
-                console.log('PDFLib loaded successfully');
-                
-                const { PDFDocument } = PDFLib;
-                console.log('PDFDocument extracted:', typeof PDFDocument);
-                
-                // Create a new PDF document for merging
-                const mergedPdf = await PDFDocument.create();
-                console.log('Merged PDF document created');
-                
-                // Add the generated PDF (first page)
-                const generatedPdf = await PDFDocument.load(generatedPDFBytes);
-                console.log('Generated PDF loaded, pages:', generatedPdf.getPageCount());
-                const generatedPages = await mergedPdf.copyPages(generatedPdf, generatedPdf.getPageIndices());
-                generatedPages.forEach(page => mergedPdf.addPage(page));
-                console.log('Generated PDF pages added to merged document');
-                
-                // Get the PDF file to attach based on subject
-                const pdfToAttach = subjectPDFMapping[subjectName] || '/get-pdf/MMPC-001';
-                console.log(`Attaching PDF: ${pdfToAttach} for subject: ${subjectName}`);
-                console.log('Available subjects:', Object.keys(subjectPDFMapping));
-                console.log('Subject mapping for this subject:', subjectPDFMapping[subjectName]);
-                
-                try {
-                    // Fetch the subject-specific PDF from secure endpoint
-                    console.log(`Fetching PDF from: ${pdfToAttach}`);
-                    const response = await fetch(pdfToAttach, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/pdf',
-                        },
-                        credentials: 'include' // Include cookies for session authentication
-                    });
-                    console.log('Fetch response status:', response.status, response.ok);
-                    
-                    if (!response.ok) {
-                        if (response.status === 403) {
-                            throw new Error('Unauthorized access. Payment required to access PDFs.');
-                        }
-                        throw new Error(`Failed to fetch ${pdfToAttach}: ${response.status} ${response.statusText}`);
-                    }
-                    
-                    const subjectPDFBytes = await response.arrayBuffer();
-                    console.log('Subject PDF bytes received:', subjectPDFBytes.byteLength);
-                    
-                    const subjectPdf = await PDFDocument.load(subjectPDFBytes);
-                    console.log('Subject PDF loaded, pages:', subjectPdf.getPageCount());
-                    
-                    // Add all pages from the subject PDF
-                    const subjectPages = await mergedPdf.copyPages(subjectPdf, subjectPdf.getPageIndices());
-                    subjectPages.forEach(page => mergedPdf.addPage(page));
-                    
-                    console.log(`Successfully merged ${subjectPages.length} pages from ${pdfToAttach}`);
-                    console.log('Total pages in merged PDF:', mergedPdf.getPageCount());
-                    
-                } catch (error) {
-                    console.warn(`Could not attach ${pdfToAttach}:`, error.message);
-                    console.log('Proceeding with generated PDF only');
-                }
-                
-                // Save the merged PDF
-                console.log('Saving merged PDF...');
-                const mergedPdfBytes = await mergedPdf.save();
-                console.log('Merged PDF saved, size:', mergedPdfBytes.byteLength);
-                return mergedPdfBytes;
-                
-            } catch (error) {
-                console.error('PDF merging failed:', error);
-                console.error('Error stack:', error.stack);
-                // Return original PDF if merging fails
-                return generatedPDFBytes;
-            }
-        }
-        
-        // Helper function to convert array buffer to base64
-        function arrayBufferToBase64(buffer) {
-            let binary = "";
-            const bytes = new Uint8Array(buffer);
-            const len = bytes.byteLength;
-            for (let i = 0; i < len; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            return window.btoa(binary);
-        }
-        
-        // Remove.bg API function for professional background removal
-        async function removeBackground(base64Img, apiKey) {
-            if (!base64Img) return null;
-            
-            try {
-                const base64Data = base64Img.replace(/^data:image\/\w+;base64,/, "");
-                
-                const formData = new FormData();
-                formData.append("image_file_b64", base64Data);
-                formData.append("size", "auto");
-                formData.append("format", "png");
-                
-                const res = await fetch("https://api.remove.bg/v1.0/removebg", {
-                    method: 'POST',
-                    headers: {
-                        "X-Api-Key": apiKey,
-                    },
-                    body: formData
-                });
-                
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                
-                const arrayBuffer = await res.arrayBuffer();
-                const base64Result = `data:image/png;base64,${arrayBufferToBase64(arrayBuffer)}`;
-                return base64Result;
-                
-            } catch (err) {
-                console.error("remove.bg error:", err.message);
-                return base64Img; // fallback to original image
-            }
-        }
+        return f(*args, **kwargs)
+    decorated_function.__name__ = f.__name__
+    return decorated_function
 
-        // Function to convert signature to transparent PNG with better background removal
-        function convertSignatureToTransparentPNG(file) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = function () {
-                    const canvas = document.getElementById("signatureCanvas");
-                    const ctx = canvas.getContext("2d");
+# Route to serve login page
+@app.route("/login")
+def login_page():
+    return send_from_directory('.', 'login.html')
 
-                    canvas.width = img.width;
-                    canvas.height = img.height;
+# Route to serve register page
+@app.route("/register")
+def register_page():
+    return send_from_directory('.', 'register.html')
 
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, 0, 0);
+# Logout route
+@app.route("/logout")
+def logout_page():
+    try:
+        user_token = session.get('user_token')
+        if user_token:
+            db.logout_user(user_token)
+            session.clear()
+        return redirect('/login')
+    except Exception as e:
+        return redirect('/login')
 
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const data = imageData.data;
+# User dashboard route
+@app.route("/dashboard")
+@require_auth
+def dashboard():
+    try:
+        user_token = session.get('user_token')
+        result = db.verify_session(user_token)
+        if result["success"]:
+            user_data = result["user"]
+            return jsonify({
+                "success": True,
+                "user": user_data,
+                "message": "Welcome to your dashboard"
+            })
+        else:
+            return jsonify({"success": False, "error": "Session expired"}), 401
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
-                    let transparentPixels = 0;
+# Test payment route for debugging
+@app.route("/test-payment")
+def test_payment():
+    return jsonify({
+        "message": "Payment system is accessible",
+        "status": "success",
+        "payment_sessions_count": len(getattr(app, 'payment_sessions', {}))
+    })
 
-                    // Adjustable threshold
-                    const strongThreshold = 240; // very light (almost white) → fully transparent
-                    const softThreshold = 200;  // light gray/off-white → partially transparent
-
-                    for (let i = 0; i < data.length; i += 4) {
-                        const r = data[i];
-                        const g = data[i + 1];
-                        const b = data[i + 2];
-                        const brightness = (r + g + b) / 3;
-
-                        if (brightness > strongThreshold) {
-                            // Pure white → fully transparent
-                            data[i + 3] = 0;
-                            transparentPixels++;
-                        } else if (brightness > softThreshold) {
-                            // Near-white → soften alpha instead of full removal
-                            const fade = (brightness - softThreshold) / (strongThreshold - softThreshold);
-                            data[i + 3] = data[i + 3] * (1 - fade);
-                        }
-                    }
-
-                    console.log(
-                        `Signature transparency processed: ${transparentPixels} pure-white pixels removed.`
-                    );
-
-                    ctx.putImageData(imageData, 0, 0);
-
-                    // Export PNG with transparency
-                    const transparentPNG = canvas.toDataURL("image/png", 1.0);
-                    window.transparentSignature = transparentPNG;
-
-                    resolve(transparentPNG);
-                };
-                img.onerror = reject;
-                img.src = URL.createObjectURL(file);
-            });
-        }
-
-        // Form submission handler
-        document.getElementById('certificateForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            console.log('Form submission intercepted by JavaScript');
-            initiatePaymentAndGenerateAssignment();
-        });
-
-
-
-        // Handle exam type selection to show/hide semester number
-        document.querySelectorAll('input[name="examType"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const semesterGroup = document.getElementById('semesterNumberGroup');
-                if (this.value === 'Semester') {
-                    semesterGroup.style.display = 'block';
-                    document.getElementById('semesterNumber').required = true;
-                } else {
-                    semesterGroup.style.display = 'none';
-                    document.getElementById('semesterNumber').required = false;
-                }
-            });
-        });
-
-        // Handle assignment submission elsewhere selection to show/hide details input
-        document.querySelectorAll('input[name="submittedElsewhere"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const detailsArea = document.getElementById('submissionDetailsArea');
-                const detailsInput = document.getElementById('submissionDetails');
-                
-                if (this.value === 'Yes') {
-                    detailsArea.style.display = 'block';
-                    detailsInput.required = true;
-            } else {
-                    detailsArea.style.display = 'none';
-                    detailsInput.required = false;
-                    detailsInput.value = ''; // Clear the input when hiding
-                }
-            });
-        });
-
-        // Cascading dropdown data structure
-        const programData = {
-            'MBA': {
-                '1st Year': {
-                    'MMPC-001': 'Management Functions and Behaviour',
-                    'MMPC-002': 'Human Resource Management',
-                    'MMPC-003': 'Economic and Social Environment',
-                    'MMPC-004': 'Accounting and Finance for Managers'
-                },
-                '2nd Year': {
-                    'MMPC-005': 'Marketing Management',
-                    'MMPC-006': 'Information Systems for Managers',
-                    'MMPC-007': 'Quantitative Analysis for Managerial Applications',
-                    'MMPC-008': 'Operations Management'
-                }
+# Test Cashfree credentials route
+@app.route("/test-cashfree-credentials")
+def test_cashfree_credentials():
+    try:
+        # Test with minimal payload
+        test_payload = {
+            "order_id": f"TEST{int(time.time())}",
+            "order_amount": 1,  # ₹1
+            "order_currency": "INR",
+            "customer_details": {
+                "customer_id": f"TESTUSER{int(time.time())}",
+                "customer_name": "Test User",
+                "customer_email": "test@example.com",
+                "customer_phone": "9999999999"
             },
-            'BBA': {
-                '1st Year': {
-                    'BBAR-101': 'Business Communication',
-                    'BBAR-102': 'Business Mathematics',
-                    'BBAR-103': 'Principles of Management'
-                },
-                '2nd Year': {
-                    'BBAR-104': 'Business Environment',
-                    'BBAR-105': 'Computer Applications in Business',
-                    'BBAR-106': 'Financial Accounting'
-                }
+            "order_meta": {
+                "return_url": "https://your-render-app-url.onrender.com/payment-success",
+                "notify_url": "https://your-render-app-url.onrender.com/payment-callback"
+            }
+        }
+        
+        headers = {
+            "x-client-id": CASHFREE_APP_ID,
+            "x-client-secret": CASHFREE_SECRET_KEY,
+            "x-api-version": "2023-08-01",
+            "Content-Type": "application/json"
+        }
+        
+        print(f"🧪 Testing Cashfree credentials...")
+        print(f"🧪 APP_ID: {CASHFREE_APP_ID}")
+        print(f"🧪 SECRET_KEY: {CASHFREE_SECRET_KEY[:10]}...{CASHFREE_SECRET_KEY[-10:]}")
+        print(f"🧪 API_URL: {CASHFREE_BASE_URL}")
+        print(f"🧪 Test payload: {test_payload}")
+        
+        # Make test request
+        response = requests.post(CASHFREE_BASE_URL, headers=headers, json=test_payload)
+        
+        return jsonify({
+            "success": True,
+            "message": "Cashfree credentials test completed",
+            "status_code": response.status_code,
+            "response": response.text[:500] if response.text else "No response text",
+            "credentials": {
+                "app_id": CASHFREE_APP_ID,
+                "secret_key_length": len(CASHFREE_SECRET_KEY),
+                "api_url": CASHFREE_BASE_URL
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "credentials": {
+                "app_id": CASHFREE_APP_ID,
+                "secret_key_length": len(CASHFREE_SECRET_KEY),
+                "api_url": CASHFREE_BASE_URL
+            }
+        }), 500
+
+# Check Cashfree account configuration
+@app.route("/check-cashfree-config")
+def check_cashfree_config():
+    try:
+        # Check account configuration
+        headers = {
+            "x-client-id": CASHFREE_APP_ID,
+            "x-client-secret": CASHFREE_SECRET_KEY,
+            "x-api-version": "2023-08-01",
+            "Content-Type": "application/json"
+        }
+        
+        # Try to get account info
+        account_url = f"https://api.cashfree.com/pg/merchants/{CASHFREE_APP_ID}"
+        response = requests.get(account_url, headers=headers)
+        
+        return jsonify({
+            "success": True,
+            "message": "Cashfree account configuration check",
+            "status_code": response.status_code,
+            "account_info": response.json() if response.status_code == 200 else response.text,
+            "credentials": {
+                "app_id": CASHFREE_APP_ID,
+                "secret_key_length": len(CASHFREE_SECRET_KEY),
+                "api_url": CASHFREE_BASE_URL
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "credentials": {
+                "app_id": CASHFREE_APP_ID,
+                "secret_key_length": len(CASHFREE_SECRET_KEY),
+                "api_url": CASHFREE_BASE_URL
+            }
+        }), 500
+
+
+# Route to initiate payment for assignments (now protected)
+@app.route("/initiate-payment", methods=["POST"])
+@require_auth
+def initiate_payment():
+    try:
+        data = request.json
+        subjects = data.get("subjects", [])
+        student_name = data.get("studentName", "")
+        enrollment = data.get("enrollmentNumber", "")
+        programme_code = data.get("programSelection", "")
+        semester_year = data.get("semesterYear", "")
+        course_code = data.get("courseCode", "")
+        study_center_code = data.get("studyCenterCode", "")
+        study_center_name = data.get("studyCenterAddress", "")
+        medium_selection = data.get("mediumSelection", "")
+        exam_type = data.get("examType", "")
+        year_selection = data.get("yearSelection", "")
+        mobile_number = data.get("mobileNumber", "")
+        email_id = data.get("emailId", "")
+
+        if not subjects or not student_name or not enrollment:
+            return jsonify({"success": False, "error": "Missing required fields"}), 400
+
+        amount_rupees = max(len(subjects), 1)  # Minimum ₹1, ₹1 per subject
+
+        # ✅ Create unique orderId
+        order_id = f"ORD{int(time.time())}"
+        
+        # Validate required data
+        customer_email = email_id if email_id else "test@example.com"
+        customer_phone = mobile_number if mobile_number else "9999999999"
+        
+        # Ensure valid email format
+        if not customer_email or "@" not in customer_email:
+            customer_email = "heypayal12345@gmail.com"
+        
+        # Ensure valid phone format (10 digits minimum)
+        if not customer_phone or len(customer_phone.replace("+", "").replace("-", "").replace(" ", "")) < 10:
+            customer_phone = "9334273197"
+        
+        print(f"🔍 Payment data validation:")
+        print(f"   Student: {student_name}")
+        print(f"   Enrollment: {enrollment}")
+        print(f"   Programme Code: {programme_code}")
+        print(f"   Course Code: {course_code}")
+        print(f"   Study Center Code: {study_center_code}")
+        print(f"   Study Center Name: {study_center_name}")
+        print(f"   Email: {customer_email}")
+        print(f"   Phone: {customer_phone}")
+        print(f"   Amount: ₹{amount_rupees}")
+        print(f"   Order ID: {order_id}")
+
+        payload = {
+            "order_id": order_id,
+            "order_amount": amount_rupees,
+            "order_currency": "INR",
+            "customer_details": {
+                "customer_id": f"CUST{int(time.time())}",
+                "customer_name": student_name,
+                "customer_email": customer_email,
+                "customer_phone": customer_phone
             },
-            'MCA': {
-                '1st Year': {
-                    'MCS-011': 'Problem Solving and Programming',
-                    'MCS-012': 'Computer Organisation and Assembly Language Programming',
-                    'MCS-013': 'Discrete Mathematics'
-                },
-                '2nd Year': {
-                    'MCS-021': 'Data and File Structures',
-                    'MCS-022': 'Operating System Concepts and Networking Management',
-                    'MCS-023': 'Introduction to Database Management Systems'
-                }
-            },
-            'BCA': {
-                '1st Year': {
-                    'BCS-011': 'Computer Basics and PC Software',
-                    'BCS-012': 'Mathematics',
-                    'BCS-013': 'Computer Organization'
-                },
-                '2nd Year': {
-                    'BCS-021': 'C++ Programming and Data Structures',
-                    'BCS-022': 'Assembly Language Programming',
-                    'BCS-023': 'Database Management Systems'
-                }
-            },
-            'B.Tech': {
-                '1st Year': {
-                    'BT-101': 'Mathematics-I',
-                    'BT-102': 'Physics',
-                    'BT-103': 'Chemistry'
-                },
-                '2nd Year': {
-                    'BT-201': 'Mathematics-II',
-                    'BT-202': 'Data Structures',
-                    'BT-203': 'Digital Electronics'
-                }
-            },
-            'M.Tech': {
-                '1st Year': {
-                    'MT-501': 'Advanced Mathematics',
-                    'MT-502': 'Advanced Data Structures and Algorithms',
-                    'MT-503': 'Computer Networks'
-                },
-                '2nd Year': {
-                    'MT-504': 'Database Systems',
-                    'MT-505': 'Software Engineering',
-                    'MT-506': 'Machine Learning'
-                }
-            }
-        };
-
-        // Handle program selection to populate semester/year
-        document.getElementById('programSelection').addEventListener('change', function() {
-            const semesterYearSelect = document.getElementById('semesterYear');
-            const courseCodeSelect = document.getElementById('courseCode');
-            const subjectsContainer = document.getElementById('subjectsContainer');
-            const selectedProgram = this.value;
-            
-            // Clear dependent dropdowns
-            semesterYearSelect.innerHTML = '<option value="">Select semester/year</option>';
-            courseCodeSelect.innerHTML = '<option value="">Select semester/year first</option>';
-            subjectsContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, semester/year, and course code first</p>';
-            
-            if (selectedProgram && programData[selectedProgram]) {
-                // Add semester/year options
-                Object.keys(programData[selectedProgram]).forEach(year => {
-                    const option = document.createElement('option');
-                    option.value = year;
-                    option.textContent = year;
-                    semesterYearSelect.appendChild(option);
-                });
-            }
-        });
-
-        // Handle semester/year selection to populate course codes
-        document.getElementById('semesterYear').addEventListener('change', function() {
-            const programSelect = document.getElementById('programSelection');
-            const courseCodeSelect = document.getElementById('courseCode');
-            const subjectsContainer = document.getElementById('subjectsContainer');
-            const selectedProgram = programSelect.value;
-            const selectedYear = this.value;
-            
-            // Clear dependent dropdowns
-            courseCodeSelect.innerHTML = '<option value="">Select course code</option>';
-            subjectsContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, semester/year, and course code first</p>';
-            
-            if (selectedProgram && selectedYear && programData[selectedProgram] && programData[selectedProgram][selectedYear]) {
-                // Add course codes for selected program and year
-                Object.entries(programData[selectedProgram][selectedYear]).forEach(([code, name]) => {
-                    const option = document.createElement('option');
-                    option.value = code;
-                    option.textContent = `${code} - ${name}`;
-                    courseCodeSelect.appendChild(option);
-                });
-            }
-        });
-
-        // Handle course code selection to populate subjects
-        document.getElementById('courseCode').addEventListener('change', function() {
-            const subjectsContainer = document.getElementById('subjectsContainer');
-            const selectedCourseCode = this.value;
-            
-            if (selectedCourseCode) {
-                // Generate subject checkboxes based on course code
-                subjectsContainer.innerHTML = '';
-                
-                // Get the course name for display
-                const programSelect = document.getElementById('programSelection');
-                const semesterYearSelect = document.getElementById('semesterYear');
-                const selectedProgram = programSelect.value;
-                const selectedYear = semesterYearSelect.value;
-                
-                if (programData[selectedProgram] && programData[selectedProgram][selectedYear] && programData[selectedProgram][selectedYear][selectedCourseCode]) {
-                    const courseName = programData[selectedProgram][selectedYear][selectedCourseCode];
-                    
-                    // Create a single checkbox for the selected course
-                    const checkboxDiv = document.createElement('div');
-                    checkboxDiv.className = 'checkbox-item';
-                    checkboxDiv.innerHTML = `
-                        <input type="checkbox" id="subject-${selectedCourseCode}" name="subjects" value="${courseName}" checked>
-                        <label for="subject-${selectedCourseCode}">${selectedCourseCode} - ${courseName}</label>
-                    `;
-                    subjectsContainer.appendChild(checkboxDiv);
-                }
-            } else {
-                subjectsContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, semester/year, and course code first</p>';
-            }
-        });
-
-        // Handle signature file selection to convert to transparent PNG
-        document.getElementById('signature').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file && (file.type.startsWith('image/'))) {
-                console.log('Signature file selected:', file.name, file.type, file.size);
-                
-                // Automatically use remove.bg API for professional background removal
-                const apiKey = window.removeBgApiKey;
-                console.log('Using remove.bg API for professional background removal');
-                
-                // Convert file to base64 first
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const base64Img = e.target.result;
-                    console.log('Processing with remove.bg API...');
-                    
-                    removeBackground(base64Img, apiKey).then(transparentPNG => {
-                        window.transparentSignature = transparentPNG;
-                        console.log('Remove.bg processing completed successfully');
-                        console.log('Professional transparent signature size:', transparentPNG.length);
-                    }).catch(error => {
-                        console.error('Remove.bg processing failed:', error);
-                        // Fallback to local processing
-                        convertSignatureToTransparentPNG(file).then(transparentPNG => {
-                            console.log('Fallback to local processing successful');
-                        }).catch(localError => {
-                            console.error('Local processing also failed:', localError);
-                        });
-                    });
-                };
-                reader.readAsDataURL(file);
-            } else {
-                console.log('No valid signature file selected');
-            }
-        });
-
-
-
-
-
-
-
-        // Payment initiation and assignment generation function
-        async function initiatePaymentAndGenerateAssignment() {
-            try {
-                console.log('Starting payment initiation...');
-                
-                // Check if user is authenticated
-                const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-                if (!isLoggedIn) {
-                    alert('Please log in to continue with payment.');
-                    window.location.href = '/login';
-                    return;
-                }
-                
-                const formData = new FormData(document.getElementById('certificateForm'));
-                
-                // Get selected subjects
-                const selectedSubjects = formData.getAll('subjects');
-                if (selectedSubjects.length === 0) {
-                    alert('Please select at least one subject before proceeding.');
-                    return;
-                }
-                
-                // Get required form data
-                const studentName = formData.get('studentName');
-                const enrollmentNumber = formData.get('enrollmentNumber');
-                const emailId = formData.get('emailId');
-                const mobileNumber = formData.get('mobileNumber');
-                
-                if (!studentName || !enrollmentNumber || !emailId || !mobileNumber) {
-                    alert('Please fill in all required fields before proceeding.');
-                    return;
-                }
-                
-                // Calculate amount (₹1 per subject)
-                const amount = selectedSubjects.length;
-                
-                // Show payment confirmation
-                const confirmPayment = confirm(
-                    `Payment Confirmation:\n\n` +
-                    `Selected Subjects: ${selectedSubjects.join(', ')}\n` +
-                    `Amount: ₹${amount}\n` +
-                    `Student: ${studentName}\n` +
-                    `Enrollment: ${enrollmentNumber}\n\n` +
-                    `Do you want to proceed with payment?`
-                );
-                
-                if (!confirmPayment) {
-                    return;
-                }
-                
-                // Show loading state
-                const submitButton = document.querySelector('button[type="submit"]');
-                const originalText = submitButton.textContent;
-                submitButton.textContent = '⏳ Processing Payment...';
-                submitButton.disabled = true;
-                
-                // Prepare payment data with all form fields
-                const paymentData = {
-                    subjects: selectedSubjects,
-                    studentName: studentName,
-                    enrollmentNumber: enrollmentNumber,
-                    emailId: emailId,
-                    mobileNumber: mobileNumber,
-                    programSelection: formData.get('programSelection'),
-                    semesterYear: formData.get('semesterYear'),
-                    courseCode: formData.get('courseCode'),
-                    studyCenterCode: formData.get('studyCenterCode'),
-                    studyCenterAddress: formData.get('studyCenterAddress'),
-                    mediumSelection: formData.get('mediumSelection'),
-                    examType: formData.get('examType'),
-                    yearSelection: formData.get('yearSelection'),
-                    submittedElsewhere: formData.get('submittedElsewhere'),
-                    submissionDetails: formData.get('submissionDetails'),
-                    confirmation: formData.get('confirmation'),
-                    amount: amount
-                };
-                
-                console.log('Initiating payment with data:', paymentData);
-                
-                // Call payment initiation endpoint
-                const response = await fetch('/initiate-payment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(paymentData)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    console.log('Payment initiated successfully:', result);
-                    
-                    // Store payment data for later use
-                    window.paymentData = {
-                        transactionId: result.transactionId,
-                        amount: result.amount,
-                        subjects: result.subjects,
-                        paymentUrl: result.paymentUrl,
-                        paymentSessionId: result.paymentSessionId
-                    };
-                    
-                    // Store student data in localStorage for payment success
-                    const storePaymentData = async () => {
-                        const paymentData = {
-                            studentName: studentName,
-                            enrollmentNumber: enrollmentNumber,
-                            emailId: emailId,
-                            mobileNumber: mobileNumber,
-                            programSelection: formData.get('programSelection'),
-                            semesterYear: formData.get('semesterYear'),
-                            courseCode: formData.get('courseCode'),
-                            studyCenterCode: formData.get('studyCenterCode'),
-                            studyCenterAddress: formData.get('studyCenterAddress'),
-                            mediumSelection: formData.get('mediumSelection'),
-                            examType: formData.get('examType'),
-                            yearSelection: formData.get('yearSelection'),
-                            submittedElsewhere: formData.get('submittedElsewhere'),
-                            submissionDetails: formData.get('submissionDetails'),
-                            confirmation: formData.get('confirmation'),
-                            subjects: selectedSubjects,
-                            amount: amount
-                        };
-
-                        // Handle ID card photo
-                        const idCardFile = formData.get('idCard');
-                        if (idCardFile && idCardFile.size > 0) {
-                            try {
-                                const idCardDataUrl = await fileToDataURL(idCardFile);
-                                paymentData.idCardPhoto = idCardDataUrl;
-                            } catch (e) {
-                                console.warn("ID card photo conversion failed:", e);
-                            }
-                        }
-
-                        // Handle signature photo
-                        if (window.transparentSignature) {
-                            paymentData.signaturePhoto = window.transparentSignature;
-                        } else {
-                            const signatureFile = formData.get('signature');
-                            if (signatureFile && signatureFile.size > 0) {
-                                try {
-                                    const signatureDataUrl = await fileToDataURL(signatureFile);
-                                    paymentData.signaturePhoto = signatureDataUrl;
-                                } catch (e) {
-                                    console.warn("Signature photo conversion failed:", e);
-                                }
-                            }
-                        }
-
-                        localStorage.setItem('paymentStudentData', JSON.stringify(paymentData));
-                    };
-
-                    await storePaymentData();
-                    
-                    // Initialize Cashfree SDK and redirect to payment
-                    try {
-                        const cashfree = Cashfree({
-                            mode: "production"
-                        });
-                        
-                        let checkoutOptions = {
-                            paymentSessionId: result.paymentSessionId,
-                            redirectTarget: "_self"
-                        };
-                        
-                        cashfree.checkout(checkoutOptions);
-                        
-                    } catch (error) {
-                        console.error('Cashfree SDK error:', error);
-                        // Fallback to direct redirect
-                        window.location.href = result.paymentUrl;
-                    }
-                    
-                } else {
-                    console.error('Payment initiation failed:', result);
-                    
-                    // Check if it's an authentication error
-                    if (response.status === 401 || response.status === 403) {
-                        alert('Please log in to continue with payment.');
-                        window.location.href = '/login';
-                        return;
-                    }
-                    
-                    alert(`Payment initiation failed: ${result.error || 'Unknown error'}`);
-                    
-                    // Reset button
-                    submitButton.textContent = originalText;
-                    submitButton.disabled = false;
-                }
-                
-            } catch (error) {
-                console.error('Error initiating payment:', error);
-                alert('An error occurred while initiating payment. Please try again.');
-                
-                // Reset button
-                const submitButton = document.querySelector('button[type="submit"]');
-                submitButton.textContent = 'Pay & Generate Assignment';
-                submitButton.disabled = false;
+            "order_meta": {
+                "return_url": "https://ignou-assignment-portal.onrender.com/payment-success?order_id={order_id}",
+                "notify_url": "https://ignou-assignment-portal.onrender.com/payment-callback"
             }
         }
 
-        // Generate assignment function (now called after payment success)
-        async function generateAssignment() {
-            const formData = new FormData(document.getElementById('certificateForm'));
-            
-            // Update certificate fields
-            document.getElementById('certStudentName').textContent = formData.get('studentName') || '_________________';
-            document.getElementById('certEnrollmentNumber').textContent = formData.get('enrollmentNumber') || '_________________';
-            document.getElementById('certProgramSelection').textContent = formData.get('programSelection') || '_________________';
-            
-            // Handle selected subjects
-            const selectedSubjects = formData.getAll('subjects');
-            if (selectedSubjects.length > 0) {
-                document.getElementById('certSelectedSubjects').textContent = selectedSubjects.join(', ');
-            } else {
-                document.getElementById('certSelectedSubjects').textContent = '_________________';
-            }
-            document.getElementById('certStudyCenterCode').textContent = formData.get('studyCenterCode') || '_________________';
-            document.getElementById('certStudyCenterAddress').textContent = formData.get('studyCenterAddress') || '_________________';
-            
-            // Auto-update Regional Centre based on selected Study Center
-            const selectedStudyCenter = formData.get('studyCenterAddress');
-            if (selectedStudyCenter) {
-                let regionalCentre = 'KOLKATA'; // Default
-                if (selectedStudyCenter.includes('Delhi')) {
-                    regionalCentre = 'DELHI';
-                } else if (selectedStudyCenter.includes('Mumbai')) {
-                    regionalCentre = 'MUMBAI';
-                } else if (selectedStudyCenter.includes('Chennai')) {
-                    regionalCentre = 'CHENNAI';
-                } else if (selectedStudyCenter.includes('Bangalore')) {
-                    regionalCentre = 'BANGALORE';
-                } else if (selectedStudyCenter.includes('Kolkata')) {
-                    regionalCentre = 'KOLKATA';
-                }
-                document.getElementById('certRegionalCentre').textContent = regionalCentre;
-            }
-            
-            document.getElementById('certMobileNumber').textContent = formData.get('mobileNumber') || '_________________';
-            document.getElementById('certEmailId').textContent = formData.get('emailId') || '_________________';
-            // Handle submission elsewhere with details
-            const submittedElsewhere = formData.get('submittedElsewhere');
-            const submissionDetails = formData.get('submissionDetails');
-            
-            if (submittedElsewhere === 'Yes' && submissionDetails) {
-                document.getElementById('certSubmittedElsewhere').textContent = `Yes - ${submissionDetails}`;
-            } else {
-                document.getElementById('certSubmittedElsewhere').textContent = submittedElsewhere || '_________________';
-            }
-            
-            document.getElementById('certConfirmation').textContent = formData.get('confirmation') || '_________________';
-            
-            // Handle student photo (from ID Card upload)
-            const photoFile = document.getElementById('idCard').files[0];
-            if (photoFile) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const photoImg = document.getElementById('certStudentPhoto');
-                    photoImg.src = e.target.result;
-                    photoImg.classList.remove('hidden');
-                };
-                reader.readAsDataURL(photoFile);
-            }
-            
-            // Handle student signature - ensure it's processed before PDF generation
-            const signatureFile = document.getElementById('signature').files[0];
-            if (signatureFile) {
-                try {
-                    // Wait for signature conversion to complete
-                    await convertSignatureToTransparentPNG(signatureFile);
-                    const signatureImg = document.getElementById('certStudentSignature');
-                    signatureImg.src = window.transparentSignature;
-                    signatureImg.classList.remove('hidden');
-                    console.log('Signature processed and ready for PDF generation');
-                } catch (error) {
-                    console.error('Signature conversion failed:', error);
-                    // Fallback to original file if conversion fails
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const signatureImg = document.getElementById('certStudentSignature');
-                    signatureImg.src = e.target.result;
-                    signatureImg.classList.remove('hidden');
-                };
-                reader.readAsDataURL(signatureFile);
-                }
-            }
-            
-
-            
-            // Set month and year in the exam info
-            const examType = formData.get('examType');
-            let monthText = 'June/Dec';
-            let specificMonth = '_______';
-            
-            console.log('=== EXAM INFO DEBUG ===');
-            console.log('Exam type:', examType);
-            console.log('Form data examType:', formData.get('examType'));
-            console.log('Form data semesterNumber:', formData.get('semesterNumber'));
-            console.log('All form data keys:', Array.from(formData.keys()));
-            console.log('All form data values:', Array.from(formData.values()));
-            
-            if (examType === 'Yearly') {
-                monthText = 'June/Dec';
-                specificMonth = '_______';
-                console.log('Yearly exam - monthText set to:', monthText);
-            } else if (examType === 'Semester') {
-                const semesterNumber = formData.get('semesterNumber');
-                console.log('Semester exam - semesterNumber:', semesterNumber);
-                if (semesterNumber === '1' || semesterNumber === '3') {
-                    monthText = 'June/Dec';
-                    specificMonth = 'June';
-                    console.log('Semester 1 or 3 - specificMonth set to:', specificMonth);
-                } else if (semesterNumber === '2' || semesterNumber === '4') {
-                    monthText = 'June/Dec';
-                    specificMonth = 'Dec';
-                    console.log('Semester 2 or 4 - specificMonth set to:', specificMonth);
-                } else {
-                    console.log('Invalid semester number:', semesterNumber);
-                }
-            } else {
-                console.log('Invalid exam type:', examType);
-            }
-            
-            const selectedYear = formData.get('yearSelection');
-            const yearText = selectedYear || '_______';
-            console.log('Selected year:', selectedYear, 'yearText:', yearText);
-            console.log('=== END EXAM INFO DEBUG ===');
-            
-            // Update the exam info text in the certificate
-            const examInfoElement = document.querySelector('p.text-sm.text-gray-600.italic.mb-1');
-            if (examInfoElement) {
-                // Replace the entire text content with the new format
-                examInfoElement.innerHTML = `For Term End Exam ${monthText} - <span class="border-b border-gray-400 px-2" style="color: red; font-weight: bold;">${specificMonth}</span> Year - <span class="border-b border-gray-400 px-2" style="color: red; font-weight: bold;">${yearText}</span>`;
-                
-                console.log('Exam info updated:', monthText, specificMonth, yearText);
-            } else {
-                console.error('Exam info element not found');
-            }
-            
-            // Set submission date to current date
-            const today = new Date();
-            const day = String(today.getDate()).padStart(2, '0');
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const year = today.getFullYear();
-            const currentDate = `${day}-${month}-${year}`;
-            
-            // Debug: Check if date element exists and set the date
-            const dateElement = document.getElementById('certSubmissionDate');
-            if (dateElement) {
-                dateElement.textContent = currentDate;
-                console.log('Date set to:', currentDate);
-            } else {
-                console.error('Date element not found');
-            }
-            
-            // Show the download page instead of generating PDFs immediately
-            console.log('Showing download page for subjects:', selectedSubjects);
-            
-            if (selectedSubjects.length === 0) {
-                alert('Please select at least one subject before generating the assignment.');
-                return;
-            }
-            
-            // Hide the form and show the download page
-            document.getElementById('formSection').classList.add('hidden');
-            document.getElementById('downloadPage').classList.remove('hidden');
-            
-            // Generate individual subject buttons
-            generateIndividualSubjectButtons(selectedSubjects);
-            
-            // Store selected subjects and form data for later use
-            window.selectedSubjects = selectedSubjects;
-            window.formData = formData;
+        headers = {
+            "x-client-id": CASHFREE_APP_ID,
+            "x-client-secret": CASHFREE_SECRET_KEY,
+            "x-api-version": "2023-08-01",
+            "Content-Type": "application/json"
         }
 
-        // Generate individual subject buttons for the download page
-        function generateIndividualSubjectButtons(subjects) {
-            console.log('Generating individual subject buttons for:', subjects);
-            const container = document.getElementById('individualSubjectButtons');
+        print(f"🔍 Cashfree API Request:")
+        print(f"URL: {CASHFREE_BASE_URL}")
+        print(f"Headers: {headers}")
+        print(f"Payload: {payload}")
+        
+        response = requests.post(CASHFREE_BASE_URL, headers=headers, json=payload)
+        
+        print(f"📡 Cashfree API Response:")
+        print(f"Status Code: {response.status_code}")
+        print(f"Response Headers: {dict(response.headers)}")
+        print(f"Response Text: {response.text}")
+
+        if response.status_code != 200:
+            return jsonify({"success": False, "error": f"Cashfree API error: {response.text}"}), 400
+
+        try:
+            res_data = response.json()
+            print(f"📊 Parsed Response Data: {res_data}")
             
-            if (!container) {
-                console.error('Individual subject buttons container not found');
-                return;
+            # Check for payment_session_id to construct payment URL
+            if "payment_session_id" in res_data:
+                payment_session_id = res_data["payment_session_id"]
+                print(f"✅ Found payment_session_id: {payment_session_id}")
+                
+                # Construct the payment URL using the session ID
+                payment_url = f"https://payments.cashfree.com/order/#/{payment_session_id}"
+                print(f"✅ Constructed payment URL: {payment_url}")
+                
+                # Add warning about potential account issues
+                print(f"⚠️  If payment page shows error, check Cashfree dashboard for:")
+                print(f"   - KYC completion status")
+                print(f"   - Business verification")
+                print(f"   - Bank account verification")
+                print(f"   - Account activation status")
+                
+            else:
+                print(f"❌ No payment_session_id found in response. Available keys: {list(res_data.keys())}")
+                return jsonify({
+                    "success": False, 
+                    "error": f"Payment session ID not found in response. Available fields: {list(res_data.keys())}. Response: {res_data}"
+                }), 400
+            
+            # Save payment request details to session
+            session['payment_request'] = {
+                "studentName": student_name,
+                "enrollmentNumber": enrollment,
+                "emailId": customer_email,
+                "mobileNumber": customer_phone,
+                "programmeCode": programme_code,
+                "semesterYear": semester_year,
+                "courseCode": course_code,
+                "studyCenterCode": study_center_code,
+                "studyCenterName": study_center_name,
+                "mediumSelection": medium_selection,
+                "examType": exam_type,
+                "yearSelection": year_selection,
+                "submittedElsewhere": data.get("submittedElsewhere", ""),
+                "submissionDetails": data.get("submissionDetails", ""),
+                "confirmation": data.get("confirmation", ""),
+                "subjects": subjects,
+                "amount": amount_rupees,
+                "order_id": order_id
             }
             
-            container.innerHTML = '';
+            return jsonify({
+                "success": True,
+                "paymentUrl": payment_url,
+                "paymentSessionId": payment_session_id,
+                "transactionId": order_id,
+                "amount": amount_rupees,
+                "subjects": subjects
+            })
             
-            subjects.forEach((subject, index) => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'subject-btn';
-                button.textContent = `📖 ${subject}`;
-                button.onclick = () => downloadSingleSubject(subject);
-                container.appendChild(button);
-                console.log(`Created button for: ${subject}`);
-            });
-        }
+        except json.JSONDecodeError as e:
+            print(f"❌ Failed to parse JSON response: {e}")
+            return jsonify({
+                "success": False, 
+                "error": f"Invalid JSON response from Cashfree: {response.text}"
+            }), 400
 
-        // Download single subject PDF
-        async function downloadSingleSubject(subjectName) {
-            try {
-                console.log(`Downloading PDF for subject: ${subjectName}`);
-                
-                // Show loading state
-                const button = event.target;
-                const originalText = button.textContent;
-                button.textContent = '⏳ Generating...';
-                button.disabled = true;
-                
-                // Generate and download the PDF for this specific subject
-                await downloadPDF(subjectName);
-                
-                // Reset button
-                button.textContent = originalText;
-                button.disabled = false;
-                
-                console.log(`PDF downloaded successfully for: ${subjectName}`);
-                
-            } catch (error) {
-                console.error(`Failed to download PDF for ${subjectName}:`, error);
-                alert(`Failed to download PDF for ${subjectName}. Please try again.`);
-                
-                // Reset button on error
-                const button = event.target;
-                button.textContent = originalText;
-                button.disabled = false;
-            }
-        }
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
-        // Download all subjects as ZIP
-        async function downloadAllSubjectsZip() {
-            try {
-                console.log('Downloading all subjects as ZIP');
-                
-                // Show loading state
-                const button = document.getElementById('downloadAllZip');
-                const originalText = button.textContent;
-                button.textContent = '⏳ Creating ZIP...';
-                button.disabled = true;
-                
-                // Use payment data subjects if available, otherwise use selected subjects
-                const subjects = window.paymentData?.subjects || window.selectedSubjects || [];
-                
-                if (subjects.length === 0) {
-                    alert('No subjects selected. Please go back and select subjects.');
-                    return;
-                }
-                
-                // Generate PDFs for all subjects
-                const pdfPromises = subjects.map(subject => downloadPDF(subject, true)); // true = return blob instead of downloading
-                const pdfBlobs = await Promise.all(pdfPromises);
-                
-                // Create ZIP file
-                const JSZip = window.JSZip;
-                if (!JSZip) {
-                    // If JSZip is not available, download PDFs individually
-                    alert('ZIP creation not available. Downloading PDFs individually...');
-                    subjects.forEach(subject => downloadPDF(subject));
-                    return;
-                }
-                
-                const zip = new JSZip();
-                
-                // Add each PDF to the ZIP
-                subjects.forEach((subject, index) => {
-                    if (pdfBlobs[index]) {
-                        const fileName = `Assignment_${subject}_${new Date().toISOString().split('T')[0]}.pdf`;
-                        zip.file(fileName, pdfBlobs[index]);
-                    }
-                });
-                
-                // Generate and download ZIP
-                const zipBlob = await zip.generateAsync({ type: 'blob' });
-                const url = URL.createObjectURL(zipBlob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `All_Subjects_Assignment_${new Date().toISOString().split('T')[0]}.zip`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                
-                console.log('ZIP file downloaded successfully');
-                
-                // Reset button
-                button.textContent = originalText;
-                button.disabled = false;
-                
-            } catch (error) {
-                console.error('Failed to create ZIP:', error);
-                alert('Failed to create ZIP file. Downloading PDFs individually...');
-                
-                // Fallback to individual downloads
-                // Use payment data subjects if available, otherwise use selected subjects
-                const subjects = window.paymentData?.subjects || window.selectedSubjects || [];
-                subjects.forEach(subject => downloadPDF(subject));
-                
-                // Reset button
-                const button = document.getElementById('downloadAllZip');
-                button.textContent = originalText;
-                button.disabled = false;
-            }
-        }
-
-        // Generate individual subject buttons for the download page
-        function generateIndividualSubjectButtons(subjects) {
-            console.log('Generating individual subject buttons for:', subjects);
-            const container = document.getElementById('individualSubjectButtons');
-            
-            if (!container) {
-                console.error('Individual subject buttons container not found');
-                return;
-            }
-            
-            container.innerHTML = '';
-            
-            subjects.forEach((subject, index) => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'subject-btn';
-                button.textContent = `📖 ${subject}`;
-                button.onclick = () => downloadSingleSubject(subject);
-                container.appendChild(button);
-                console.log(`Created button for: ${subject}`);
-            });
-        }
-
-        // Download single subject PDF
-        async function downloadSingleSubject(subjectName) {
-            try {
-                console.log(`Downloading PDF for subject: ${subjectName}`);
-                
-                // Show loading state
-                const button = event.target;
-                const originalText = button.textContent;
-                button.textContent = '⏳ Generating...';
-                button.disabled = true;
-                
-                // Generate and download the PDF for this specific subject
-                await downloadPDF(subjectName);
-                
-                // Reset button
-                button.textContent = originalText;
-                button.disabled = false;
-                
-                console.log(`PDF downloaded successfully for: ${subjectName}`);
-                
-            } catch (error) {
-                console.error(`Failed to download PDF for ${subjectName}:`, error);
-                alert(`Failed to download PDF for ${subjectName}. Please try again.`);
-                
-                // Reset button on error
-                const button = event.target;
-                button.textContent = originalText;
-                button.disabled = false;
-            }
-        }
-
-        // Download all subjects as ZIP
-        async function downloadAllSubjectsZip() {
-            try {
-                console.log('Downloading all subjects as ZIP');
-                
-                // Show loading state
-                const button = document.getElementById('downloadAllZip');
-                const originalText = button.textContent;
-                button.textContent = '⏳ Creating ZIP...';
-                button.disabled = true;
-                
-                // Use payment data subjects if available, otherwise use selected subjects
-                const subjects = window.paymentData?.subjects || window.selectedSubjects || [];
-                
-                if (subjects.length === 0) {
-                    alert('No subjects selected. Please go back and select subjects.');
-                    return;
-                }
-                
-                // Generate PDFs for all subjects
-                const pdfPromises = subjects.map(subject => downloadPDF(subject, true)); // true = return blob instead of downloading
-                const pdfBlobs = await Promise.all(pdfPromises);
-                
-                // Create ZIP file
-                const JSZip = window.JSZip;
-                if (!JSZip) {
-                    // If JSZip is not available, download PDFs individually
-                    alert('ZIP creation not available. Downloading PDFs individually...');
-                    subjects.forEach(subject => downloadPDF(subject));
-                    return;
-                }
-                
-                const zip = new JSZip();
-                
-                // Add each PDF to the ZIP
-                subjects.forEach((subject, index) => {
-                    if (pdfBlobs[index]) {
-                        const fileName = `Assignment_${subject}_${new Date().toISOString().split('T')[0]}.pdf`;
-                        zip.file(fileName, pdfBlobs[index]);
-                    }
-                });
-                
-                // Generate and download ZIP
-                const zipBlob = await zip.generateAsync({ type: 'blob' });
-                const url = URL.createObjectURL(zipBlob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `All_Subjects_Assignment_${new Date().toISOString().split('T')[0]}.zip`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                
-                console.log('ZIP file downloaded successfully');
-                
-                // Reset button
-                button.textContent = originalText;
-                button.disabled = false;
-                
-            } catch (error) {
-                console.error('Failed to create ZIP:', error);
-                alert('Failed to create ZIP file. Downloading PDFs individually...');
-                
-                // Fallback to individual downloads
-                // Use payment data subjects if available, otherwise use selected subjects
-                const subjects = window.paymentData?.subjects || window.selectedSubjects || [];
-                subjects.forEach(subject => downloadPDF(subject));
-                
-                // Reset button
-                const button = document.getElementById('downloadAllZip');
-                button.textContent = originalText;
-                button.disabled = false;
-            }
-        }
-
-        // Generate download buttons for each subject
-        function generateDownloadButtons(subjects) {
-            console.log('Generating download buttons for subjects:', subjects);
-            const downloadButtonsContainer = document.getElementById('downloadButtons');
-            if (!downloadButtonsContainer) {
-                console.error('Download buttons container not found');
-                return;
-            }
-            
-            downloadButtonsContainer.innerHTML = '';
-            
-            if (subjects.length === 0) {
-                // If no subjects selected, create one general download button
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'btn btn-secondary w-full';
-                button.textContent = 'Download PDF';
-                button.onclick = () => downloadPDF('student_assignment');
-                downloadButtonsContainer.appendChild(button);
-                console.log('Created general download button');
-            } else {
-                // Create separate download button for each subject
-                subjects.forEach((subject, index) => {
-                    const button = document.createElement('button');
-                    button.type = 'button';
-                    button.className = 'btn btn-secondary w-full';
-                    button.textContent = `Download PDF - ${subject}`;
-                    button.onclick = () => downloadPDF(subject);
-                    downloadButtonsContainer.appendChild(button);
-                    console.log(`Created download button for: ${subject}`);
-                });
-            }
-        }
-
-        // Download PDF function using jsPDF
-        async function downloadPDF(subjectName = 'student_assignment', returnBlob = false) {
-            try {
-                // Get form data for the current subject
-                const formData = new FormData(document.getElementById('certificateForm'));
-                
-                // Prepare template data
-                const templateData = {
-                    name: formData.get('studentName') || 'Not provided',
-                    enrollment: formData.get('enrollmentNumber') || 'Not provided',
-                    program: formData.get('programSelection') || 'Not provided',
-                    courseCode: formData.get('courseCode') || 'Not provided',
-                    course: subjectName === 'student_assignment' ? 
-                        (formData.getAll('subjects').length > 0 ? formData.getAll('subjects').join(', ') : 'Not provided') : 
-                        subjectName,
-                    centerCode: formData.get('studyCenterCode') || 'Not provided',
-                    centerAddress: formData.get('studyCenterAddress') || 'Not provided',
-                    center: formData.get('studyCenterAddress') ? 
-                        formData.get('studyCenterAddress').split(' ')[0] : 'Delhi',
-                    mobile: formData.get('mobileNumber') || 'Not provided',
-                    email: formData.get('emailId') || 'Not provided',
-                    assignmentAnyWhereElse: (() => {
-                        const submittedElsewhere = formData.get('submittedElsewhere');
-                        const submissionDetails = formData.get('submissionDetails');
-                        
-                        if (submittedElsewhere === 'Yes' && submissionDetails) {
-                            return `Yes - ${submissionDetails}`;
-                        } else {
-                            return submittedElsewhere || 'Not provided';
-                        }
-                    })(),
-                    crossChecked: formData.get('confirmation') || 'Not provided',
-                    date: new Date().toLocaleDateString('en-GB') || 'Not provided',
-                    semester: formData.get('semesterNumber') || '',
-                    year: formData.get('yearSelection') || '',
-                    photo: null,
-                    sign: null
-                };
-
-                // Handle photo upload
-                const photoFile = formData.get('idCard');
-                if (photoFile && photoFile.size > 0) {
-                    try {
-                        const photoDataUrl = await fileToDataURL(photoFile);
-                        templateData.photo = photoDataUrl;
-                    } catch (e) {
-                        console.warn("Photo conversion failed:", e);
-                    }
-                }
-
-                // Handle signature upload - use transparent signature if available
-                if (window.transparentSignature) {
-                    console.log('Using transparent signature for PDF');
-                    templateData.sign = window.transparentSignature;
-                } else {
-                    console.log('No transparent signature available, using fallback');
-                    // Fallback to original signature processing
-                const signatureFile = formData.get('signature');
-                if (signatureFile && signatureFile.size > 0) {
-                    try {
-                        const signatureDataUrl = await fileToDataURL(signatureFile);
-                        templateData.sign = signatureDataUrl;
-                    } catch (e) {
-                        console.warn("Signature conversion failed:", e);
-                        }
-                    }
-                }
-
-                // Generate PDF with logo preparation
-                if (returnBlob) {
-                    const blob = await prepareAndDownloadPDF(templateData, true);
-                    return blob;
-                } else {
-                    await prepareAndDownloadPDF(templateData, false);
-                    console.log("PDF generation initiated for:", subjectName);
-                }
-                
-            } catch (error) {
-                console.error("PDF generation failed:", error);
-                if (returnBlob) {
-                    return null;
-                }
-                alert("PDF generation failed. Please try again.");
-            }
-        }
-
-        // Helper function to convert file to data URL
-        function fileToDataURL(file) {
-            return new Promise((resolve, reject) => {
-                // For image files, use regular FileReader
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);
-                } else {
-                    // For non-image files, use regular FileReader
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
-
-        // Convert image file to Base64
-        function getBase64FromImageUrl(url) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.setAttribute("crossOrigin", "anonymous");
-                img.onload = () => {
-                    const canvas = document.createElement("canvas");
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext("2d");
-                    ctx.drawImage(img, 0, 0);
-                    resolve(canvas.toDataURL("image/jpeg"));
-                };
-                img.onerror = (err) => reject(err);
-                img.src = url;
-            });
-        }
-
-        async function prepareAndDownloadPDF(templateData, returnBlob = false) {
-            try {
-                // Generate PDF directly (logos are handled statically in generatePDF)
-                return await generatePDF(templateData, returnBlob);
-            } catch (e) {
-                console.error("Failed to prepare PDF data:", e);
-                if (returnBlob) {
-                    return null;
-                }
-                alert("PDF preparation failed. Please try again.");
-            }
-        }
-
-        // Main PDF generation function using jsPDF
-        async function generatePDF(templateData, returnBlob = false) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ unit: "pt", format: "a4" });
-
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
-            const margin = 50;
-            const lineHeight = 24;
-            const maxWidth = pageWidth - margin * 2;
-
-            // Outer border
-            doc.setLineWidth(1);
-            doc.rect(margin / 2, margin / 2, pageWidth - margin, pageHeight - margin);
-
-            // IGNOU Logos (left + right) - Always display first
-            try {
-                // Hindi Logo (image2) - left side - Moved lower
-                doc.addImage("https://raw.githubusercontent.com/payalgit933/ignou-logo/main/image2.jpg", "JPEG", margin - 15, margin + 15, 100, 40);
-                // English Logo (image4) - right side - Smaller size and moved lower
-                doc.addImage("https://raw.githubusercontent.com/payalgit933/ignou-logo/main/image4.jpg", "JPEG", pageWidth - margin - 75, margin + 15, 80, 35);
-            } catch (e) {
-                console.warn("IGNOU logo loading failed:", e);
-                // Fallback text if images fail
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(10);
-                doc.text("IGNOU Logo (Hindi)", margin - 15, margin + 35);
-                doc.text("IGNOU Logo (English)", pageWidth - margin - 75, margin + 30);
-            }
-
-            // Header
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(14);
-            doc.text("INDIRA GANDHI NATIONAL OPEN UNIVERSITY", pageWidth / 2, margin + 35, { align: "center" });
-
-            doc.setFontSize(11);
-            doc.setTextColor(200, 0, 0);
-            doc.text(`Regional Centre ${templateData.center || "Delhi"}`, pageWidth / 2, margin + 55, { align: "center" });
-            doc.setTextColor(0, 0, 0);
-
-            // Title
-            doc.setFontSize(14);
-            doc.text("Format for Assignment Submission", pageWidth / 2, margin + 95, { align: "center" });
-            doc.line(pageWidth / 2 - 120, margin + 98, pageWidth / 2 + 120, margin + 98);
-
-            // Exam info and instructions
-            doc.setFontSize(11);
-            doc.setFont("helvetica", "italic");
-            doc.setTextColor(100, 100, 100);
-            
-            // Dynamic exam info based on semester and year
-            let examMonth = "June/Dec";
-            let specificMonth = "_______";
-            if (templateData.semester && templateData.semester !== "") {
-                if (["1", "3"].includes(templateData.semester)) {
-                    examMonth = "June/Dec";
-                    specificMonth = "June";
-                } else if (["2", "4"].includes(templateData.semester)) {
-                    examMonth = "June/Dec";
-                    specificMonth = "Dec";
-                }
-            }
-            
-            doc.text(`For Term End Exam ${examMonth} - ${specificMonth} Year - ${templateData.year || "_______"}`, pageWidth / 2, margin + 115, { align: "center" });
-            doc.text("(Please read the instructions given below carefully before submitting assignments)", pageWidth / 2, margin + 135, { align: "center" });
-            
-            // Reset text color and font
-            doc.setTextColor(0, 0, 0);
-            doc.setFont("helvetica", "normal");
-
-            let y = margin + 200;
-
-                        // Row helper
-            function addRow(num, label, value) {
-                const leftX = margin + 10;
-                const labelWidth = 240; // Fixed width for left column
-                const valueWidth = maxWidth - 260; // Remaining width for right column
-                
-                doc.setFont("helvetica", "bold");
-                const labelText = `${num}. ${label} : `;
-                const wrappedLabel = doc.splitTextToSize(labelText, labelWidth); // wrap label if needed
-                doc.text(wrappedLabel, leftX, y);
-                
-                doc.setFont("helvetica", "normal");
-                const wrappedValue = doc.splitTextToSize(value || "__________", valueWidth); // wrap value
-                
-                // Draw first line of value aligned with the label
-                if (wrappedValue.length > 0) {
-                    doc.text(wrappedValue[0], leftX + 250, y);
-                }
-                
-                // Draw remaining lines aligned with the label text (not the number)
-                for (let i = 1; i < wrappedValue.length; i++) {
-                    doc.text(wrappedValue[i], leftX + 250, y + (i * lineHeight));
-                }
-                
-                // Move Y based on tallest block
-                const lines = Math.max(wrappedLabel.length, wrappedValue.length);
-                y += lineHeight * lines + 6;
-                
-                // Add small text below row 5 (Course Code)
-                if (num === 5) {
-                    doc.setFont("helvetica", "italic");
-                    doc.setFontSize(9);
-                    doc.setTextColor(100, 100, 100);
-                    doc.text("(Use this format course-wise separately)", leftX + 18, y);
-                    doc.setTextColor(0, 0, 0);
-                    doc.setFontSize(11);
-                    doc.setFont("helvetica", "normal");
-                    y += 20; // Add extra space for the small text
-                }
-                
-                // Add additional text below row 9 if "Yes" is selected
-                if (num === 9 && value.toLowerCase().includes('yes')) {
-                    doc.setFont("helvetica", "italic");
-                    doc.setFontSize(9);
-                    doc.setTextColor(100, 100, 100);
-                    doc.text("(Please provide details in the space below)", leftX + 20, y);
-                    doc.setTextColor(0, 0, 0);
-                    doc.setFontSize(11);
-                    doc.setFont("helvetica", "normal");
-                    y += 15; // Add extra space for the additional text
-                                     }
-            }
-
-                         // Rows
-             addRow(1, "Name of the Student", templateData.name);
-             addRow(2, "Enrollment Number", templateData.enrollment);
-             addRow(3, "Programme Code", templateData.program);
-             addRow(4, "Course Code", templateData.course);
-             addRow(5, "Course Code", templateData.courseCode);
-             addRow(6, "Name of the Study Centre With complete address", templateData.centerAddress);
-             addRow(7, "Study Centre Code", templateData.centerCode);
-             addRow(8, "Mobile Number", templateData.mobile);
-             addRow(9, "Details if this same assignment has been submitted anywhere else also", templateData.assignmentAnyWhereElse);
-             addRow(10, "Email ID", templateData.email);
-             addRow(11, "Above information cross checked and correct?", templateData.crossChecked);
-
-            // Footer – Date inline
-            const footerY = 780;
-            const signLabelY = footerY - 40; // Moved up by 40 points
-            
-            doc.setFont("helvetica", "bold");
-            doc.text("Date of Submission:", margin, signLabelY);
-            doc.setFont("helvetica", "normal");
-            doc.text(templateData.date || "__________", margin + 130, signLabelY);
-
-                         // Footer – Signature (image above text)
-             if (templateData.sign) {
-                 try {
-                     console.log('Adding signature to PDF:', templateData.sign.substring(0, 100) + '...');
-                     
-                     // For signatures, always use PNG format for transparency
-                     let imageFormat = "PNG";
-                     
-                     // Signature image: 100px × 40px above the text - moved up
-                     doc.addImage(templateData.sign, imageFormat, pageWidth - margin - 120, signLabelY - 50, 100, 40);
-                     console.log('Signature added to PDF successfully');
-                 } catch (e) {
-                     console.warn("Signature image failed:", e);
-                 }
-             } else {
-                 console.log('No signature data available for PDF');
-             }
-            doc.setFont("helvetica", "bold");
-            doc.text("Signature of the Student", pageWidth - margin - 120, signLabelY);
-
-            // PAGE 2: Student Photo
-            if (templateData.photo) {
-                doc.addPage();
-                
-                // Add the same border as first page
-                doc.setLineWidth(1);
-                doc.rect(margin / 2, margin / 2, pageWidth - margin, pageHeight - margin);
-                
-                                 try {
-                     // Detect image format from data URL
-                     let imageFormat = "JPEG";
-                     if (templateData.photo.startsWith("data:image/png")) {
-                         imageFormat = "PNG";
-                     } else if (templateData.photo.startsWith("data:image/webp")) {
-                         imageFormat = "WEBP";
-                     } else if (templateData.photo.startsWith("data:image/avif")) {
-                         imageFormat = "AVIF";
-                     }
-                     
-                     // Set fixed dimensions for the photo
-                     const photoWidth = 400;  // Fixed width
-                     const photoHeight = 300; // Fixed height
-                     
-                     // Center the image on the page
-                     const x = (pageWidth - photoWidth) / 2;
-                     const y = (pageHeight - photoHeight) / 2;
-                     
-                     doc.addImage(templateData.photo, imageFormat, x, y, photoWidth, photoHeight);
-                 } catch (e) {
-                     console.warn("Photo addImage failed", e);
-                 }
-            }
-
-            // Save file with merging - Format: <enrollment_subject>
-            const enrollment = templateData.enrollment || "Student";
-            const subject = templateData.course || "General";
-            const fileName = `${enrollment}_${subject}.pdf`;
-            
-            // Get the PDF as bytes for merging
-            const pdfBytes = doc.output('arraybuffer');
-            
-            // Merge with subject-specific PDF
-            const subjectName = templateData.course || 'General';
-            console.log(`Merging PDF for subject: ${subjectName}`);
-            console.log('Template data course:', templateData.course);
-            console.log('Template data keys:', Object.keys(templateData));
-            
-            try {
-                console.log('Calling mergePDFs function...');
-                const mergedPDFBytes = await mergePDFs(pdfBytes, subjectName);
-                console.log('Merge completed, merged PDF size:', mergedPDFBytes.byteLength);
-                
-                // Create download link for merged PDF
-                const blob = new Blob([mergedPDFBytes], { type: 'application/pdf' });
-                
-                if (returnBlob) {
-                    // Return blob for ZIP creation
-                    return blob;
-                }
-                
-                // Download the PDF
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                
-                console.log('Merged PDF downloaded successfully');
-                
-            } catch (error) {
-                console.error('PDF merging failed, downloading original:', error);
-                console.error('Error details:', error.message);
-                
-                if (returnBlob) {
-                    // Return original PDF blob for ZIP creation
-                    const originalBlob = new Blob([doc.output('arraybuffer')], { type: 'application/pdf' });
-                    return originalBlob;
-                }
-                
-                // Fallback to original PDF if merging fails
-                doc.save(fileName);
-            }
-        }
-
-        // Test PDF accessibility function
-        async function testPDFAccess() {
-            console.log('Testing PDF accessibility...');
-            const testFiles = ['BCS-53-EM-2025-26.pdf', 'BCS-54-EM-2025-26.pdf'];
-            
-            for (const file of testFiles) {
-                try {
-                    const response = await fetch(`pdfs/${file}`);
-                    console.log(`${file}: Status ${response.status}, OK: ${response.ok}`);
-                    if (response.ok) {
-                        const bytes = await response.arrayBuffer();
-                        console.log(`${file}: Size ${bytes.byteLength} bytes`);
-                    }
-                } catch (error) {
-                    console.error(`${file}: Error -`, error.message);
-                }
-            }
+# Route to handle successful payment redirect
+@app.route("/payment-success", methods=["GET", "POST"])
+def payment_success():
+    try:
+        # Get order ID from query parameters (Cashfree sends this)
+        order_id = request.args.get("order_id")
+        print(f"🔍 Payment success request - Order ID: {order_id}")
+        
+        if not order_id:
+            return "Payment verification failed. Order ID not found."
+        
+        # Verify payment with Cashfree API
+        headers = {
+            "x-client-id": CASHFREE_APP_ID,
+            "x-client-secret": CASHFREE_SECRET_KEY,
+            "x-api-version": "2023-08-01",
+            "Content-Type": "application/json"
         }
         
-        // Test PDF access on page load
-        window.addEventListener('load', function() {
-            console.log('Page loaded, testing PDF accessibility...');
-            testPDFAccess();
-        });
-
-        // Set default date to today
-        document.getElementById('yearSelection').value = new Date().getFullYear().toString();
+        # Get order status from Cashfree
+        order_url = f"https://api.cashfree.com/pg/orders/{order_id}"
+        response = requests.get(order_url, headers=headers)
         
-        // Check authentication status on page load
-        checkAuthStatus();
+        print(f"📡 Cashfree order status response: {response.status_code}")
+        print(f"📡 Response: {response.text}")
         
-        // Add debugging for authentication
-        console.log('Authentication check completed');
+        if response.status_code != 200:
+            return f"Payment verification failed. API error: {response.text}"
         
-        // Check if this is a payment success redirect
-        const urlParams = new URLSearchParams(window.location.search);
-        const paymentSuccess = urlParams.get('payment_success') === 'true';
-        const orderId = urlParams.get('order_id');
+        order_data = response.json()
+        order_status = order_data.get("order_status", "UNKNOWN")
         
-        if (paymentSuccess && orderId) {
-            // Show payment success message and download options
-            showPaymentSuccess(orderId);
-        }
+        print(f"📊 Order status: {order_status}")
         
-        // Check if payment data is provided by server
-        {% if payment_success and payment_data %}
-        window.serverPaymentData = {{ payment_data | tojson }};
-        console.log('Server payment data:', window.serverPaymentData);
-        {% endif %}
-
-        // Helper function to get enrollment number
-        function getEnrollmentNumber() {
-            return window.formData?.get('enrollmentNumber') || 'Student';
-        }
+        if order_status != "PAID":
+            return f"Payment verification failed. Order status: {order_status}. Please contact support."
         
-        // Function to show payment success and download options
-        function showPaymentSuccess(orderId) {
-            // Use server payment data if available, otherwise fallback to localStorage data
-            let paymentData;
-            
-            if (window.serverPaymentData) {
-                // Use server-provided payment data
-                paymentData = {
-                    orderId: orderId,
-                    amount: window.serverPaymentData.amount || 1,
-                    status: window.serverPaymentData.status || 'PAID',
-                    subjects: window.serverPaymentData.subjects || [],
-                    studentName: window.serverPaymentData.studentName || 'Not Provided',
-                    enrollmentNumber: window.serverPaymentData.enrollmentNumber || 'Not Provided',
-                    emailId: window.serverPaymentData.emailId || 'Not Provided',
-                    mobileNumber: window.serverPaymentData.mobileNumber || 'Not Provided'
-                };
-            } else {
-                // Try to get data from localStorage first
-                const storedData = localStorage.getItem('paymentStudentData');
-                if (storedData) {
-                    try {
-                        const parsedData = JSON.parse(storedData);
-                        paymentData = {
-                            orderId: orderId,
-                            amount: parsedData.amount || 1,
-                            status: 'PAID',
-                            subjects: parsedData.subjects || [],
-                            studentName: parsedData.studentName || 'Not Provided',
-                            enrollmentNumber: parsedData.enrollmentNumber || 'Not Provided',
-                            emailId: parsedData.emailId || 'Not Provided',
-                            mobileNumber: parsedData.mobileNumber || 'Not Provided'
-                        };
-                    } catch (e) {
-                        console.error('Error parsing stored payment data:', e);
-                    }
-                }
-                
-                // Fallback to form data if localStorage data is not available
-                if (!paymentData) {
-                    const selectedSubjects = [];
-                    const checkboxes = document.querySelectorAll('input[name="subjects"]:checked');
-                    checkboxes.forEach(checkbox => {
-                        selectedSubjects.push(checkbox.value);
-                    });
-                    
-                    const subjectsToUse = selectedSubjects.length > 0 ? selectedSubjects : ["Mathematics"];
-                    
-                    paymentData = {
-                        orderId: orderId,
-                        amount: 1,
-                        status: 'PAID',
-                        subjects: subjectsToUse,
-                        studentName: 'Not Provided',
-                        enrollmentNumber: 'Not Provided',
-                        emailId: 'Not Provided',
-                        mobileNumber: 'Not Provided'
-                    };
-                }
-            }
-            
-            // Store payment data for PDF generation
-            window.paymentData = paymentData;
-            
-            // Hide the form and show download page
-            document.getElementById('formSection').classList.add('hidden');
-            document.getElementById('downloadPage').classList.remove('hidden');
-            
-            // Generate individual subject buttons
-            generateIndividualSubjectButtons();
-            
-            // Show success message
-            alert(`Payment successful! You can now download your assignments for: ${paymentData.subjects.join(', ')}`);
+        # Payment is verified as successful
+        print(f"✅ Payment verified as successful for order: {order_id}")
+        
+        # Store payment data in session for use in index.html
+        session['payment_success'] = True
+        payment_request = session.get("payment_request", {})
+        session['payment_data'] = {
+            "order_id": order_id,
+            "amount": order_data.get("order_amount", 1),
+            "status": order_data.get("order_status", "PAID"),
+            "created_at": order_data.get("created_at", ""),
+            # Student Information
+            "studentName": payment_request.get("studentName", "Not Provided"),
+            "enrollmentNumber": payment_request.get("enrollmentNumber", "Not Provided"),
+            "emailId": payment_request.get("emailId", "Not Provided"),
+            "mobileNumber": payment_request.get("mobileNumber", "Not Provided"),
+            # Program and Course Information
+            "programmeCode": payment_request.get("programmeCode", "Not Provided"),
+            "semesterYear": payment_request.get("semesterYear", "Not Provided"),
+            "courseCode": payment_request.get("courseCode", "Not Provided"),
+            # Study Center Information
+            "studyCenterCode": payment_request.get("studyCenterCode", "Not Provided"),
+            "studyCenterName": payment_request.get("studyCenterName", "Not Provided"),
+            # Academic Information
+            "mediumSelection": payment_request.get("mediumSelection", "Not Provided"),
+            "examType": payment_request.get("examType", "Not Provided"),
+            "semesterNumber": payment_request.get("semesterNumber", "Not Provided"),
+            "yearSelection": payment_request.get("yearSelection", "Not Provided"),
+            # Assignment Information
+            "submittedElsewhere": payment_request.get("submittedElsewhere", "Not Provided"),
+            "submissionDetails": payment_request.get("submissionDetails", "Not Provided"),
+            "confirmation": payment_request.get("confirmation", "Not Provided"),
+            # Selected Subjects
+            "subjects": payment_request.get("subjects", []),
+            # File uploads (these will be added by the frontend)
+            "idCardPhoto": None,
+            "signaturePhoto": None
         }
         
-        // Function to generate individual subject buttons
-        function generateIndividualSubjectButtons() {
-            const container = document.getElementById('individualSubjectButtons');
-            container.innerHTML = '';
+        # Redirect to index.html with payment success flag
+        return redirect(f"/?payment_success=true&order_id={order_id}")
+        
+    except Exception as e:
+        print(f"❌ Error in payment success: {str(e)}")
+        return f"Error processing payment success: {str(e)}"
+
+# Route to check payment status
+@app.route("/check-payment/<transaction_id>")
+def check_payment(transaction_id):
+    if not hasattr(app, 'payment_sessions'):
+        return jsonify({"success": False, "error": "No payment sessions"}), 404
+    
+    payment_session = app.payment_sessions.get(transaction_id)
+    if not payment_session:
+        return jsonify({"success": False, "error": "Payment session not found"}), 404
+    
+    return jsonify({
+        "success": True,
+        "payment": payment_session
+    })
+
+@app.route("/payment-callback", methods=["POST"])
+def payment_callback():
+    try:
+        # Cashfree sends webhook data
+        data = request.json
+        print(f"📡 Cashfree webhook received: {data}")
+        
+        # Extract order information
+        order_id = data.get("order_id")
+        order_status = data.get("order_status")
+        
+        if order_status == "PAID":
+            print(f"✅ Payment confirmed via webhook for order: {order_id}")
+            return jsonify({"status": "success", "message": "Payment received. Allow PDF download."})
+        else:
+            print(f"❌ Payment not completed. Status: {order_status}")
+            return jsonify({"status": "failed", "message": "Payment not completed"})
             
-            const subjects = window.paymentData.subjects;
-            subjects.forEach(subject => {
-                const button = document.createElement('button');
-                button.className = 'btn btn-primary m-2';
-                button.textContent = `📖 ${subject}`;
-                button.onclick = () => downloadSingleSubjectForPayment(subject);
-                container.appendChild(button);
-            });
+    except Exception as e:
+        print(f"❌ Webhook processing error: {str(e)}")
+        return jsonify({"status": "error", "message": "Webhook processing failed"}), 500
+
+@app.route("/payment-status", methods=["POST"])
+def payment_status():
+    # This is the redirect page after payment
+    return "Payment completed. You can now download your PDF."
+
+@app.route("/payment-status/<transaction_id>", methods=["GET"])
+def get_payment_status(transaction_id):
+    # Get payment data from session if available
+    payment_request = session.get('payment_request', {})
+    payment_data = session.get('payment_data', {})
+    
+    return jsonify({
+        "success": True,
+        "status": "PAYMENT_SUCCESS",
+        "amount": payment_data.get("amount", 1),
+        "subjects": payment_request.get("subjects", []),
+        "userData": {
+            "studentName": payment_request.get("studentName", "Not Provided"),
+            "enrollmentNumber": payment_request.get("enrollmentNumber", "Not Provided"),
+            "emailId": payment_request.get("emailId", "Not Provided"),
+            "mobileNumber": payment_request.get("mobileNumber", "Not Provided"),
+            "programmeCode": payment_request.get("programmeCode", "Not Provided"),
+            "courseCode": payment_request.get("courseCode", "Not Provided"),
+            "studyCenterCode": payment_request.get("studyCenterCode", "Not Provided"),
+            "studyCenterName": payment_request.get("studyCenterName", "Not Provided"),
+            "mediumSelection": payment_request.get("mediumSelection", "Not Provided"),
+            "examType": payment_request.get("examType", "Not Provided"),
+            "semesterNumber": payment_request.get("semesterNumber", "Not Provided"),
+            "yearSelection": payment_request.get("yearSelection", "Not Provided")
+        }
+    })
+
+# Debug route to check form data
+@app.route("/debug-form-data", methods=["POST"])
+def debug_form_data():
+    """Debug route to check what form data is being received"""
+    try:
+        data = request.json
+        return jsonify({
+            "success": True,
+            "received_data": data,
+            "field_count": len(data) if data else 0,
+            "expected_fields": [
+                "studentName", "enrollmentNumber", "programSelection", "courseCode",
+                "studyCenterCode", "studyCenterAddress", "mediumSelection", "examType",
+                "semesterNumber", "yearSelection", "subjects", "mobileNumber", "emailId"
+            ]
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Debug route to check payment error
+@app.route("/debug-payment-error")
+def debug_payment_error():
+    """Debug route to identify payment gateway issues"""
+    debug_info = {
+        "credentials_status": {
+            "app_id_configured": CASHFREE_APP_ID != 'your_production_app_id',
+            "secret_key_configured": CASHFREE_SECRET_KEY != 'your_production_secret_key',
+            "app_id_preview": CASHFREE_APP_ID[:8] + "..." if CASHFREE_APP_ID != 'your_production_app_id' else "❌ NOT SET",
+            "secret_key_preview": CASHFREE_SECRET_KEY[:8] + "..." if CASHFREE_SECRET_KEY != 'your_production_secret_key' else "❌ NOT SET"
+        },
+        "api_config": {
+            "base_url": CASHFREE_BASE_URL,
+            "environment": "PRODUCTION",
+            "api_version": "2023-08-01"
+        },
+        "common_issues": [
+            "1. Credentials not set in environment variables",
+            "2. Using sandbox credentials in production",
+            "3. Invalid order amount (must be >= 1.00)",
+            "4. Invalid customer details",
+            "5. Network connectivity issues"
+        ]
+    }
+    return jsonify(debug_info)
+
+# Test production authentication
+@app.route("/test-production-auth")
+def test_production_auth():
+    """Test authentication with production Cashfree API"""
+    try:
+        headers = {
+            "x-client-id": CASHFREE_APP_ID,
+            "x-client-secret": CASHFREE_SECRET_KEY,
+            "x-api-version": "2023-08-01",
+            "Content-Type": "application/json"
         }
         
-        // Function to download single subject for payment success
-        async function downloadSingleSubjectForPayment(subjectName) {
-            try {
-                console.log(`Downloading PDF for subject: ${subjectName}`);
-                
-                // Use server payment data if available, otherwise fallback to form data
-                let templateData;
-                
-                if (window.paymentData && window.paymentData.studentName !== 'Not Provided') {
-                    // Use payment data (from server or localStorage)
-                    templateData = {
-                        name: window.paymentData.studentName || 'Not provided',
-                        enrollment: window.paymentData.enrollmentNumber || 'Not provided',
-                        program: 'Not provided', // Not available in payment data
-                        courseCode: 'Not provided', // Not available in payment data
-                        course: subjectName === 'student_assignment' ? 
-                            'Not provided' : subjectName,
-                        centerAddress: 'Not provided', // Not available in payment data
-                        centerCode: 'Not provided', // Not available in payment data
-                        mobile: window.paymentData.mobileNumber || 'Not provided',
-                        assignmentAnyWhereElse: 'Not provided', // Not available in payment data
-                        email: window.paymentData.emailId || 'Not provided',
-                        crossChecked: 'Not provided', // Not available in payment data
-                        semester: '', // Not available in payment data
-                        year: new Date().getFullYear().toString(),
-                        center: 'Delhi', // Default
-                        date: new Date().toLocaleDateString('en-GB')
-                    };
-                } else {
-                    // Fallback to form data
-                    const formData = new FormData(document.getElementById('certificateForm'));
-                    
-                    templateData = {
-                        name: formData.get('studentName') || 'Not provided',
-                        enrollment: formData.get('enrollmentNumber') || 'Not provided',
-                        program: formData.get('programSelection') || 'Not provided',
-                        courseCode: formData.get('courseCode') || 'Not provided',
-                        course: subjectName === 'student_assignment' ? 
-                            (formData.get('courseCode') || 'Not provided') : subjectName,
-                        centerAddress: formData.get('centerAddress') || 'Not provided',
-                        centerCode: formData.get('centerCode') || 'Not provided',
-                        mobile: formData.get('mobileNumber') || 'Not provided',
-                        assignmentAnyWhereElse: formData.get('assignmentAnyWhereElse') || 'Not provided',
-                        email: formData.get('email') || 'Not provided',
-                        crossChecked: formData.get('crossChecked') || 'Not provided',
-                        semester: formData.get('semesterSelection') || '',
-                        year: formData.get('yearSelection') || new Date().getFullYear().toString(),
-                        center: formData.get('regionalCentre') || 'Delhi',
-                        date: new Date().toLocaleDateString('en-GB')
-                    };
-                    
-                    // Handle photo upload from form
-                    const photoFile = formData.get('idCard');
-                    if (photoFile && photoFile.size > 0) {
-                        try {
-                            const photoDataUrl = await fileToDataURL(photoFile);
-                            templateData.photo = photoDataUrl;
-                        } catch (e) {
-                            console.warn("Photo conversion failed:", e);
-                        }
-                    }
-
-                    // Handle signature upload from form
-                    if (window.transparentSignature) {
-                        console.log('Using transparent signature for PDF');
-                        templateData.sign = window.transparentSignature;
-                    } else {
-                        console.log('No transparent signature available, using fallback');
-                        const signatureFile = formData.get('signature');
-                        if (signatureFile && signatureFile.size > 0) {
-                            try {
-                                const signatureDataUrl = await fileToDataURL(signatureFile);
-                                templateData.sign = signatureDataUrl;
-                            } catch (e) {
-                                console.warn("Signature conversion failed:", e);
-                            }
-                        }
-                    }
-                }
-                
-                // Generate PDF with the collected data
-                await prepareAndDownloadPDF(templateData, false);
-                
-                console.log(`PDF downloaded successfully for ${subjectName}`);
-                
-            } catch (error) {
-                console.error('Error downloading PDF:', error);
-                alert('Error downloading PDF. Please try again.');
-            }
-        }
-
-        // Function to download all subjects as ZIP for payment success
-        async function downloadAllSubjectsZipForPayment() {
-            try {
-                console.log('Downloading all subjects as ZIP for payment success');
-                
-                // Show loading state
-                const button = document.getElementById('downloadAllZip');
-                const originalText = button.textContent;
-                button.textContent = '⏳ Creating ZIP...';
-                button.disabled = true;
-                
-                // Use payment data subjects
-                const subjects = window.paymentData?.subjects || [];
-                
-                if (subjects.length === 0) {
-                    alert('No subjects available for download.');
-                    return;
-                }
-                
-                // Use server payment data if available, otherwise fallback to form data
-                let baseTemplateData;
-                
-                if (window.paymentData && window.paymentData.studentName !== 'Not Provided') {
-                    // Use payment data (from server or localStorage)
-                    baseTemplateData = {
-                        name: window.paymentData.studentName || 'Not provided',
-                        enrollment: window.paymentData.enrollmentNumber || 'Not provided',
-                        program: window.paymentData.programmeCode || 'Not provided',
-                        courseCode: window.paymentData.courseCode || 'Not provided',
-                        centerAddress: window.paymentData.studyCenterName || 'Not provided',
-                        centerCode: window.paymentData.studyCenterCode || 'Not provided',
-                        mobile: window.paymentData.mobileNumber || 'Not provided',
-                        assignmentAnyWhereElse: (() => {
-                            const submittedElsewhere = window.paymentData.submittedElsewhere;
-                            const submissionDetails = window.paymentData.submissionDetails;
-                            
-                            if (submittedElsewhere === 'Yes' && submissionDetails) {
-                                return `Yes - ${submissionDetails}`;
-                            } else {
-                                return submittedElsewhere || 'Not provided';
-                            }
-                        })(),
-                        email: window.paymentData.emailId || 'Not provided',
-                        crossChecked: window.paymentData.confirmation || 'Not provided',
-                        semester: window.paymentData.semesterYear || '',
-                        year: window.paymentData.yearSelection || new Date().getFullYear().toString(),
-                        center: window.paymentData.studyCenterName ? 
-                            window.paymentData.studyCenterName.split(' ')[0] : 'Delhi',
-                        date: new Date().toLocaleDateString('en-GB'),
-                        photo: window.paymentData.idCardPhoto || null,
-                        sign: window.paymentData.signaturePhoto || null
-                    };
-                } else {
-                    // Fallback to form data
-                    const formData = new FormData(document.getElementById('certificateForm'));
-                    
-                    baseTemplateData = {
-                        name: formData.get('studentName') || 'Not provided',
-                        enrollment: formData.get('enrollmentNumber') || 'Not provided',
-                        program: formData.get('programSelection') || 'Not provided',
-                        courseCode: formData.get('courseCode') || 'Not provided',
-                        centerAddress: formData.get('studyCenterAddress') || 'Not provided',
-                        centerCode: formData.get('studyCenterCode') || 'Not provided',
-                        mobile: formData.get('mobileNumber') || 'Not provided',
-                        assignmentAnyWhereElse: (() => {
-                            const submittedElsewhere = formData.get('submittedElsewhere');
-                            const submissionDetails = formData.get('submissionDetails');
-                            
-                            if (submittedElsewhere === 'Yes' && submissionDetails) {
-                                return `Yes - ${submissionDetails}`;
-                            } else {
-                                return submittedElsewhere || 'Not provided';
-                            }
-                        })(),
-                        email: formData.get('emailId') || 'Not provided',
-                        crossChecked: formData.get('confirmation') || 'Not provided',
-                        semester: formData.get('semesterYear') || '',
-                        year: formData.get('yearSelection') || new Date().getFullYear().toString(),
-                        center: formData.get('studyCenterAddress') ? 
-                            formData.get('studyCenterAddress').split(' ')[0] : 'Delhi',
-                        date: new Date().toLocaleDateString('en-GB'),
-                        photo: null,
-                        sign: null
-                    };
-                    
-                    // Handle photo upload from form
-                    const photoFile = formData.get('idCard');
-                    if (photoFile && photoFile.size > 0) {
-                        try {
-                            const photoDataUrl = await fileToDataURL(photoFile);
-                            baseTemplateData.photo = photoDataUrl;
-                        } catch (e) {
-                            console.warn("Photo conversion failed:", e);
-                        }
-                    }
-
-                    // Handle signature upload from form
-                    if (window.transparentSignature) {
-                        console.log('Using transparent signature for PDF');
-                        baseTemplateData.sign = window.transparentSignature;
-                    } else {
-                        console.log('No transparent signature available, using fallback');
-                        const signatureFile = formData.get('signature');
-                        if (signatureFile && signatureFile.size > 0) {
-                            try {
-                                const signatureDataUrl = await fileToDataURL(signatureFile);
-                                baseTemplateData.sign = signatureDataUrl;
-                            } catch (e) {
-                                console.warn("Signature conversion failed:", e);
-                            }
-                        }
-                    }
-                }
-                
-                // Generate PDFs for all subjects
-                const pdfPromises = subjects.map(subject => {
-                    const templateData = {
-                        ...baseTemplateData,
-                        course: subject === 'student_assignment' ? 
-                            (formData.get('courseCode') || 'Not provided') : subject
-                    };
-                    return prepareAndDownloadPDF(templateData, true); // true = return blob
-                });
-                const pdfBlobs = await Promise.all(pdfPromises);
-                
-                // Create ZIP file
-                const JSZip = window.JSZip;
-                if (!JSZip) {
-                    // If JSZip is not available, download PDFs individually
-                    alert('ZIP creation not available. Downloading PDFs individually...');
-                    subjects.forEach(subject => downloadSingleSubjectForPayment(subject));
-                    return;
-                }
-                
-                const zip = new JSZip();
-                
-                // Add each PDF to the ZIP
-                subjects.forEach((subject, index) => {
-                    if (pdfBlobs[index]) {
-                        const fileName = `Assignment_${subject}_${new Date().toISOString().split('T')[0]}.pdf`;
-                        zip.file(fileName, pdfBlobs[index]);
-                    }
-                });
-                
-                // Generate and download ZIP
-                const zipBlob = await zip.generateAsync({ type: 'blob' });
-                const url = URL.createObjectURL(zipBlob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `IGNOU_Assignments_${new Date().toISOString().split('T')[0]}.zip`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                
-                console.log('ZIP file downloaded successfully');
-                
-            } catch (error) {
-                console.error('Error creating ZIP file:', error);
-                alert('Error creating ZIP file. Please try again.');
-            } finally {
-                // Restore button state
-                const button = document.getElementById('downloadAllZip');
-                button.textContent = '📥 Download All Subjects (ZIP)';
-                button.disabled = false;
-            }
-        }
-
-        // Add event listeners for download page buttons
-        document.getElementById('downloadAllZip').addEventListener('click', function() {
-            // Check if this is payment success flow
-            if (window.paymentData) {
-                downloadAllSubjectsZipForPayment();
-            } else {
-                downloadAllSubjectsZip();
-            }
-        });
-        document.getElementById('backToForm').addEventListener('click', function() {
-            // Hide download page and show form
-            document.getElementById('downloadPage').classList.add('hidden');
-            document.getElementById('formSection').classList.remove('hidden');
-        });
+        # Try to get account info (this will fail if auth is wrong)
+        account_url = "https://api.cashfree.com/pg/merchants/me"
+        response = requests.get(account_url, headers=headers, timeout=10)
         
-        // Authentication functions
-        function checkAuthStatus() {
-            const userData = localStorage.getItem('userData');
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-            
-            if (userData && isLoggedIn === 'true') {
-                try {
-                    const user = JSON.parse(userData);
-                    showUserStatus(user);
-                } catch (e) {
-                    console.error('Error parsing user data:', e);
-                    clearUserData();
-                }
-            } else {
-                showAuthLinks();
+        return jsonify({
+            "status_code": response.status_code,
+            "success": response.status_code == 200,
+            "error": response.text if response.status_code != 200 else "Authentication successful",
+            "url": account_url,
+            "credentials": {
+                "app_id_preview": CASHFREE_APP_ID[:8] + "..." if CASHFREE_APP_ID != 'your_production_app_id' else "❌ NOT SET",
+                "secret_key_preview": CASHFREE_SECRET_KEY[:8] + "..." if CASHFREE_SECRET_KEY != 'your_production_secret_key' else "❌ NOT SET"
             }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status_code": "ERROR",
+            "success": False,
+            "error": str(e),
+            "credentials": {
+                "app_id_preview": CASHFREE_APP_ID[:8] + "..." if CASHFREE_APP_ID != 'your_production_app_id' else "❌ NOT SET",
+                "secret_key_preview": CASHFREE_SECRET_KEY[:8] + "..." if CASHFREE_SECRET_KEY != 'your_production_secret_key' else "❌ NOT SET"
+            }
+        })
+
+# Secure PDF route - only accessible after payment
+@app.route("/get-pdf/<course_code>")
+def get_pdf(course_code):
+    """Secure route to serve PDFs only to paid users"""
+    try:
+        # Check if user has paid
+        payment_data = session.get('payment_data')
+        if not payment_data or payment_data.get("status") != "PAID":
+            return jsonify({"success": False, "error": "Unauthorized access. Payment required."}), 403
+        
+        # Map course code to PDF file
+        pdf_mapping = {
+            "MMPC-001": "pdfs/MBA/MMPC-001.pdf",
+            "MMPC-002": "pdfs/MBA/MMPC-002.pdf",
+            "MMPC-003": "pdfs/MBA/MMPC-003.pdf",
+            "MMPC-004": "pdfs/MBA/MMPC-004.pdf",
+            "MMPC-005": "pdfs/MBA/MMPC-005.pdf",
+            "MMPC-006": "pdfs/MBA/MMPC-006.pdf",
+            "MMPC-007": "pdfs/MBA/MMPC-007.pdf",
+            "MMPC-008": "pdfs/MBA/MMPC-008.pdf",
+            "MMPC-009": "pdfs/MBA/MMPC-009.pdf",
+            "MMPC-010": "pdfs/MBA/MMPC-010.pdf",
+            # BBA course codes
+            "BBAR-101": "pdfs/BBA/BBAR-101.pdf",
+            "BBAR-102": "pdfs/BBA/BBAR-102.pdf",
+            "BBAR-103": "pdfs/BBA/BBAR-103.pdf",
+            "BBAR-104": "pdfs/BBA/BBAR-104.pdf",
+            "BBAR-105": "pdfs/BBA/BBAR-105.pdf",
+            "BBAR-106": "pdfs/BBA/BBAR-106.pdf",
+            # MCA course codes
+            "MCS-011": "pdfs/MCA/MCS-011.pdf",
+            "MCS-012": "pdfs/MCA/MCS-012.pdf",
+            "MCS-013": "pdfs/MCA/MCS-013.pdf",
+            "MCS-014": "pdfs/MCA/MCS-014.pdf",
+            "MCS-015": "pdfs/MCA/MCS-015.pdf",
+            "MCS-021": "pdfs/MCA/MCS-021.pdf",
+            "MCS-022": "pdfs/MCA/MCS-022.pdf",
+            "MCS-023": "pdfs/MCA/MCS-023.pdf",
+            "MCS-024": "pdfs/MCA/MCS-024.pdf",
+            "MCS-025": "pdfs/MCA/MCS-025.pdf",
+            # BCA course codes
+            "BCS-011": "pdfs/BCA/BCS-011.pdf",
+            "BCS-012": "pdfs/BCA/BCS-012.pdf",
+            "BCS-013": "pdfs/BCA/BCS-013.pdf",
+            "BCS-014": "pdfs/BCA/BCS-014.pdf",
+            "BCS-015": "pdfs/BCA/BCS-015.pdf",
+            "BCS-021": "pdfs/BCA/BCS-021.pdf",
+            "BCS-022": "pdfs/BCA/BCS-022.pdf",
+            "BCS-023": "pdfs/BCA/BCS-023.pdf",
+            "BCS-024": "pdfs/BCA/BCS-024.pdf",
+            "BCS-025": "pdfs/BCA/BCS-025.pdf",
+            # B.Tech course codes
+            "BT-101": "pdfs/B.Tech/BT-101.pdf",
+            "BT-102": "pdfs/B.Tech/BT-102.pdf",
+            "BT-103": "pdfs/B.Tech/BT-103.pdf",
+            "BT-104": "pdfs/B.Tech/BT-104.pdf",
+            "BT-105": "pdfs/B.Tech/BT-105.pdf",
+            "BT-106": "pdfs/B.Tech/BT-106.pdf",
+            "BT-201": "pdfs/B.Tech/BT-201.pdf",
+            "BT-202": "pdfs/B.Tech/BT-202.pdf",
+            "BT-203": "pdfs/B.Tech/BT-203.pdf",
+            "BT-204": "pdfs/B.Tech/BT-204.pdf",
+            # M.Tech course codes
+            "MT-501": "pdfs/M.Tech/MT-501.pdf",
+            "MT-502": "pdfs/M.Tech/MT-502.pdf",
+            "MT-503": "pdfs/M.Tech/MT-503.pdf",
+            "MT-504": "pdfs/M.Tech/MT-504.pdf",
+            "MT-505": "pdfs/M.Tech/MT-505.pdf",
+            "MT-506": "pdfs/M.Tech/MT-506.pdf",
+            "MT-507": "pdfs/M.Tech/MT-507.pdf",
+            "MT-508": "pdfs/M.Tech/MT-508.pdf",
+            "MT-509": "pdfs/M.Tech/MT-509.pdf",
+            "MT-510": "pdfs/M.Tech/MT-510.pdf"
         }
 
-        function showUserStatus(user) {
-            // Add user status display to the page if needed
-            console.log('User logged in:', user);
-        }
+        pdf_file = pdf_mapping.get(course_code)
+        if not pdf_file:
+            return jsonify({"success": False, "error": f"Course code {course_code} not found"}), 404
+        
+        if not os.path.exists(pdf_file):
+            return jsonify({"success": False, "error": f"PDF file not found for course {course_code}"}), 404
 
-        function showAuthLinks() {
-            // Redirect to welcome page if not authenticated
-            window.location.href = '/welcome';
-        }
+        print(f"✅ Serving PDF for course {course_code} to paid user")
+        return send_file(pdf_file, as_attachment=False, mimetype='application/pdf')
+        
+    except Exception as e:
+        print(f"❌ Error serving PDF for course {course_code}: {str(e)}")
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
-        function clearUserData() {
-            localStorage.removeItem('userData');
-            localStorage.removeItem('isLoggedIn');
-            showAuthLinks();
-        }
-
-        // Function to update PDF elements with payment data
-        function updatePDFElementsWithPaymentData() {
-            if (!window.paymentData) return;
-            
-            // Update text fields in PDF template
-            const elements = {
-                'certStudentName': window.paymentData.studentName,
-                'certEnrollmentNumber': window.paymentData.enrollmentNumber,
-                'certProgramSelection': window.paymentData.programmeCode,
-                'certCourseCode': window.paymentData.courseCode,
-                'certStudyCenterCode': window.paymentData.studyCenterCode,
-                'certStudyCenterAddress': window.paymentData.studyCenterName,
-                'certEmailId': window.paymentData.emailId,
-                'certMobileNumber': window.paymentData.mobileNumber,
-                'certMediumSelection': window.paymentData.mediumSelection,
-                'certExamType': window.paymentData.examType,
-                'certSemesterYear': window.paymentData.semesterYear,
-                'certYearSelection': window.paymentData.yearSelection,
-                'certSubmittedElsewhere': window.paymentData.submittedElsewhere,
-                'certSubmissionDetails': window.paymentData.submissionDetails,
-                'certConfirmation': window.paymentData.confirmation
-            };
-            
-            // Update text elements
-            Object.entries(elements).forEach(([id, value]) => {
-                const element = document.getElementById(id);
-                if (element && value && value !== 'Not Provided') {
-                    element.textContent = value;
-                }
-            });
-            
-            // Update images
-            if (window.paymentData.idCardPhoto) {
-                const photoElement = document.getElementById('certStudentPhoto');
-                if (photoElement) {
-                    photoElement.src = window.paymentData.idCardPhoto;
-                    photoElement.style.display = 'block';
-                }
-            }
-            
-            if (window.paymentData.signaturePhoto) {
-                const signatureElement = document.getElementById('certStudentSignature');
-                if (signatureElement) {
-                    signatureElement.src = window.paymentData.signaturePhoto;
-                    signatureElement.style.display = 'block';
-                }
-            }
-            
-            // Update subjects
-            if (window.paymentData.subjects && window.paymentData.subjects.length > 0) {
-                const subjectsElement = document.getElementById('certSelectedSubjects');
-                if (subjectsElement) {
-                    subjectsElement.textContent = window.paymentData.subjects.join(', ');
-                }
-            }
-            
-            console.log('PDF elements updated with payment data');
-        }
-
-        // Page initialization
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if this is a payment success page
-            const urlParams = new URLSearchParams(window.location.search);
-            const paymentSuccess = urlParams.get('payment_success') === 'true';
-            
-            if (paymentSuccess) {
-                // Load payment data from localStorage
-                const paymentStudentData = localStorage.getItem('paymentStudentData');
-                if (paymentStudentData) {
-                    try {
-                        const data = JSON.parse(paymentStudentData);
-                        window.paymentData = {
-                            ...window.paymentData,
-                            ...data
-                        };
-                        console.log('Payment data loaded from localStorage:', window.paymentData);
-                        
-                        // Handle images if they exist
-                        if (data.idCardPhoto) {
-                            window.paymentData.idCardPhoto = data.idCardPhoto;
-                        }
-                        if (data.signaturePhoto) {
-                            window.paymentData.signaturePhoto = data.signaturePhoto;
-                        }
-                        
-                        // Update PDF elements with payment data
-                        updatePDFElementsWithPaymentData();
-                        
-                    } catch (e) {
-                        console.error('Error parsing payment data:', e);
-                    }
-                }
-                
-                // Show download page
-                document.getElementById('formSection').classList.add('hidden');
-                document.getElementById('downloadPage').classList.remove('hidden');
-                
-                // Generate download buttons
-                const subjects = window.paymentData?.subjects || [];
-                generateDownloadButtons(subjects);
-            } else {
-                // Normal form page
-                checkAuthStatus();
-            }
-        });
-    </script>
-</body>
-</html>
-
-
-
-
-
-
+if __name__ == "__main__":
+    app.run(port=5000, debug=True)
