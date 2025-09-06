@@ -1449,7 +1449,23 @@
                         amount: result.amount,
                         courses: result.courses,
                         paymentUrl: result.paymentUrl,
-                        paymentSessionId: result.paymentSessionId
+                        paymentSessionId: result.paymentSessionId,
+                        // Store all form data for PDF generation
+                        studentName: studentName,
+                        enrollmentNumber: enrollmentNumber,
+                        emailId: emailId,
+                        mobileNumber: mobileNumber,
+                        programSelection: formData.get('programSelection'),
+                        courseCode: formData.get('courseCode'),
+                        studyCenterCode: formData.get('studyCenterCode'),
+                        studyCenterAddress: formData.get('studyCenterAddress'),
+                        mediumSelection: formData.get('mediumSelection'),
+                        examType: formData.get('examType'),
+                        semesterNumber: formData.get('semesterNumber'),
+                        yearSelection: formData.get('yearSelection'),
+                        submittedElsewhere: formData.get('submittedElsewhere'),
+                        submissionDetails: formData.get('submissionDetails'),
+                        confirmation: formData.get('confirmation')
                     };
                     
                     // Store student data in localStorage for payment success
@@ -1561,7 +1577,10 @@
             document.getElementById('certEnrollmentNumber').textContent = formData.get('enrollmentNumber') || '_________________';
             document.getElementById('certProgramSelection').textContent = formData.get('programSelection') || '_________________';
             
-            // Handle selected courses
+            // Handle course code (single selection)
+            document.getElementById('certCourseCode').textContent = formData.get('courseCode') || '_________________';
+            
+            // Handle selected courses (multiple selection)
             const selectedCourses = formData.getAll('courses');
             if (selectedCourses.length > 0) {
                 document.getElementById('certSelectedCourses').textContent = selectedCourses.join(', ');
@@ -2566,19 +2585,29 @@
                     templateData = {
                         name: window.paymentData.studentName || 'Not provided',
                         enrollment: window.paymentData.enrollmentNumber || 'Not provided',
-                        program: 'Not provided', // Not available in payment data
-                        courseCode: 'Not provided', // Not available in payment data
+                        program: window.paymentData.programSelection || 'Not provided',
+                        courseCode: window.paymentData.courseCode || 'Not provided',
                         course: subjectName === 'student_assignment' ? 
-                            'Not provided' : subjectName,
-                        centerAddress: 'Not provided', // Not available in payment data
-                        centerCode: 'Not provided', // Not available in payment data
+                            (window.paymentData.courses ? window.paymentData.courses.join(', ') : 'Not provided') : subjectName,
+                        centerAddress: window.paymentData.studyCenterAddress || 'Not provided',
+                        centerCode: window.paymentData.studyCenterCode || 'Not provided',
                         mobile: window.paymentData.mobileNumber || 'Not provided',
-                        assignmentAnyWhereElse: 'Not provided', // Not available in payment data
+                        assignmentAnyWhereElse: (() => {
+                            const submittedElsewhere = window.paymentData.submittedElsewhere;
+                            const submissionDetails = window.paymentData.submissionDetails;
+                            
+                            if (submittedElsewhere === 'Yes' && submissionDetails) {
+                                return `Yes - ${submissionDetails}`;
+                            } else {
+                                return submittedElsewhere || 'Not provided';
+                            }
+                        })(),
                         email: window.paymentData.emailId || 'Not provided',
-                        crossChecked: 'Not provided', // Not available in payment data
-                        semester: '', // Not available in payment data
-                        year: new Date().getFullYear().toString(),
-                        center: 'Delhi', // Default
+                        crossChecked: window.paymentData.confirmation || 'Not provided',
+                        semester: window.paymentData.semesterNumber || '',
+                        year: window.paymentData.yearSelection || new Date().getFullYear().toString(),
+                        center: window.paymentData.studyCenterAddress ? 
+                            window.paymentData.studyCenterAddress.split(' ')[0] : 'Delhi',
                         date: new Date().toLocaleDateString('en-GB')
                     };
                 } else {
@@ -2671,9 +2700,9 @@
                     baseTemplateData = {
                         name: window.paymentData.studentName || 'Not provided',
                         enrollment: window.paymentData.enrollmentNumber || 'Not provided',
-                        program: window.paymentData.programmeCode || 'Not provided',
+                        program: window.paymentData.programSelection || 'Not provided',
                         courseCode: window.paymentData.courseCode || 'Not provided',
-                        centerAddress: window.paymentData.studyCenterName || 'Not provided',
+                        centerAddress: window.paymentData.studyCenterAddress || 'Not provided',
                         centerCode: window.paymentData.studyCenterCode || 'Not provided',
                         mobile: window.paymentData.mobileNumber || 'Not provided',
                         assignmentAnyWhereElse: (() => {
@@ -2690,8 +2719,8 @@
                         crossChecked: window.paymentData.confirmation || 'Not provided',
                         semester: window.paymentData.semesterNumber || '',
                         year: window.paymentData.yearSelection || new Date().getFullYear().toString(),
-                        center: window.paymentData.studyCenterName ? 
-                            window.paymentData.studyCenterName.split(' ')[0] : 'Delhi',
+                        center: window.paymentData.studyCenterAddress ? 
+                            window.paymentData.studyCenterAddress.split(' ')[0] : 'Delhi',
                         date: new Date().toLocaleDateString('en-GB'),
                         photo: window.paymentData.idCardPhoto || null,
                         sign: window.paymentData.signaturePhoto || null
@@ -2869,18 +2898,23 @@
             const elements = {
                 'certStudentName': window.paymentData.studentName,
                 'certEnrollmentNumber': window.paymentData.enrollmentNumber,
-                'certProgramSelection': window.paymentData.programmeCode,
+                'certProgramSelection': window.paymentData.programSelection,
                 'certCourseCode': window.paymentData.courseCode,
+                'certSelectedCourses': window.paymentData.courses ? window.paymentData.courses.join(', ') : 'Not provided',
                 'certStudyCenterCode': window.paymentData.studyCenterCode,
-                'certStudyCenterAddress': window.paymentData.studyCenterName,
+                'certStudyCenterAddress': window.paymentData.studyCenterAddress,
                 'certEmailId': window.paymentData.emailId,
                 'certMobileNumber': window.paymentData.mobileNumber,
-                'certMediumSelection': window.paymentData.mediumSelection,
-                'certExamType': window.paymentData.examType,
-                'certSemesterNumber': window.paymentData.semesterNumber,
-                'certYearSelection': window.paymentData.yearSelection,
-                'certSubmittedElsewhere': window.paymentData.submittedElsewhere,
-                'certSubmissionDetails': window.paymentData.submissionDetails,
+                'certSubmittedElsewhere': (() => {
+                    const submittedElsewhere = window.paymentData.submittedElsewhere;
+                    const submissionDetails = window.paymentData.submissionDetails;
+                    
+                    if (submittedElsewhere === 'Yes' && submissionDetails) {
+                        return `Yes - ${submissionDetails}`;
+                    } else {
+                        return submittedElsewhere || 'Not provided';
+                    }
+                })(),
                 'certConfirmation': window.paymentData.confirmation
             };
             

@@ -549,11 +549,11 @@ def payment_success():
             "emailId": payment_request.get("emailId", "Not Provided"),
             "mobileNumber": payment_request.get("mobileNumber", "Not Provided"),
             # Program and Course Information
-            "programmeCode": payment_request.get("programmeCode", "Not Provided"),
+            "programSelection": payment_request.get("programSelection", "Not Provided"),
             "courseCode": payment_request.get("courseCode", "Not Provided"),
             # Study Center Information
             "studyCenterCode": payment_request.get("studyCenterCode", "Not Provided"),
-            "studyCenterName": payment_request.get("studyCenterName", "Not Provided"),
+            "studyCenterAddress": payment_request.get("studyCenterAddress", "Not Provided"),
             # Academic Information
             "mediumSelection": payment_request.get("mediumSelection", "Not Provided"),
             "examType": payment_request.get("examType", "Not Provided"),
@@ -563,7 +563,7 @@ def payment_success():
             "submittedElsewhere": payment_request.get("submittedElsewhere", "Not Provided"),
             "submissionDetails": payment_request.get("submissionDetails", "Not Provided"),
             "confirmation": payment_request.get("confirmation", "Not Provided"),
-            # Selected Subjects
+            # Selected Courses
             "courses": payment_request.get("courses", []),
             # File uploads (these will be added by the frontend)
             "idCardPhoto": None,
