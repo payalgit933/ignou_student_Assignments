@@ -1400,6 +1400,9 @@
                     examType: formData.get('examType'),
                     semesterNumber: formData.get('semesterNumber'),
                     yearSelection: formData.get('yearSelection'),
+                    submittedElsewhere: formData.get('submittedElsewhere'),
+                    submissionDetails: formData.get('submissionDetails'),
+                    confirmation: formData.get('confirmation'),
                     amount: amount
                 };
                 
@@ -1429,14 +1432,57 @@
                     };
                     
                     // Store student data in localStorage for payment success
-                    localStorage.setItem('paymentStudentData', JSON.stringify({
-                        studentName: studentName,
-                        enrollmentNumber: enrollmentNumber,
-                        emailId: emailId,
-                        mobileNumber: mobileNumber,
-                        subjects: selectedSubjects,
-                        amount: amount
-                    }));
+                    const storePaymentData = async () => {
+                        const paymentData = {
+                            studentName: studentName,
+                            enrollmentNumber: enrollmentNumber,
+                            emailId: emailId,
+                            mobileNumber: mobileNumber,
+                            programSelection: formData.get('programSelection'),
+                            courseCode: formData.get('courseCode'),
+                            studyCenterCode: formData.get('studyCenterCode'),
+                            studyCenterAddress: formData.get('studyCenterAddress'),
+                            mediumSelection: formData.get('mediumSelection'),
+                            examType: formData.get('examType'),
+                            semesterNumber: formData.get('semesterNumber'),
+                            yearSelection: formData.get('yearSelection'),
+                            submittedElsewhere: formData.get('submittedElsewhere'),
+                            submissionDetails: formData.get('submissionDetails'),
+                            confirmation: formData.get('confirmation'),
+                            subjects: selectedSubjects,
+                            amount: amount
+                        };
+
+                        // Handle ID card photo
+                        const idCardFile = formData.get('idCard');
+                        if (idCardFile && idCardFile.size > 0) {
+                            try {
+                                const idCardDataUrl = await fileToDataURL(idCardFile);
+                                paymentData.idCardPhoto = idCardDataUrl;
+                            } catch (e) {
+                                console.warn("ID card photo conversion failed:", e);
+                            }
+                        }
+
+                        // Handle signature photo
+                        if (window.transparentSignature) {
+                            paymentData.signaturePhoto = window.transparentSignature;
+                        } else {
+                            const signatureFile = formData.get('signature');
+                            if (signatureFile && signatureFile.size > 0) {
+                                try {
+                                    const signatureDataUrl = await fileToDataURL(signatureFile);
+                                    paymentData.signaturePhoto = signatureDataUrl;
+                                } catch (e) {
+                                    console.warn("Signature photo conversion failed:", e);
+                                }
+                            }
+                        }
+
+                        localStorage.setItem('paymentStudentData', JSON.stringify(paymentData));
+                    };
+
+                    await storePaymentData();
                     
                     // Initialize Cashfree SDK and redirect to payment
                     try {
@@ -2604,18 +2650,21 @@
                     baseTemplateData = {
                         name: window.paymentData.studentName || 'Not provided',
                         enrollment: window.paymentData.enrollmentNumber || 'Not provided',
-                        program: 'Not provided', // Not available in payment data
-                        courseCode: 'Not provided', // Not available in payment data
-                        centerAddress: 'Not provided', // Not available in payment data
-                        centerCode: 'Not provided', // Not available in payment data
+                        program: window.paymentData.programmeCode || 'Not provided',
+                        courseCode: window.paymentData.courseCode || 'Not provided',
+                        centerAddress: window.paymentData.studyCenterName || 'Not provided',
+                        centerCode: window.paymentData.studyCenterCode || 'Not provided',
                         mobile: window.paymentData.mobileNumber || 'Not provided',
-                        assignmentAnyWhereElse: 'Not provided', // Not available in payment data
+                        assignmentAnyWhereElse: window.paymentData.submittedElsewhere || 'Not provided',
                         email: window.paymentData.emailId || 'Not provided',
-                        crossChecked: 'Not provided', // Not available in payment data
-                        semester: '', // Not available in payment data
-                        year: new Date().getFullYear().toString(),
-                        center: 'Delhi', // Default
-                        date: new Date().toLocaleDateString('en-GB')
+                        crossChecked: window.paymentData.confirmation || 'Not provided',
+                        semester: window.paymentData.semesterNumber || '',
+                        year: window.paymentData.yearSelection || new Date().getFullYear().toString(),
+                        center: window.paymentData.studyCenterName ? 
+                            window.paymentData.studyCenterName.split(' ')[0] : 'Delhi',
+                        date: new Date().toLocaleDateString('en-GB'),
+                        photo: window.paymentData.idCardPhoto || null,
+                        sign: window.paymentData.signaturePhoto || null
                     };
                 } else {
                     // Fallback to form data
@@ -2626,16 +2675,28 @@
                         enrollment: formData.get('enrollmentNumber') || 'Not provided',
                         program: formData.get('programSelection') || 'Not provided',
                         courseCode: formData.get('courseCode') || 'Not provided',
-                        centerAddress: formData.get('centerAddress') || 'Not provided',
-                        centerCode: formData.get('centerCode') || 'Not provided',
+                        centerAddress: formData.get('studyCenterAddress') || 'Not provided',
+                        centerCode: formData.get('studyCenterCode') || 'Not provided',
                         mobile: formData.get('mobileNumber') || 'Not provided',
-                        assignmentAnyWhereElse: formData.get('assignmentAnyWhereElse') || 'Not provided',
-                        email: formData.get('email') || 'Not provided',
-                        crossChecked: formData.get('crossChecked') || 'Not provided',
-                        semester: formData.get('semesterSelection') || '',
+                        assignmentAnyWhereElse: (() => {
+                            const submittedElsewhere = formData.get('submittedElsewhere');
+                            const submissionDetails = formData.get('submissionDetails');
+                            
+                            if (submittedElsewhere === 'Yes' && submissionDetails) {
+                                return `Yes - ${submissionDetails}`;
+                            } else {
+                                return submittedElsewhere || 'Not provided';
+                            }
+                        })(),
+                        email: formData.get('emailId') || 'Not provided',
+                        crossChecked: formData.get('confirmation') || 'Not provided',
+                        semester: formData.get('semesterNumber') || '',
                         year: formData.get('yearSelection') || new Date().getFullYear().toString(),
-                        center: formData.get('regionalCentre') || 'Delhi',
-                        date: new Date().toLocaleDateString('en-GB')
+                        center: formData.get('studyCenterAddress') ? 
+                            formData.get('studyCenterAddress').split(' ')[0] : 'Delhi',
+                        date: new Date().toLocaleDateString('en-GB'),
+                        photo: null,
+                        sign: null
                     };
                     
                     // Handle photo upload from form
@@ -2769,6 +2830,41 @@
             localStorage.removeItem('isLoggedIn');
             showAuthLinks();
         }
+
+        // Page initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if this is a payment success page
+            const urlParams = new URLSearchParams(window.location.search);
+            const paymentSuccess = urlParams.get('payment_success') === 'true';
+            
+            if (paymentSuccess) {
+                // Load payment data from localStorage
+                const paymentStudentData = localStorage.getItem('paymentStudentData');
+                if (paymentStudentData) {
+                    try {
+                        const data = JSON.parse(paymentStudentData);
+                        window.paymentData = {
+                            ...window.paymentData,
+                            ...data
+                        };
+                        console.log('Payment data loaded from localStorage:', window.paymentData);
+                    } catch (e) {
+                        console.error('Error parsing payment data:', e);
+                    }
+                }
+                
+                // Show download page
+                document.getElementById('formSection').classList.add('hidden');
+                document.getElementById('downloadPage').classList.remove('hidden');
+                
+                // Generate download buttons
+                const subjects = window.paymentData?.subjects || [];
+                generateDownloadButtons(subjects);
+            } else {
+                // Normal form page
+                checkAuthStatus();
+            }
+        });
     </script>
 </body>
 </html>
