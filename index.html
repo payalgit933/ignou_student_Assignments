@@ -958,14 +958,16 @@
         // Remove.bg API configuration
         window.removeBgApiKey = 'px2zysgmbvcxprf'; // Stored API key
         
-        // Subject to PDF mapping for automatic attachment
+        // Subject to PDF mapping for automatic attachment - using secure endpoint
         const subjectPDFMapping = {
-            'Mathematics': 'BCS-53-EM-2025-26.pdf',
-            'Computer Science': 'BCS-54-EM-2025-26.pdf',
-            'Economics': 'BCS-53-EM-2025-26.pdf', // Default to BCS-53 for other subjects
-            'Physics': 'BCS-53-EM-2025-26.pdf',
-            'Chemistry': 'BCS-53-EM-2025-26.pdf',
-            'Biology': 'BCS-53-EM-2025-26.pdf'
+            'Mathematics': '/get-pdf/MMPC-001',
+            'Computer Science': '/get-pdf/MMPC-002',
+            'Economics': '/get-pdf/MMPC-003',
+            'Physics': '/get-pdf/MMPC-004',
+            'Chemistry': '/get-pdf/MMPC-005',
+            'Biology': '/get-pdf/MMPC-006',
+            'Business Studies': '/get-pdf/MMPC-007',
+            'English': '/get-pdf/MMPC-008'
         };
         
         // Function to merge PDFs
@@ -1004,19 +1006,28 @@
                 console.log('Generated PDF pages added to merged document');
                 
                 // Get the PDF file to attach based on subject
-                const pdfToAttach = subjectPDFMapping[subjectName] || 'BCS-53-EM-2025-26.pdf';
+                const pdfToAttach = subjectPDFMapping[subjectName] || '/get-pdf/MMPC-001';
                 console.log(`Attaching PDF: ${pdfToAttach} for subject: ${subjectName}`);
                 console.log('Available subjects:', Object.keys(subjectPDFMapping));
                 console.log('Subject mapping for this subject:', subjectPDFMapping[subjectName]);
                 
                 try {
-                    // Fetch the subject-specific PDF
-                    console.log(`Fetching PDF from: pdfs/${pdfToAttach}`);
-                    const response = await fetch(`pdfs/${pdfToAttach}`);
+                    // Fetch the subject-specific PDF from secure endpoint
+                    console.log(`Fetching PDF from: ${pdfToAttach}`);
+                    const response = await fetch(pdfToAttach, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/pdf',
+                        },
+                        credentials: 'include' // Include cookies for session authentication
+                    });
                     console.log('Fetch response status:', response.status, response.ok);
                     
                     if (!response.ok) {
-                        throw new Error(`Failed to fetch ${pdfToAttach}: ${response.status}`);
+                        if (response.status === 403) {
+                            throw new Error('Unauthorized access. Payment required to access PDFs.');
+                        }
+                        throw new Error(`Failed to fetch ${pdfToAttach}: ${response.status} ${response.statusText}`);
                     }
                     
                     const subjectPDFBytes = await response.arrayBuffer();

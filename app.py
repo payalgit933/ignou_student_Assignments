@@ -5,7 +5,7 @@ import hashlib
 import json
 import os
 import time
-from flask import Flask, request, jsonify, redirect, send_from_directory, session
+from flask import Flask, request, jsonify, redirect, send_from_directory, session, send_file
 from flask_cors import CORS
 import requests
 from database import db
@@ -712,6 +712,95 @@ def test_production_auth():
                 "secret_key_preview": CASHFREE_SECRET_KEY[:8] + "..." if CASHFREE_SECRET_KEY != 'your_production_secret_key' else "❌ NOT SET"
             }
         })
+
+# Secure PDF route - only accessible after payment
+@app.route("/get-pdf/<course_code>")
+def get_pdf(course_code):
+    """Secure route to serve PDFs only to paid users"""
+    try:
+        # Check if user has paid
+        payment_data = session.get('payment_data')
+        if not payment_data or payment_data.get("status") != "PAID":
+            return jsonify({"success": False, "error": "Unauthorized access. Payment required."}), 403
+        
+        # Map course code to PDF file
+        pdf_mapping = {
+            "MMPC-001": "pdfs/MBA/MMPC-001.pdf",
+            "MMPC-002": "pdfs/MBA/MMPC-002.pdf",
+            "MMPC-003": "pdfs/MBA/MMPC-003.pdf",
+            "MMPC-004": "pdfs/MBA/MMPC-004.pdf",
+            "MMPC-005": "pdfs/MBA/MMPC-005.pdf",
+            "MMPC-006": "pdfs/MBA/MMPC-006.pdf",
+            "MMPC-007": "pdfs/MBA/MMPC-007.pdf",
+            "MMPC-008": "pdfs/MBA/MMPC-008.pdf",
+            "MMPC-009": "pdfs/MBA/MMPC-009.pdf",
+            "MMPC-010": "pdfs/MBA/MMPC-010.pdf",
+            # BBA course codes
+            "BBAR-101": "pdfs/BBA/BBAR-101.pdf",
+            "BBAR-102": "pdfs/BBA/BBAR-102.pdf",
+            "BBAR-103": "pdfs/BBA/BBAR-103.pdf",
+            "BBAR-104": "pdfs/BBA/BBAR-104.pdf",
+            "BBAR-105": "pdfs/BBA/BBAR-105.pdf",
+            "BBAR-106": "pdfs/BBA/BBAR-106.pdf",
+            # MCA course codes
+            "MCS-011": "pdfs/MCA/MCS-011.pdf",
+            "MCS-012": "pdfs/MCA/MCS-012.pdf",
+            "MCS-013": "pdfs/MCA/MCS-013.pdf",
+            "MCS-014": "pdfs/MCA/MCS-014.pdf",
+            "MCS-015": "pdfs/MCA/MCS-015.pdf",
+            "MCS-021": "pdfs/MCA/MCS-021.pdf",
+            "MCS-022": "pdfs/MCA/MCS-022.pdf",
+            "MCS-023": "pdfs/MCA/MCS-023.pdf",
+            "MCS-024": "pdfs/MCA/MCS-024.pdf",
+            "MCS-025": "pdfs/MCA/MCS-025.pdf",
+            # BCA course codes
+            "BCS-011": "pdfs/BCA/BCS-011.pdf",
+            "BCS-012": "pdfs/BCA/BCS-012.pdf",
+            "BCS-013": "pdfs/BCA/BCS-013.pdf",
+            "BCS-014": "pdfs/BCA/BCS-014.pdf",
+            "BCS-015": "pdfs/BCA/BCS-015.pdf",
+            "BCS-021": "pdfs/BCA/BCS-021.pdf",
+            "BCS-022": "pdfs/BCA/BCS-022.pdf",
+            "BCS-023": "pdfs/BCA/BCS-023.pdf",
+            "BCS-024": "pdfs/BCA/BCS-024.pdf",
+            "BCS-025": "pdfs/BCA/BCS-025.pdf",
+            # B.Tech course codes
+            "BT-101": "pdfs/B.Tech/BT-101.pdf",
+            "BT-102": "pdfs/B.Tech/BT-102.pdf",
+            "BT-103": "pdfs/B.Tech/BT-103.pdf",
+            "BT-104": "pdfs/B.Tech/BT-104.pdf",
+            "BT-105": "pdfs/B.Tech/BT-105.pdf",
+            "BT-106": "pdfs/B.Tech/BT-106.pdf",
+            "BT-201": "pdfs/B.Tech/BT-201.pdf",
+            "BT-202": "pdfs/B.Tech/BT-202.pdf",
+            "BT-203": "pdfs/B.Tech/BT-203.pdf",
+            "BT-204": "pdfs/B.Tech/BT-204.pdf",
+            # M.Tech course codes
+            "MT-501": "pdfs/M.Tech/MT-501.pdf",
+            "MT-502": "pdfs/M.Tech/MT-502.pdf",
+            "MT-503": "pdfs/M.Tech/MT-503.pdf",
+            "MT-504": "pdfs/M.Tech/MT-504.pdf",
+            "MT-505": "pdfs/M.Tech/MT-505.pdf",
+            "MT-506": "pdfs/M.Tech/MT-506.pdf",
+            "MT-507": "pdfs/M.Tech/MT-507.pdf",
+            "MT-508": "pdfs/M.Tech/MT-508.pdf",
+            "MT-509": "pdfs/M.Tech/MT-509.pdf",
+            "MT-510": "pdfs/M.Tech/MT-510.pdf"
+        }
+
+        pdf_file = pdf_mapping.get(course_code)
+        if not pdf_file:
+            return jsonify({"success": False, "error": f"Course code {course_code} not found"}), 404
+        
+        if not os.path.exists(pdf_file):
+            return jsonify({"success": False, "error": f"PDF file not found for course {course_code}"}), 404
+
+        print(f"✅ Serving PDF for course {course_code} to paid user")
+        return send_file(pdf_file, as_attachment=False, mimetype='application/pdf')
+        
+    except Exception as e:
+        print(f"❌ Error serving PDF for course {course_code}: {str(e)}")
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
