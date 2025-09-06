@@ -129,90 +129,6 @@
             color: #333;
         }
 
-        /* Multi-select dropdown styles */
-        .multiselect-dropdown {
-            position: relative;
-            width: 100%;
-        }
-
-        .multiselect-dropdown .dropdown-button {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            background: white;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-            color: #333;
-            transition: border-color 0.3s ease;
-        }
-
-        .multiselect-dropdown .dropdown-button:hover {
-            border-color: #007bff;
-        }
-
-        .multiselect-dropdown .dropdown-button.open {
-            border-color: #007bff;
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
-        }
-
-        .multiselect-dropdown .dropdown-arrow {
-            transition: transform 0.3s ease;
-        }
-
-        .multiselect-dropdown .dropdown-arrow.open {
-            transform: rotate(180deg);
-        }
-
-        .multiselect-dropdown .dropdown-content {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 2px solid #007bff;
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-        }
-
-        .multiselect-dropdown .dropdown-content.show {
-            display: block;
-        }
-
-        .multiselect-dropdown .dropdown-item {
-            padding: 10px 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background-color 0.2s ease;
-        }
-
-        .multiselect-dropdown .dropdown-item:hover {
-            background-color: #f8f9fa;
-        }
-
-        .multiselect-dropdown .dropdown-item input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-        }
-
-        .multiselect-dropdown .dropdown-item label {
-            cursor: pointer;
-            font-size: 14px;
-            color: #333;
-            margin: 0;
-        }
-
         .radio-group {
             display: flex;
             gap: 20px;
@@ -695,41 +611,28 @@
                             <option value="M.Tech">M.Tech</option>
                         </select>
                     </div>
-                    <div class="form-group" id="semesterYearGroup" style="display: none;">
-                        <label for="semesterSelection" class="required">Semester</label>
-                        <select id="semesterSelection" name="semesterSelection">
-                            <option value="">Select Semester</option>
-                            <option value="1">1st Semester</option>
-                            <option value="2">2nd Semester</option>
-                            <option value="3">3rd Semester</option>
-                            <option value="4">4th Semester</option>
-                            <option value="5">5th Semester</option>
-                            <option value="6">6th Semester</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="yearGroup" style="display: none;">
-                        <label for="yearSelection" class="required">Year</label>
-                        <select id="yearSelection" name="yearSelection">
-                            <option value="">Select Year</option>
-                            <option value="2024">2024</option>
-                            <option value="2025">2025</option>
-                            <option value="2026">2026</option>
+                    <div class="form-group">
+                        <label for="semesterYear" class="required">Semester/Year</label>
+                        <select id="semesterYear" name="semesterYear" required>
+                            <option value="">Select program first</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="form-row" id="courseSelectionGroup" style="display: none;">
-                    <div class="form-group full-width">
-                        <label class="required">Course Selection</label>
-                        <div class="multiselect-dropdown" id="courseMultiselect">
-                            <div class="dropdown-button" id="courseDropdownButton">
-                                <span id="courseDropdownText">Select courses...</span>
-                                <span class="dropdown-arrow">▼</span>
-                            </div>
-                            <div class="dropdown-content" id="courseDropdownContent">
-                                <!-- Course options will be populated dynamically -->
-                            </div>
-                        </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="courseCode" class="required">Course Code</label>
+                        <select id="courseCode" name="courseCode" required>
+                            <option value="">Select semester/year first</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="mediumSelection" class="required">Medium Selection</label>
+                        <select id="mediumSelection" name="mediumSelection" required>
+                            <option value="">Select Medium</option>
+                            <option value="English">English</option>
+                            <option value="Hindi">Hindi</option>
+                        </select>
                     </div>
                 </div>
 
@@ -755,15 +658,37 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="mediumSelection" class="required">Medium Selection</label>
-                        <select id="mediumSelection" name="mediumSelection" required>
-                            <option value="">Select Medium</option>
-                            <option value="English">English</option>
-                            <option value="Hindi">Hindi</option>
+                        <label for="examType" class="required">Exam Type Selection</label>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" id="examYearly" name="examType" value="Yearly" required>
+                                <label for="examYearly">Yearly</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="examSemester" name="examType" value="Semester" required>
+                                <label for="examSemester">Semester</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="yearSelection" class="required">Year Selection</label>
+                        <select id="yearSelection" name="yearSelection" required>
+                            <option value="">Select year</option>
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                            <option value="2026">2026</option>
                         </select>
                     </div>
                 </div>
 
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label class="required">Subjects Selection</label>
+                        <div class="checkbox-group" id="subjectsContainer">
+                            <p class="text-gray-600 italic">Please select program, semester/year, and course code first</p>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="form-row">
                     <div class="form-group">
@@ -883,49 +808,55 @@
                             
                             <div class="flex items-start">
                                 <span class="font-bold text-base w-8">4.</span>
-                                <span class="font-bold text-base w-80">Selected Courses</span>
+                                <span class="font-bold text-base w-80">Course Code</span>
                                 <span class="text-base mx-2">:</span>
-                                <span class="text-base border-b border-gray-400 px-2" id="certSelectedSubjects">_____</span>
+                                <span class="text-base border-b border-gray-400 px-2" id="certCourseCode">_____</span>
                             </div>
-                            <p class="text-xs text-gray-600 italic ml-10 mb-4">(Use this format course-wise separately)</p>
                             
                             <div class="flex items-start">
                                 <span class="font-bold text-base w-8">5.</span>
+                                <span class="font-bold text-base w-80">Selected Subjects</span>
+                                <span class="text-base mx-2">:</span>
+                                <span class="text-base border-b border-gray-400 px-2" id="certSelectedSubjects">_____</span>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <span class="font-bold text-base w-8">6.</span>
                                 <span class="font-bold text-base w-80">Study Centre Code</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certStudyCenterCode">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">6.</span>
+                                <span class="font-bold text-base w-8">7.</span>
                                 <span class="font-bold text-base w-80">Name of the Study Centre With complete address</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certStudyCenterAddress">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">7.</span>
+                                <span class="font-bold text-base w-8">8.</span>
                                 <span class="font-bold text-base w-80">Mobile Number</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certMobileNumber">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">8.</span>
+                                <span class="font-bold text-base w-8">9.</span>
                                 <span class="font-bold text-base w-80">E-mail ID</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certEmailId">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">9.</span>
+                                <span class="font-bold text-base w-8">10.</span>
                                 <span class="font-bold text-base w-80">Details if this same assignment has been submitted anywhere else also</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certSubmittedElsewhere">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">10.</span>
+                                <span class="font-bold text-base w-8">11.</span>
                                 <span class="font-bold text-base w-80">Above information is cross checked and it is correct: Yes/No</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certConfirmation">_____</span>
@@ -1245,205 +1176,161 @@
             });
         });
 
-        // Course data organized by program, semester, and year
-        const courseData = {
+        // Cascading dropdown data structure
+        const programData = {
             'MBA': {
-                '1': {
-                    '2024': [
-                        { value: 'MMPC-001', text: 'MMPC-001 - Management Functions and Behaviour' },
-                        { value: 'MMPC-002', text: 'MMPC-002 - Human Resource Management' },
-                        { value: 'MMPC-003', text: 'MMPC-003 - Economic and Social Environment' }
-                    ],
-                    '2025': [
-                        { value: 'MMPC-001', text: 'MMPC-001 - Management Functions and Behaviour' },
-                        { value: 'MMPC-002', text: 'MMPC-002 - Human Resource Management' },
-                        { value: 'MMPC-003', text: 'MMPC-003 - Economic and Social Environment' }
-                    ]
+                '1st Year': {
+                    'MMPC-001': 'Management Functions and Behaviour',
+                    'MMPC-002': 'Human Resource Management',
+                    'MMPC-003': 'Economic and Social Environment',
+                    'MMPC-004': 'Accounting and Finance for Managers'
                 },
-                '2': {
-                    '2024': [
-                        { value: 'MMPC-004', text: 'MMPC-004 - Accounting and Finance for Managers' },
-                        { value: 'MMPC-005', text: 'MMPC-005 - Marketing Management' },
-                        { value: 'MMPC-006', text: 'MMPC-006 - Information Systems for Managers' }
-                    ],
-                    '2025': [
-                        { value: 'MMPC-004', text: 'MMPC-004 - Accounting and Finance for Managers' },
-                        { value: 'MMPC-005', text: 'MMPC-005 - Marketing Management' },
-                        { value: 'MMPC-006', text: 'MMPC-006 - Information Systems for Managers' }
-                    ]
+                '2nd Year': {
+                    'MMPC-005': 'Marketing Management',
+                    'MMPC-006': 'Information Systems for Managers',
+                    'MMPC-007': 'Quantitative Analysis for Managerial Applications',
+                    'MMPC-008': 'Operations Management'
                 }
             },
             'BBA': {
-                '1': {
-                    '2024': [
-                        { value: 'BBAR-101', text: 'BBAR-101 - Business Communication' },
-                        { value: 'BBAR-102', text: 'BBAR-102 - Business Mathematics' }
-                    ],
-                    '2025': [
-                        { value: 'BBAR-101', text: 'BBAR-101 - Business Communication' },
-                        { value: 'BBAR-102', text: 'BBAR-102 - Business Mathematics' }
-                    ]
+                '1st Year': {
+                    'BBAR-101': 'Business Communication',
+                    'BBAR-102': 'Business Mathematics',
+                    'BBAR-103': 'Principles of Management'
                 },
-                '2': {
-                    '2024': [
-                        { value: 'BBAR-103', text: 'BBAR-103 - Principles of Management' },
-                        { value: 'BBAR-104', text: 'BBAR-104 - Business Environment' }
-                    ],
-                    '2025': [
-                        { value: 'BBAR-103', text: 'BBAR-103 - Principles of Management' },
-                        { value: 'BBAR-104', text: 'BBAR-104 - Business Environment' }
-                    ]
+                '2nd Year': {
+                    'BBAR-104': 'Business Environment',
+                    'BBAR-105': 'Computer Applications in Business',
+                    'BBAR-106': 'Financial Accounting'
                 }
             },
             'MCA': {
-                '1': {
-                    '2024': [
-                        { value: 'MCS-011', text: 'MCS-011 - Problem Solving and Programming' },
-                        { value: 'MCS-012', text: 'MCS-012 - Computer Organisation and Assembly Language Programming' }
-                    ],
-                    '2025': [
-                        { value: 'MCS-011', text: 'MCS-011 - Problem Solving and Programming' },
-                        { value: 'MCS-012', text: 'MCS-012 - Computer Organisation and Assembly Language Programming' }
-                    ]
+                '1st Year': {
+                    'MCS-011': 'Problem Solving and Programming',
+                    'MCS-012': 'Computer Organisation and Assembly Language Programming',
+                    'MCS-013': 'Discrete Mathematics'
                 },
-                '2': {
-                    '2024': [
-                        { value: 'MCS-013', text: 'MCS-013 - Discrete Mathematics' },
-                        { value: 'MCS-014', text: 'MCS-014 - Systems Analysis and Design' }
-                    ],
-                    '2025': [
-                        { value: 'MCS-013', text: 'MCS-013 - Discrete Mathematics' },
-                        { value: 'MCS-014', text: 'MCS-014 - Systems Analysis and Design' }
-                    ]
+                '2nd Year': {
+                    'MCS-021': 'Data and File Structures',
+                    'MCS-022': 'Operating System Concepts and Networking Management',
+                    'MCS-023': 'Introduction to Database Management Systems'
+                }
+            },
+            'BCA': {
+                '1st Year': {
+                    'BCS-011': 'Computer Basics and PC Software',
+                    'BCS-012': 'Mathematics',
+                    'BCS-013': 'Computer Organization'
+                },
+                '2nd Year': {
+                    'BCS-021': 'C++ Programming and Data Structures',
+                    'BCS-022': 'Assembly Language Programming',
+                    'BCS-023': 'Database Management Systems'
+                }
+            },
+            'B.Tech': {
+                '1st Year': {
+                    'BT-101': 'Mathematics-I',
+                    'BT-102': 'Physics',
+                    'BT-103': 'Chemistry'
+                },
+                '2nd Year': {
+                    'BT-201': 'Mathematics-II',
+                    'BT-202': 'Data Structures',
+                    'BT-203': 'Digital Electronics'
+                }
+            },
+            'M.Tech': {
+                '1st Year': {
+                    'MT-501': 'Advanced Mathematics',
+                    'MT-502': 'Advanced Data Structures and Algorithms',
+                    'MT-503': 'Computer Networks'
+                },
+                '2nd Year': {
+                    'MT-504': 'Database Systems',
+                    'MT-505': 'Software Engineering',
+                    'MT-506': 'Machine Learning'
                 }
             }
         };
 
-        // Handle program selection to show semester and year dropdowns
+        // Handle program selection to populate semester/year
         document.getElementById('programSelection').addEventListener('change', function() {
+            const semesterYearSelect = document.getElementById('semesterYear');
+            const courseCodeSelect = document.getElementById('courseCode');
+            const subjectsContainer = document.getElementById('subjectsContainer');
             const selectedProgram = this.value;
-            const semesterYearGroup = document.getElementById('semesterYearGroup');
-            const yearGroup = document.getElementById('yearGroup');
-            const courseSelectionGroup = document.getElementById('courseSelectionGroup');
             
-            if (selectedProgram) {
-                semesterYearGroup.style.display = 'block';
-                yearGroup.style.display = 'block';
-                courseSelectionGroup.style.display = 'none';
-            } else {
-                semesterYearGroup.style.display = 'none';
-                yearGroup.style.display = 'none';
-                courseSelectionGroup.style.display = 'none';
+            // Clear dependent dropdowns
+            semesterYearSelect.innerHTML = '<option value="">Select semester/year</option>';
+            courseCodeSelect.innerHTML = '<option value="">Select semester/year first</option>';
+            subjectsContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, semester/year, and course code first</p>';
+            
+            if (selectedProgram && programData[selectedProgram]) {
+                // Add semester/year options
+                Object.keys(programData[selectedProgram]).forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    semesterYearSelect.appendChild(option);
+                });
             }
         });
 
-        // Handle semester and year selection to populate course checkboxes
-        document.getElementById('semesterSelection').addEventListener('change', updateCourseSelection);
-        document.getElementById('yearSelection').addEventListener('change', updateCourseSelection);
-
-        function updateCourseSelection() {
-            const selectedProgram = document.getElementById('programSelection').value;
-            const selectedSemester = document.getElementById('semesterSelection').value;
-            const selectedYear = document.getElementById('yearSelection').value;
-            const courseSelectionGroup = document.getElementById('courseSelectionGroup');
-            const courseDropdownContent = document.getElementById('courseDropdownContent');
+        // Handle semester/year selection to populate course codes
+        document.getElementById('semesterYear').addEventListener('change', function() {
+            const programSelect = document.getElementById('programSelection');
+            const courseCodeSelect = document.getElementById('courseCode');
+            const subjectsContainer = document.getElementById('subjectsContainer');
+            const selectedProgram = programSelect.value;
+            const selectedYear = this.value;
             
-            if (selectedProgram && selectedSemester && selectedYear) {
-                // Clear existing options
-                courseDropdownContent.innerHTML = '';
+            // Clear dependent dropdowns
+            courseCodeSelect.innerHTML = '<option value="">Select course code</option>';
+            subjectsContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, semester/year, and course code first</p>';
+            
+            if (selectedProgram && selectedYear && programData[selectedProgram] && programData[selectedProgram][selectedYear]) {
+                // Add course codes for selected program and year
+                Object.entries(programData[selectedProgram][selectedYear]).forEach(([code, name]) => {
+                    const option = document.createElement('option');
+                    option.value = code;
+                    option.textContent = `${code} - ${name}`;
+                    courseCodeSelect.appendChild(option);
+                });
+            }
+        });
+
+        // Handle course code selection to populate subjects
+        document.getElementById('courseCode').addEventListener('change', function() {
+            const subjectsContainer = document.getElementById('subjectsContainer');
+            const selectedCourseCode = this.value;
+            
+            if (selectedCourseCode) {
+                // Generate subject checkboxes based on course code
+                subjectsContainer.innerHTML = '';
                 
-                // Get courses for the selected program, semester, and year
-                const courses = courseData[selectedProgram]?.[selectedSemester]?.[selectedYear] || [];
+                // Get the course name for display
+                const programSelect = document.getElementById('programSelection');
+                const semesterYearSelect = document.getElementById('semesterYear');
+                const selectedProgram = programSelect.value;
+                const selectedYear = semesterYearSelect.value;
                 
-                if (courses.length > 0) {
-                    courses.forEach((course, index) => {
-                        const dropdownItem = document.createElement('div');
-                        dropdownItem.className = 'dropdown-item';
-                        dropdownItem.innerHTML = `
-                            <input type="checkbox" id="course_${index}" name="subjects" value="${course.value}">
-                            <label for="course_${index}">${course.text}</label>
-                        `;
-                        courseDropdownContent.appendChild(dropdownItem);
-                    });
+                if (programData[selectedProgram] && programData[selectedProgram][selectedYear] && programData[selectedProgram][selectedYear][selectedCourseCode]) {
+                    const courseName = programData[selectedProgram][selectedYear][selectedCourseCode];
                     
-                    courseSelectionGroup.style.display = 'block';
-                } else {
-                    courseSelectionGroup.style.display = 'none';
+                    // Create a single checkbox for the selected course
+                    const checkboxDiv = document.createElement('div');
+                    checkboxDiv.className = 'checkbox-item';
+                    checkboxDiv.innerHTML = `
+                        <input type="checkbox" id="subject-${selectedCourseCode}" name="subjects" value="${courseName}" checked>
+                        <label for="subject-${selectedCourseCode}">${selectedCourseCode} - ${courseName}</label>
+                    `;
+                    subjectsContainer.appendChild(checkboxDiv);
                 }
             } else {
-                courseSelectionGroup.style.display = 'none';
+                subjectsContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, semester/year, and course code first</p>';
             }
-        }
-
-        // Check server status
-        async function checkServerStatus() {
-            try {
-                const response = await fetch('/test-payment');
-                const result = await response.json();
-                if (result.status === 'success') {
-                    console.log('✅ Server is running and accessible');
-                } else {
-                    console.warn('⚠️ Server responded but with unexpected status');
-                }
-            } catch (error) {
-                console.error('❌ Server is not running or not accessible:', error);
-                alert('⚠️ Server is not running. Please start the Flask server by running "python app.py" in the terminal.');
-            }
-        }
-
-        // Multi-select dropdown functionality
-        function initializeMultiSelectDropdown() {
-            const dropdownButton = document.getElementById('courseDropdownButton');
-            const dropdownContent = document.getElementById('courseDropdownContent');
-            const dropdownText = document.getElementById('courseDropdownText');
-            const dropdownArrow = document.querySelector('.dropdown-arrow');
-
-            // Toggle dropdown
-            dropdownButton.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const isOpen = dropdownContent.classList.contains('show');
-                
-                if (isOpen) {
-                    dropdownContent.classList.remove('show');
-                    dropdownButton.classList.remove('open');
-                    dropdownArrow.classList.remove('open');
-                } else {
-                    dropdownContent.classList.add('show');
-                    dropdownButton.classList.add('open');
-                    dropdownArrow.classList.add('open');
-                }
-            });
-
-            // Handle checkbox changes
-            dropdownContent.addEventListener('change', function(e) {
-                if (e.target.type === 'checkbox') {
-                    updateDropdownText();
-                }
-            });
-
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!dropdownButton.contains(e.target) && !dropdownContent.contains(e.target)) {
-                    dropdownContent.classList.remove('show');
-                    dropdownButton.classList.remove('open');
-                    dropdownArrow.classList.remove('open');
-                }
-            });
-
-            function updateDropdownText() {
-                const checkboxes = dropdownContent.querySelectorAll('input[type="checkbox"]:checked');
-                const selectedCount = checkboxes.length;
-                
-                if (selectedCount === 0) {
-                    dropdownText.textContent = 'Select courses...';
-                } else if (selectedCount === 1) {
-                    const selectedLabel = checkboxes[0].nextElementSibling.textContent;
-                    dropdownText.textContent = selectedLabel;
-                } else {
-                    dropdownText.textContent = `${selectedCount} courses selected`;
-                }
-            }
-        }
+        });
 
         // Handle signature file selection to convert to transparent PNG
         document.getElementById('signature').addEventListener('change', function(e) {
@@ -1551,11 +1438,12 @@
                     emailId: emailId,
                     mobileNumber: mobileNumber,
                     programSelection: formData.get('programSelection'),
+                    semesterYear: formData.get('semesterYear'),
                     courseCode: formData.get('courseCode'),
                     studyCenterCode: formData.get('studyCenterCode'),
                     studyCenterAddress: formData.get('studyCenterAddress'),
                     mediumSelection: formData.get('mediumSelection'),
-                    semesterNumber: formData.get('semesterSelection'), // Fixed: use semesterSelection
+                    examType: formData.get('examType'),
                     yearSelection: formData.get('yearSelection'),
                     submittedElsewhere: formData.get('submittedElsewhere'),
                     submissionDetails: formData.get('submissionDetails'),
@@ -1565,30 +1453,8 @@
                 
                 console.log('Initiating payment with data:', paymentData);
                 
-                // First, upload images to backend
-                const idCardFile = formData.get('idCard');
-                const signatureFile = formData.get('signature');
-                
-                if (idCardFile && idCardFile.size > 0) {
-                    try {
-                        const idCardDataUrl = await fileToDataURL(idCardFile);
-                        paymentData.idCardPhoto = idCardDataUrl;
-                    } catch (e) {
-                        console.warn("ID card photo conversion failed:", e);
-                    }
-                }
-                
-                if (signatureFile && signatureFile.size > 0) {
-                    try {
-                        const signatureDataUrl = await fileToDataURL(signatureFile);
-                        paymentData.signaturePhoto = signatureDataUrl;
-                    } catch (e) {
-                        console.warn("Signature photo conversion failed:", e);
-                    }
-                }
-                
                 // Call payment initiation endpoint
-                let response = await fetch('/initiate-payment', {
+                const response = await fetch('/initiate-payment', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1596,29 +1462,7 @@
                     body: JSON.stringify(paymentData)
                 });
                 
-                let result = await response.json();
-                
-                // If payment fails due to credentials, try test payment
-                if (!result.success && result.error && result.error.includes('not configured')) {
-                    console.log('🔄 Real payment failed, trying test payment...');
-                    
-                    response = await fetch('/test-initiate-payment', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(paymentData)
-                    });
-                    
-                    result = await response.json();
-                    
-                    if (result.success) {
-                        console.log('✅ Test payment initiated successfully');
-                        // Redirect to payment success page
-                        window.location.href = result.paymentUrl;
-                        return;
-                    }
-                }
+                const result = await response.json();
                 
                 if (result.success) {
                     console.log('Payment initiated successfully:', result);
@@ -1635,22 +1479,23 @@
                     // Store student data in localStorage for payment success
                     const storePaymentData = async () => {
                         const paymentData = {
-                        studentName: studentName,
-                        enrollmentNumber: enrollmentNumber,
-                        emailId: emailId,
-                        mobileNumber: mobileNumber,
+                            studentName: studentName,
+                            enrollmentNumber: enrollmentNumber,
+                            emailId: emailId,
+                            mobileNumber: mobileNumber,
                             programSelection: formData.get('programSelection'),
+                            semesterYear: formData.get('semesterYear'),
                             courseCode: formData.get('courseCode'),
                             studyCenterCode: formData.get('studyCenterCode'),
                             studyCenterAddress: formData.get('studyCenterAddress'),
                             mediumSelection: formData.get('mediumSelection'),
-                            semesterNumber: formData.get('semesterSelection'), // Fixed: use semesterSelection
+                            examType: formData.get('examType'),
                             yearSelection: formData.get('yearSelection'),
                             submittedElsewhere: formData.get('submittedElsewhere'),
                             submissionDetails: formData.get('submissionDetails'),
                             confirmation: formData.get('confirmation'),
-                        subjects: selectedSubjects,
-                        amount: amount
+                            subjects: selectedSubjects,
+                            amount: amount
                         };
 
                         // Handle ID card photo
@@ -1713,16 +1558,7 @@
                         return;
                     }
                     
-                    // Show detailed error message
-                    let errorMessage = result.error || 'Unknown error';
-                    if (result.details) {
-                        errorMessage += `\n\nDetails: ${result.details}`;
-                    }
-                    if (result.status_code) {
-                        errorMessage += `\n\nStatus Code: ${result.status_code}`;
-                    }
-                    
-                    alert(`Payment initiation failed: ${errorMessage}`);
+                    alert(`Payment initiation failed: ${result.error || 'Unknown error'}`);
                     
                     // Reset button
                     submitButton.textContent = originalText;
@@ -1731,15 +1567,7 @@
                 
             } catch (error) {
                 console.error('Error initiating payment:', error);
-                
-                // Check if it's a network/server error
-                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                    alert('Server is not running. Please start the Flask server by running "python app.py" in the terminal.');
-                } else if (error.message.includes('Unexpected token')) {
-                    alert('Server returned HTML instead of JSON. Please check if the server is running correctly.');
-                } else {
-                    alert('An error occurred while initiating payment. Please try again.');
-                }
+                alert('An error occurred while initiating payment. Please try again.');
                 
                 // Reset button
                 const submitButton = document.querySelector('button[type="submit"]');
@@ -2638,12 +2466,6 @@
         // Add debugging for authentication
         console.log('Authentication check completed');
         
-        // Initialize multi-select dropdown
-        initializeMultiSelectDropdown();
-        
-        // Check server status
-        checkServerStatus();
-        
         // Check if this is a payment success redirect
         const urlParams = new URLSearchParams(window.location.search);
         const paymentSuccess = urlParams.get('payment_success') === 'true';
@@ -2655,7 +2477,10 @@
         }
         
         // Check if payment data is provided by server
-        // Server payment data will be set by the backend if available
+        {% if payment_success and payment_data %}
+        window.serverPaymentData = {{ payment_data | tojson }};
+        console.log('Server payment data:', window.serverPaymentData);
+        {% endif %}
 
         // Helper function to get enrollment number
         function getEnrollmentNumber() {
@@ -3062,24 +2887,21 @@
 
         // Function to update PDF elements with payment data
         function updatePDFElementsWithPaymentData() {
-            if (!window.paymentData) {
-                console.log('No payment data available');
-                return;
-            }
-            
-            console.log('Updating PDF elements with payment data:', window.paymentData);
+            if (!window.paymentData) return;
             
             // Update text fields in PDF template
             const elements = {
                 'certStudentName': window.paymentData.studentName,
                 'certEnrollmentNumber': window.paymentData.enrollmentNumber,
                 'certProgramSelection': window.paymentData.programmeCode,
+                'certCourseCode': window.paymentData.courseCode,
                 'certStudyCenterCode': window.paymentData.studyCenterCode,
                 'certStudyCenterAddress': window.paymentData.studyCenterName,
                 'certEmailId': window.paymentData.emailId,
                 'certMobileNumber': window.paymentData.mobileNumber,
                 'certMediumSelection': window.paymentData.mediumSelection,
-                'certSemesterNumber': window.paymentData.semesterNumber,
+                'certExamType': window.paymentData.examType,
+                'certSemesterYear': window.paymentData.semesterYear,
                 'certYearSelection': window.paymentData.yearSelection,
                 'certSubmittedElsewhere': window.paymentData.submittedElsewhere,
                 'certSubmissionDetails': window.paymentData.submissionDetails,
@@ -3100,10 +2922,7 @@
                 if (photoElement) {
                     photoElement.src = window.paymentData.idCardPhoto;
                     photoElement.style.display = 'block';
-                    console.log('ID card photo updated in PDF template');
                 }
-            } else {
-                console.log('No ID card photo found in payment data');
             }
             
             if (window.paymentData.signaturePhoto) {
@@ -3111,10 +2930,7 @@
                 if (signatureElement) {
                     signatureElement.src = window.paymentData.signaturePhoto;
                     signatureElement.style.display = 'block';
-                    console.log('Signature photo updated in PDF template');
                 }
-            } else {
-                console.log('No signature photo found in payment data');
             }
             
             // Update subjects
