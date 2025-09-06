@@ -842,6 +842,13 @@
                             
                             <div class="flex items-start">
                                 <span class="font-bold text-base w-8">4.</span>
+                                <span class="font-bold text-base w-80">Course Code</span>
+                                <span class="text-base mx-2">:</span>
+                                <span class="text-base border-b border-gray-400 px-2" id="certCourseCode">_____</span>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <span class="font-bold text-base w-8">5.</span>
                                 <span class="font-bold text-base w-80">Selected Subjects</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certSelectedSubjects">_____</span>
@@ -849,42 +856,42 @@
                             <p class="text-xs text-gray-600 italic ml-10 mb-4">(Use this format course-wise separately)</p>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">5.</span>
+                                <span class="font-bold text-base w-8">6.</span>
                                 <span class="font-bold text-base w-80">Study Centre Code</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certStudyCenterCode">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">6.</span>
+                                <span class="font-bold text-base w-8">7.</span>
                                 <span class="font-bold text-base w-80">Name of the Study Centre With complete address</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certStudyCenterAddress">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">7.</span>
+                                <span class="font-bold text-base w-8">8.</span>
                                 <span class="font-bold text-base w-80">Mobile Number</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certMobileNumber">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">8.</span>
+                                <span class="font-bold text-base w-8">9.</span>
                                 <span class="font-bold text-base w-80">E-mail ID</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certEmailId">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">9.</span>
+                                <span class="font-bold text-base w-8">10.</span>
                                 <span class="font-bold text-base w-80">Details if this same assignment has been submitted anywhere else also</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certSubmittedElsewhere">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">10.</span>
+                                <span class="font-bold text-base w-8">11.</span>
                                 <span class="font-bold text-base w-80">Above information is cross checked and it is correct: Yes/No</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certConfirmation">_____</span>
@@ -2666,7 +2673,16 @@
                         centerAddress: window.paymentData.studyCenterName || 'Not provided',
                         centerCode: window.paymentData.studyCenterCode || 'Not provided',
                         mobile: window.paymentData.mobileNumber || 'Not provided',
-                        assignmentAnyWhereElse: window.paymentData.submittedElsewhere || 'Not provided',
+                        assignmentAnyWhereElse: (() => {
+                            const submittedElsewhere = window.paymentData.submittedElsewhere;
+                            const submissionDetails = window.paymentData.submissionDetails;
+                            
+                            if (submittedElsewhere === 'Yes' && submissionDetails) {
+                                return `Yes - ${submissionDetails}`;
+                            } else {
+                                return submittedElsewhere || 'Not provided';
+                            }
+                        })(),
                         email: window.paymentData.emailId || 'Not provided',
                         crossChecked: window.paymentData.confirmation || 'Not provided',
                         semester: window.paymentData.semesterNumber || '',
@@ -2842,6 +2858,65 @@
             showAuthLinks();
         }
 
+        // Function to update PDF elements with payment data
+        function updatePDFElementsWithPaymentData() {
+            if (!window.paymentData) return;
+            
+            // Update text fields in PDF template
+            const elements = {
+                'certStudentName': window.paymentData.studentName,
+                'certEnrollmentNumber': window.paymentData.enrollmentNumber,
+                'certProgramSelection': window.paymentData.programmeCode,
+                'certCourseCode': window.paymentData.courseCode,
+                'certStudyCenterCode': window.paymentData.studyCenterCode,
+                'certStudyCenterAddress': window.paymentData.studyCenterName,
+                'certEmailId': window.paymentData.emailId,
+                'certMobileNumber': window.paymentData.mobileNumber,
+                'certMediumSelection': window.paymentData.mediumSelection,
+                'certExamType': window.paymentData.examType,
+                'certSemesterNumber': window.paymentData.semesterNumber,
+                'certYearSelection': window.paymentData.yearSelection,
+                'certSubmittedElsewhere': window.paymentData.submittedElsewhere,
+                'certSubmissionDetails': window.paymentData.submissionDetails,
+                'certConfirmation': window.paymentData.confirmation
+            };
+            
+            // Update text elements
+            Object.entries(elements).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                if (element && value && value !== 'Not Provided') {
+                    element.textContent = value;
+                }
+            });
+            
+            // Update images
+            if (window.paymentData.idCardPhoto) {
+                const photoElement = document.getElementById('certStudentPhoto');
+                if (photoElement) {
+                    photoElement.src = window.paymentData.idCardPhoto;
+                    photoElement.style.display = 'block';
+                }
+            }
+            
+            if (window.paymentData.signaturePhoto) {
+                const signatureElement = document.getElementById('certStudentSignature');
+                if (signatureElement) {
+                    signatureElement.src = window.paymentData.signaturePhoto;
+                    signatureElement.style.display = 'block';
+                }
+            }
+            
+            // Update subjects
+            if (window.paymentData.subjects && window.paymentData.subjects.length > 0) {
+                const subjectsElement = document.getElementById('certSelectedSubjects');
+                if (subjectsElement) {
+                    subjectsElement.textContent = window.paymentData.subjects.join(', ');
+                }
+            }
+            
+            console.log('PDF elements updated with payment data');
+        }
+
         // Page initialization
         document.addEventListener('DOMContentLoaded', function() {
             // Check if this is a payment success page
@@ -2859,6 +2934,18 @@
                             ...data
                         };
                         console.log('Payment data loaded from localStorage:', window.paymentData);
+                        
+                        // Handle images if they exist
+                        if (data.idCardPhoto) {
+                            window.paymentData.idCardPhoto = data.idCardPhoto;
+                        }
+                        if (data.signaturePhoto) {
+                            window.paymentData.signaturePhoto = data.signaturePhoto;
+                        }
+                        
+                        // Update PDF elements with payment data
+                        updatePDFElementsWithPaymentData();
+                        
                     } catch (e) {
                         console.error('Error parsing payment data:', e);
                     }
