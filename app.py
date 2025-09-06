@@ -19,11 +19,23 @@ CASHFREE_APP_ID = os.getenv('CASHFREE_APP_ID', 'your_production_app_id')
 CASHFREE_SECRET_KEY = os.getenv('CASHFREE_SECRET_KEY', 'your_production_secret_key')
 CASHFREE_BASE_URL = "https://api.cashfree.com/pg/orders"  # Production URL
 
+# Test credentials for development (replace with your actual test credentials)
+TEST_CASHFREE_APP_ID = "TEST_APP_ID"  # Replace with your test app ID
+TEST_CASHFREE_SECRET_KEY = "TEST_SECRET_KEY"  # Replace with your test secret key
+TEST_CASHFREE_BASE_URL = "https://api.cashfree.com/pg/orders"  # Same URL for test
+
+# Use test credentials if production credentials are not set
+if CASHFREE_APP_ID == 'your_production_app_id' or CASHFREE_SECRET_KEY == 'your_production_secret_key':
+    print("⚠️  Using TEST credentials for development")
+    CASHFREE_APP_ID = TEST_CASHFREE_APP_ID
+    CASHFREE_SECRET_KEY = TEST_CASHFREE_SECRET_KEY
+    CASHFREE_BASE_URL = TEST_CASHFREE_BASE_URL
+
 # Debug: Print configuration status
-print(f"🔍 Cashfree Production Configuration:")
+print(f"🔍 Cashfree Configuration:")
 print(f"   Base URL: {CASHFREE_BASE_URL}")
-print(f"   APP_ID: {'✅ Set' if CASHFREE_APP_ID != 'your_production_app_id' else '❌ Using placeholder'}")
-print(f"   SECRET_KEY: {'✅ Set' if CASHFREE_SECRET_KEY != 'your_production_secret_key' else '❌ Using placeholder'}")
+print(f"   APP_ID: {'✅ Set' if CASHFREE_APP_ID not in ['your_production_app_id', 'TEST_APP_ID'] else '❌ Using placeholder/test'}")
+print(f"   SECRET_KEY: {'✅ Set' if CASHFREE_SECRET_KEY not in ['your_production_secret_key', 'TEST_SECRET_KEY'] else '❌ Using placeholder/test'}")
 
 # PhonePe sandbox URL
 PHONEPE_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay"
@@ -237,6 +249,92 @@ def test_payment():
         "payment_sessions_count": len(getattr(app, 'payment_sessions', {}))
     })
 
+# Test payment initiation route (for development without real credentials)
+@app.route("/test-initiate-payment", methods=["POST"])
+@require_auth
+def test_initiate_payment():
+    try:
+        data = request.json
+        subjects = data.get("subjects", [])
+        student_name = data.get("studentName", "")
+        enrollment = data.get("enrollmentNumber", "")
+        
+        if not subjects or not student_name or not enrollment:
+            return jsonify({"success": False, "error": "Missing required fields"}), 400
+
+        amount_rupees = max(len(subjects), 1)
+        order_id = f"TEST_ORD{int(time.time())}"
+        
+        print(f"🧪 Test Payment Initiated:")
+        print(f"   Student: {student_name}")
+        print(f"   Enrollment: {enrollment}")
+        print(f"   Subjects: {subjects}")
+        print(f"   Amount: ₹{amount_rupees}")
+        print(f"   Order ID: {order_id}")
+        
+        # Store payment request details to session
+        session['payment_request'] = {
+            "studentName": student_name,
+            "enrollmentNumber": enrollment,
+            "emailId": data.get("emailId", "test@example.com"),
+            "mobileNumber": data.get("mobileNumber", "9999999999"),
+            "programmeCode": data.get("programSelection", ""),
+            "courseCode": data.get("courseCode", ""),
+            "studyCenterCode": data.get("studyCenterCode", ""),
+            "studyCenterName": data.get("studyCenterAddress", ""),
+            "mediumSelection": data.get("mediumSelection", ""),
+            "semesterNumber": data.get("semesterNumber", ""),
+            "yearSelection": data.get("yearSelection", ""),
+            "submittedElsewhere": data.get("submittedElsewhere", ""),
+            "submissionDetails": data.get("submissionDetails", ""),
+            "confirmation": data.get("confirmation", ""),
+            "subjects": subjects,
+            "amount": amount_rupees,
+            "order_id": order_id,
+            "idCardPhoto": data.get("idCardPhoto", None),
+            "signaturePhoto": data.get("signaturePhoto", None)
+        }
+        
+        # Simulate successful payment
+        session['payment_success'] = True
+        session['payment_data'] = {
+            "order_id": order_id,
+            "amount": amount_rupees,
+            "status": "PAID",
+            "created_at": time.time(),
+            "studentName": student_name,
+            "enrollmentNumber": enrollment,
+            "emailId": data.get("emailId", "test@example.com"),
+            "mobileNumber": data.get("mobileNumber", "9999999999"),
+            "programmeCode": data.get("programSelection", ""),
+            "courseCode": data.get("courseCode", ""),
+            "studyCenterCode": data.get("studyCenterCode", ""),
+            "studyCenterName": data.get("studyCenterAddress", ""),
+            "mediumSelection": data.get("mediumSelection", ""),
+            "semesterNumber": data.get("semesterNumber", ""),
+            "yearSelection": data.get("yearSelection", ""),
+            "submittedElsewhere": data.get("submittedElsewhere", ""),
+            "submissionDetails": data.get("submissionDetails", ""),
+            "confirmation": data.get("confirmation", ""),
+            "subjects": subjects,
+            "idCardPhoto": data.get("idCardPhoto", None),
+            "signaturePhoto": data.get("signaturePhoto", None)
+        }
+        
+        return jsonify({
+            "success": True,
+            "message": "Test payment initiated successfully",
+            "paymentUrl": f"/?payment_success=true&order_id={order_id}",
+            "paymentSessionId": f"test_session_{order_id}",
+            "transactionId": order_id,
+            "amount": amount_rupees,
+            "subjects": subjects
+        })
+        
+    except Exception as e:
+        print(f"❌ Test payment error: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 # Test Cashfree credentials route
 @app.route("/test-cashfree-credentials")
 def test_cashfree_credentials():
@@ -425,7 +523,24 @@ def initiate_payment():
         print(f"Response Text: {response.text}")
 
         if response.status_code != 200:
-            return jsonify({"success": False, "error": f"Cashfree API error: {response.text}"}), 400
+            print(f"❌ Cashfree API Error: {response.status_code}")
+            print(f"❌ Error Response: {response.text}")
+            
+            # If credentials are test/placeholder, provide helpful error message
+            if CASHFREE_APP_ID in ['TEST_APP_ID', 'your_production_app_id'] or CASHFREE_SECRET_KEY in ['TEST_SECRET_KEY', 'your_production_secret_key']:
+                return jsonify({
+                    "success": False, 
+                    "error": "Payment gateway not configured. Please set up Cashfree credentials.",
+                    "details": "CASHFREE_APP_ID and CASHFREE_SECRET_KEY environment variables are required.",
+                    "status_code": response.status_code,
+                    "response": response.text
+                }), 400
+            else:
+                return jsonify({
+                    "success": False, 
+                    "error": f"Cashfree API error: {response.text}",
+                    "status_code": response.status_code
+                }), 400
 
         try:
             res_data = response.json()
