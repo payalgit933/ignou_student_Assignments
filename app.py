@@ -353,7 +353,7 @@ def initiate_payment():
         study_center_code = data.get("studyCenterCode", "")
         study_center_name = data.get("studyCenterAddress", "")
         medium_selection = data.get("mediumSelection", "")
-        exam_type = data.get("examType", "")
+        exam_type = data.get("periodType", "")
         year_selection = data.get("yearSelection", "")
         mobile_number = data.get("mobileNumber", "")
         email_id = data.get("emailId", "")
