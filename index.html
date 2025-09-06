@@ -646,8 +646,28 @@
                 <div class="form-row">
                     <div class="form-group full-width">
                         <label class="required">Course Code Selection</label>
-                        <div class="checkbox-group" id="courseCodeContainer">
-                            <p class="text-gray-600 italic">Please select program, period type, and semester/year first</p>
+                        <div class="relative">
+                            <button type="button" id="courseDropdownToggle" class="w-full px-4 py-2 text-left bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <span id="courseDropdownText">Please select program, period type, and semester/year first</span>
+                                <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </span>
+                            </button>
+                            <div id="courseDropdownMenu" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg hidden">
+                                <div class="max-h-60 overflow-y-auto">
+                                    <div class="px-4 py-2 border-b border-gray-200">
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="checkbox" id="selectAllCourses" class="mr-2">
+                                            <span class="font-semibold text-blue-600">Select All</span>
+                                        </label>
+                                    </div>
+                                    <div id="courseCodeContainer" class="py-1">
+                                        <p class="px-4 py-2 text-gray-600 italic">Please select program, period type, and semester/year first</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="mt-2">
                             <span class="text-sm font-semibold text-blue-600">Total Amount: ₹<span id="totalAmount">0</span></span>
@@ -1349,12 +1369,16 @@
         document.getElementById('programSelection').addEventListener('change', function() {
             const semesterYearValueSelect = document.getElementById('semesterYearValue');
             const courseCodeContainer = document.getElementById('courseCodeContainer');
+            const courseDropdownText = document.getElementById('courseDropdownText');
             const totalAmountSpan = document.getElementById('totalAmount');
+            const dropdownMenu = document.getElementById('courseDropdownMenu');
             
             // Clear dependent fields
             semesterYearValueSelect.innerHTML = '<option value="">Select program and period type first</option>';
-            courseCodeContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, period type, and semester/year first</p>';
+            courseCodeContainer.innerHTML = '<p class="px-4 py-2 text-gray-600 italic">Please select program, period type, and semester/year first</p>';
+            courseDropdownText.textContent = 'Please select program, period type, and semester/year first';
             totalAmountSpan.textContent = '0';
+            dropdownMenu.classList.add('hidden');
         });
 
         // Handle period type selection (Semester/Year)
@@ -1363,14 +1387,18 @@
                 const programSelect = document.getElementById('programSelection');
                 const semesterYearValueSelect = document.getElementById('semesterYearValue');
                 const courseCodeContainer = document.getElementById('courseCodeContainer');
+                const courseDropdownText = document.getElementById('courseDropdownText');
                 const totalAmountSpan = document.getElementById('totalAmount');
+                const dropdownMenu = document.getElementById('courseDropdownMenu');
                 const selectedProgram = programSelect.value;
                 const selectedPeriodType = this.value;
                 
                 // Clear dependent fields
                 semesterYearValueSelect.innerHTML = '<option value="">Select semester/year</option>';
-                courseCodeContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, period type, and semester/year first</p>';
+                courseCodeContainer.innerHTML = '<p class="px-4 py-2 text-gray-600 italic">Please select program, period type, and semester/year first</p>';
+                courseDropdownText.textContent = 'Please select program, period type, and semester/year first';
                 totalAmountSpan.textContent = '0';
+                dropdownMenu.classList.add('hidden');
                 
                 if (selectedProgram && selectedPeriodType && programData[selectedProgram] && programData[selectedProgram][selectedPeriodType]) {
                     // Add semester/year options based on period type
@@ -1387,16 +1415,19 @@
         // Handle semester/year value selection to populate course codes
         document.getElementById('semesterYearValue').addEventListener('change', function() {
             const programSelect = document.getElementById('programSelection');
-            const periodTypeRadios = document.querySelectorAll('input[name="periodType"]');
             const courseCodeContainer = document.getElementById('courseCodeContainer');
+            const courseDropdownText = document.getElementById('courseDropdownText');
             const totalAmountSpan = document.getElementById('totalAmount');
+            const dropdownMenu = document.getElementById('courseDropdownMenu');
             const selectedProgram = programSelect.value;
             const selectedPeriodType = document.querySelector('input[name="periodType"]:checked')?.value;
             const selectedPeriod = this.value;
             
-            // Clear course code container
+            // Clear course code container and reset dropdown
             courseCodeContainer.innerHTML = '';
             totalAmountSpan.textContent = '0';
+            courseDropdownText.textContent = 'Please select program, period type, and semester/year first';
+            dropdownMenu.classList.add('hidden');
             
             if (selectedProgram && selectedPeriodType && selectedPeriod && 
                 programData[selectedProgram] && 
@@ -1407,20 +1438,34 @@
                 const courses = programData[selectedProgram][selectedPeriodType][selectedPeriod];
                 Object.entries(courses).forEach(([code, name]) => {
                     const checkboxDiv = document.createElement('div');
-                    checkboxDiv.className = 'checkbox-item';
+                    checkboxDiv.className = 'px-4 py-2 hover:bg-gray-100';
                     checkboxDiv.innerHTML = `
-                        <input type="checkbox" id="course-${code}" name="courseCodes" value="${code}" data-name="${name}">
-                        <label for="course-${code}">${code} - ${name}</label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="course-${code}" name="courseCodes" value="${code}" data-name="${name}" class="mr-2">
+                            <span class="text-sm">${code} - ${name}</span>
+                        </label>
                     `;
                     courseCodeContainer.appendChild(checkboxDiv);
                 });
+                
+                // Update dropdown text
+                courseDropdownText.textContent = `Select courses (${Object.keys(courses).length} available)`;
                 
                 // Add event listeners to course code checkboxes for pricing
                 document.querySelectorAll('input[name="courseCodes"]').forEach(checkbox => {
                     checkbox.addEventListener('change', updateTotalAmount);
                 });
+                
+                // Add event listener to Select All checkbox
+                document.getElementById('selectAllCourses').addEventListener('change', function() {
+                    const courseCheckboxes = document.querySelectorAll('input[name="courseCodes"]');
+                    courseCheckboxes.forEach(checkbox => {
+                        checkbox.checked = this.checked;
+                    });
+                    updateTotalAmount();
+                });
             } else {
-                courseCodeContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, period type, and semester/year first</p>';
+                courseCodeContainer.innerHTML = '<p class="px-4 py-2 text-gray-600 italic">Please select program, period type, and semester/year first</p>';
             }
         });
 
@@ -1429,7 +1474,47 @@
             const selectedCourses = document.querySelectorAll('input[name="courseCodes"]:checked');
             const totalAmount = selectedCourses.length;
             document.getElementById('totalAmount').textContent = totalAmount;
+            
+            // Update dropdown text to show selected count
+            const courseDropdownText = document.getElementById('courseDropdownText');
+            if (totalAmount === 0) {
+                const programSelect = document.getElementById('programSelection');
+                const selectedPeriodType = document.querySelector('input[name="periodType"]:checked')?.value;
+                const selectedPeriod = document.getElementById('semesterYearValue').value;
+                
+                if (programSelect.value && selectedPeriodType && selectedPeriod) {
+                    courseDropdownText.textContent = 'Select courses';
+                } else {
+                    courseDropdownText.textContent = 'Please select program, period type, and semester/year first';
+                }
+            } else {
+                courseDropdownText.textContent = `${totalAmount} course${totalAmount > 1 ? 's' : ''} selected`;
+            }
+            
+            // Update Select All checkbox state
+            const selectAllCheckbox = document.getElementById('selectAllCourses');
+            const allCourseCheckboxes = document.querySelectorAll('input[name="courseCodes"]');
+            if (allCourseCheckboxes.length > 0) {
+                selectAllCheckbox.checked = selectedCourses.length === allCourseCheckboxes.length;
+                selectAllCheckbox.indeterminate = selectedCourses.length > 0 && selectedCourses.length < allCourseCheckboxes.length;
+            }
         }
+
+        // Handle dropdown toggle
+        document.getElementById('courseDropdownToggle').addEventListener('click', function() {
+            const dropdownMenu = document.getElementById('courseDropdownMenu');
+            dropdownMenu.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdownToggle = document.getElementById('courseDropdownToggle');
+            const dropdownMenu = document.getElementById('courseDropdownMenu');
+            
+            if (!dropdownToggle.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                dropdownMenu.classList.add('hidden');
+            }
+        });
 
         // Handle signature file selection to convert to transparent PNG
         document.getElementById('signature').addEventListener('change', function(e) {
