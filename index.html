@@ -1375,6 +1375,22 @@
             }
         }
 
+        // Check server status
+        async function checkServerStatus() {
+            try {
+                const response = await fetch('/test-payment');
+                const result = await response.json();
+                if (result.status === 'success') {
+                    console.log('✅ Server is running and accessible');
+                } else {
+                    console.warn('⚠️ Server responded but with unexpected status');
+                }
+            } catch (error) {
+                console.error('❌ Server is not running or not accessible:', error);
+                alert('⚠️ Server is not running. Please start the Flask server by running "python app.py" in the terminal.');
+            }
+        }
+
         // Multi-select dropdown functionality
         function initializeMultiSelectDropdown() {
             const dropdownButton = document.getElementById('courseDropdownButton');
@@ -1715,7 +1731,15 @@
                 
             } catch (error) {
                 console.error('Error initiating payment:', error);
-                alert('An error occurred while initiating payment. Please try again.');
+                
+                // Check if it's a network/server error
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    alert('Server is not running. Please start the Flask server by running "python app.py" in the terminal.');
+                } else if (error.message.includes('Unexpected token')) {
+                    alert('Server returned HTML instead of JSON. Please check if the server is running correctly.');
+                } else {
+                    alert('An error occurred while initiating payment. Please try again.');
+                }
                 
                 // Reset button
                 const submitButton = document.querySelector('button[type="submit"]');
@@ -2616,6 +2640,9 @@
         
         // Initialize multi-select dropdown
         initializeMultiSelectDropdown();
+        
+        // Check server status
+        checkServerStatus();
         
         // Check if this is a payment success redirect
         const urlParams = new URLSearchParams(window.location.search);
