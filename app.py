@@ -347,8 +347,9 @@ def initiate_payment():
         student_name = data.get("studentName", "")
         enrollment = data.get("enrollmentNumber", "")
         programme_code = data.get("programSelection", "")
-        semester_year = data.get("semesterYear", "")
-        course_code = data.get("courseCode", "")
+        period_type = data.get("periodType", "")
+        semester_year_value = data.get("semesterYearValue", "")
+        course_codes = data.get("courseCodes", [])
         study_center_code = data.get("studyCenterCode", "")
         study_center_name = data.get("studyCenterAddress", "")
         medium_selection = data.get("mediumSelection", "")
@@ -461,8 +462,9 @@ def initiate_payment():
                 "emailId": customer_email,
                 "mobileNumber": customer_phone,
                 "programmeCode": programme_code,
-                "semesterYear": semester_year,
-                "courseCode": course_code,
+                "periodType": period_type,
+                "semesterYearValue": semester_year_value,
+                "courseCodes": course_codes,
                 "studyCenterCode": study_center_code,
                 "studyCenterName": study_center_name,
                 "mediumSelection": medium_selection,
@@ -550,8 +552,9 @@ def payment_success():
             "mobileNumber": payment_request.get("mobileNumber", "Not Provided"),
             # Program and Course Information
             "programmeCode": payment_request.get("programmeCode", "Not Provided"),
-            "semesterYear": payment_request.get("semesterYear", "Not Provided"),
-            "courseCode": payment_request.get("courseCode", "Not Provided"),
+            "periodType": payment_request.get("periodType", "Not Provided"),
+            "semesterYearValue": payment_request.get("semesterYearValue", "Not Provided"),
+            "courseCodes": payment_request.get("courseCodes", []),
             # Study Center Information
             "studyCenterCode": payment_request.get("studyCenterCode", "Not Provided"),
             "studyCenterName": payment_request.get("studyCenterName", "Not Provided"),
