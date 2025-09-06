@@ -561,7 +561,6 @@ def payment_success():
             # Academic Information
             "mediumSelection": payment_request.get("mediumSelection", "Not Provided"),
             "examType": payment_request.get("examType", "Not Provided"),
-            "semesterNumber": payment_request.get("semesterNumber", "Not Provided"),
             "yearSelection": payment_request.get("yearSelection", "Not Provided"),
             # Assignment Information
             "submittedElsewhere": payment_request.get("submittedElsewhere", "Not Provided"),
@@ -640,13 +639,17 @@ def get_payment_status(transaction_id):
             "emailId": payment_request.get("emailId", "Not Provided"),
             "mobileNumber": payment_request.get("mobileNumber", "Not Provided"),
             "programmeCode": payment_request.get("programmeCode", "Not Provided"),
-            "courseCode": payment_request.get("courseCode", "Not Provided"),
+            "periodType": payment_request.get("periodType", "Not Provided"),
+            "semesterYearValue": payment_request.get("semesterYearValue", "Not Provided"),
+            "courseCodes": payment_request.get("courseCodes", []),
             "studyCenterCode": payment_request.get("studyCenterCode", "Not Provided"),
             "studyCenterName": payment_request.get("studyCenterName", "Not Provided"),
             "mediumSelection": payment_request.get("mediumSelection", "Not Provided"),
             "examType": payment_request.get("examType", "Not Provided"),
-            "semesterNumber": payment_request.get("semesterNumber", "Not Provided"),
-            "yearSelection": payment_request.get("yearSelection", "Not Provided")
+            "yearSelection": payment_request.get("yearSelection", "Not Provided"),
+            "submittedElsewhere": payment_request.get("submittedElsewhere", "Not Provided"),
+            "submissionDetails": payment_request.get("submissionDetails", "Not Provided"),
+            "confirmation": payment_request.get("confirmation", "Not Provided")
         }
     })
 
