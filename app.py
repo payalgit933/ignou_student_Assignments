@@ -465,7 +465,6 @@ def initiate_payment():
                 "studyCenterCode": study_center_code,
                 "studyCenterName": study_center_name,
                 "mediumSelection": medium_selection,
-                "examType": exam_type,
                 "semesterNumber": semester_number,
                 "yearSelection": year_selection,
                 "submittedElsewhere": data.get("submittedElsewhere", ""),
@@ -473,7 +472,10 @@ def initiate_payment():
                 "confirmation": data.get("confirmation", ""),
                 "subjects": subjects,
                 "amount": amount_rupees,
-                "order_id": order_id
+                "order_id": order_id,
+                # Store image data
+                "idCardPhoto": data.get("idCardPhoto", None),
+                "signaturePhoto": data.get("signaturePhoto", None)
             }
             
             return jsonify({
@@ -492,6 +494,24 @@ def initiate_payment():
                 "error": f"Invalid JSON response from Cashfree: {response.text}"
             }), 400
 
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Route to handle image uploads and store in session
+@app.route("/upload-images", methods=["POST"])
+def upload_images():
+    try:
+        data = request.get_json()
+        id_card_photo = data.get('idCardPhoto')
+        signature_photo = data.get('signaturePhoto')
+        
+        # Store images in session
+        if id_card_photo:
+            session['payment_request']['idCardPhoto'] = id_card_photo
+        if signature_photo:
+            session['payment_request']['signaturePhoto'] = signature_photo
+            
+        return jsonify({"success": True, "message": "Images stored successfully"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -556,7 +576,6 @@ def payment_success():
             "studyCenterName": payment_request.get("studyCenterName", "Not Provided"),
             # Academic Information
             "mediumSelection": payment_request.get("mediumSelection", "Not Provided"),
-            "examType": payment_request.get("examType", "Not Provided"),
             "semesterNumber": payment_request.get("semesterNumber", "Not Provided"),
             "yearSelection": payment_request.get("yearSelection", "Not Provided"),
             # Assignment Information
@@ -566,8 +585,8 @@ def payment_success():
             # Selected Subjects
             "subjects": payment_request.get("subjects", []),
             # File uploads (these will be added by the frontend)
-            "idCardPhoto": None,
-            "signaturePhoto": None
+            "idCardPhoto": payment_request.get("idCardPhoto", None),
+            "signaturePhoto": payment_request.get("signaturePhoto", None)
         }
         
         # Redirect to index.html with payment success flag
@@ -640,9 +659,13 @@ def get_payment_status(transaction_id):
             "studyCenterCode": payment_request.get("studyCenterCode", "Not Provided"),
             "studyCenterName": payment_request.get("studyCenterName", "Not Provided"),
             "mediumSelection": payment_request.get("mediumSelection", "Not Provided"),
-            "examType": payment_request.get("examType", "Not Provided"),
             "semesterNumber": payment_request.get("semesterNumber", "Not Provided"),
-            "yearSelection": payment_request.get("yearSelection", "Not Provided")
+            "yearSelection": payment_request.get("yearSelection", "Not Provided"),
+            "submittedElsewhere": payment_request.get("submittedElsewhere", "Not Provided"),
+            "submissionDetails": payment_request.get("submissionDetails", "Not Provided"),
+            "confirmation": payment_request.get("confirmation", "Not Provided"),
+            "idCardPhoto": payment_request.get("idCardPhoto", None),
+            "signaturePhoto": payment_request.get("signaturePhoto", None)
         }
     })
 
