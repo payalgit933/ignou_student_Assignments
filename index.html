@@ -2464,10 +2464,7 @@
         }
         
         // Check if payment data is provided by server
-        {% if payment_success and payment_data %}
-        window.serverPaymentData = {{ payment_data | tojson }};
-        console.log('Server payment data:', window.serverPaymentData);
-        {% endif %}
+        // Server payment data will be set by the backend if available
 
         // Helper function to get enrollment number
         function getEnrollmentNumber() {
