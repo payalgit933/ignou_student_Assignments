@@ -612,18 +612,25 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="semesterYear" class="required">Semester/Year</label>
-                        <select id="semesterYear" name="semesterYear" required>
-                            <option value="">Select program first</option>
-                        </select>
+                        <label class="required">Academic Period Type</label>
+                        <div class="radio-group">
+                            <div class="radio-item">
+                                <input type="radio" id="periodSemester" name="periodType" value="Semester" required>
+                                <label for="periodSemester">Semester</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="periodYear" name="periodType" value="Year" required>
+                                <label for="periodYear">Year</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="courseCode" class="required">Course Code</label>
-                        <select id="courseCode" name="courseCode" required>
-                            <option value="">Select semester/year first</option>
+                        <label for="semesterYearValue" class="required">Semester/Year Selection</label>
+                        <select id="semesterYearValue" name="semesterYearValue" required>
+                            <option value="">Select program and period type first</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -633,6 +640,18 @@
                             <option value="English">English</option>
                             <option value="Hindi">Hindi</option>
                         </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label class="required">Course Code Selection</label>
+                        <div class="checkbox-group" id="courseCodeContainer">
+                            <p class="text-gray-600 italic">Please select program, period type, and semester/year first</p>
+                        </div>
+                        <div class="mt-2">
+                            <span class="text-sm font-semibold text-blue-600">Total Amount: ₹<span id="totalAmount">0</span></span>
+                        </div>
                     </div>
                 </div>
 
@@ -681,14 +700,6 @@
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group full-width">
-                        <label class="required">Subjects Selection</label>
-                        <div class="checkbox-group" id="subjectsContainer">
-                            <p class="text-gray-600 italic">Please select program, semester/year, and course code first</p>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="form-row">
                     <div class="form-group">
@@ -1176,161 +1187,249 @@
             });
         });
 
-        // Cascading dropdown data structure
+        // Enhanced cascading dropdown data structure
         const programData = {
             'MBA': {
-                '1st Year': {
-                    'MMPC-001': 'Management Functions and Behaviour',
-                    'MMPC-002': 'Human Resource Management',
-                    'MMPC-003': 'Economic and Social Environment',
-                    'MMPC-004': 'Accounting and Finance for Managers'
+                'Semester': {
+                    '1st Semester': {
+                        'MMPC-001': 'Management Functions and Behaviour',
+                        'MMPC-002': 'Human Resource Management'
+                    },
+                    '2nd Semester': {
+                        'MMPC-003': 'Economic and Social Environment',
+                        'MMPC-004': 'Accounting and Finance for Managers'
+                    },
+                    '3rd Semester': {
+                        'MMPC-005': 'Marketing Management',
+                        'MMPC-006': 'Information Systems for Managers'
+                    },
+                    '4th Semester': {
+                        'MMPC-007': 'Quantitative Analysis for Managerial Applications',
+                        'MMPC-008': 'Operations Management'
+                    }
                 },
-                '2nd Year': {
-                    'MMPC-005': 'Marketing Management',
-                    'MMPC-006': 'Information Systems for Managers',
-                    'MMPC-007': 'Quantitative Analysis for Managerial Applications',
-                    'MMPC-008': 'Operations Management'
+                'Year': {
+                    '1st Year': {
+                        'MMPC-001': 'Management Functions and Behaviour',
+                        'MMPC-002': 'Human Resource Management',
+                        'MMPC-003': 'Economic and Social Environment',
+                        'MMPC-004': 'Accounting and Finance for Managers'
+                    },
+                    '2nd Year': {
+                        'MMPC-005': 'Marketing Management',
+                        'MMPC-006': 'Information Systems for Managers',
+                        'MMPC-007': 'Quantitative Analysis for Managerial Applications',
+                        'MMPC-008': 'Operations Management'
+                    }
                 }
             },
             'BBA': {
-                '1st Year': {
-                    'BBAR-101': 'Business Communication',
-                    'BBAR-102': 'Business Mathematics',
-                    'BBAR-103': 'Principles of Management'
+                'Semester': {
+                    '1st Semester': {
+                        'BBAR-101': 'Business Communication',
+                        'BBAR-102': 'Business Mathematics'
+                    },
+                    '2nd Semester': {
+                        'BBAR-103': 'Principles of Management',
+                        'BBAR-104': 'Business Environment'
+                    }
                 },
-                '2nd Year': {
-                    'BBAR-104': 'Business Environment',
-                    'BBAR-105': 'Computer Applications in Business',
-                    'BBAR-106': 'Financial Accounting'
+                'Year': {
+                    '1st Year': {
+                        'BBAR-101': 'Business Communication',
+                        'BBAR-102': 'Business Mathematics',
+                        'BBAR-103': 'Principles of Management'
+                    },
+                    '2nd Year': {
+                        'BBAR-104': 'Business Environment',
+                        'BBAR-105': 'Computer Applications in Business',
+                        'BBAR-106': 'Financial Accounting'
+                    }
                 }
             },
             'MCA': {
-                '1st Year': {
-                    'MCS-011': 'Problem Solving and Programming',
-                    'MCS-012': 'Computer Organisation and Assembly Language Programming',
-                    'MCS-013': 'Discrete Mathematics'
+                'Semester': {
+                    '1st Semester': {
+                        'MCS-011': 'Problem Solving and Programming',
+                        'MCS-012': 'Computer Organisation and Assembly Language Programming'
+                    },
+                    '2nd Semester': {
+                        'MCS-013': 'Discrete Mathematics',
+                        'MCS-014': 'Systems Analysis and Design'
+                    }
                 },
-                '2nd Year': {
-                    'MCS-021': 'Data and File Structures',
-                    'MCS-022': 'Operating System Concepts and Networking Management',
-                    'MCS-023': 'Introduction to Database Management Systems'
+                'Year': {
+                    '1st Year': {
+                        'MCS-011': 'Problem Solving and Programming',
+                        'MCS-012': 'Computer Organisation and Assembly Language Programming',
+                        'MCS-013': 'Discrete Mathematics'
+                    },
+                    '2nd Year': {
+                        'MCS-021': 'Data and File Structures',
+                        'MCS-022': 'Operating System Concepts and Networking Management',
+                        'MCS-023': 'Introduction to Database Management Systems'
+                    }
                 }
             },
             'BCA': {
-                '1st Year': {
-                    'BCS-011': 'Computer Basics and PC Software',
-                    'BCS-012': 'Mathematics',
-                    'BCS-013': 'Computer Organization'
+                'Semester': {
+                    '1st Semester': {
+                        'BCS-011': 'Computer Basics and PC Software',
+                        'BCS-012': 'Mathematics'
+                    },
+                    '2nd Semester': {
+                        'BCS-013': 'Computer Organization',
+                        'BCS-014': 'C Language Programming'
+                    }
                 },
-                '2nd Year': {
-                    'BCS-021': 'C++ Programming and Data Structures',
-                    'BCS-022': 'Assembly Language Programming',
-                    'BCS-023': 'Database Management Systems'
+                'Year': {
+                    '1st Year': {
+                        'BCS-011': 'Computer Basics and PC Software',
+                        'BCS-012': 'Mathematics',
+                        'BCS-013': 'Computer Organization'
+                    },
+                    '2nd Year': {
+                        'BCS-021': 'C++ Programming and Data Structures',
+                        'BCS-022': 'Assembly Language Programming',
+                        'BCS-023': 'Database Management Systems'
+                    }
                 }
             },
             'B.Tech': {
-                '1st Year': {
-                    'BT-101': 'Mathematics-I',
-                    'BT-102': 'Physics',
-                    'BT-103': 'Chemistry'
+                'Semester': {
+                    '1st Semester': {
+                        'BT-101': 'Mathematics-I',
+                        'BT-102': 'Physics'
+                    },
+                    '2nd Semester': {
+                        'BT-103': 'Chemistry',
+                        'BT-104': 'Engineering Graphics'
+                    }
                 },
-                '2nd Year': {
-                    'BT-201': 'Mathematics-II',
-                    'BT-202': 'Data Structures',
-                    'BT-203': 'Digital Electronics'
+                'Year': {
+                    '1st Year': {
+                        'BT-101': 'Mathematics-I',
+                        'BT-102': 'Physics',
+                        'BT-103': 'Chemistry'
+                    },
+                    '2nd Year': {
+                        'BT-201': 'Mathematics-II',
+                        'BT-202': 'Data Structures',
+                        'BT-203': 'Digital Electronics'
+                    }
                 }
             },
             'M.Tech': {
-                '1st Year': {
-                    'MT-501': 'Advanced Mathematics',
-                    'MT-502': 'Advanced Data Structures and Algorithms',
-                    'MT-503': 'Computer Networks'
+                'Semester': {
+                    '1st Semester': {
+                        'MT-501': 'Advanced Mathematics',
+                        'MT-502': 'Advanced Data Structures and Algorithms'
+                    },
+                    '2nd Semester': {
+                        'MT-503': 'Computer Networks',
+                        'MT-504': 'Database Systems'
+                    }
                 },
-                '2nd Year': {
-                    'MT-504': 'Database Systems',
-                    'MT-505': 'Software Engineering',
-                    'MT-506': 'Machine Learning'
+                'Year': {
+                    '1st Year': {
+                        'MT-501': 'Advanced Mathematics',
+                        'MT-502': 'Advanced Data Structures and Algorithms',
+                        'MT-503': 'Computer Networks'
+                    },
+                    '2nd Year': {
+                        'MT-504': 'Database Systems',
+                        'MT-505': 'Software Engineering',
+                        'MT-506': 'Machine Learning'
+                    }
                 }
             }
         };
 
-        // Handle program selection to populate semester/year
+        // Handle program selection to clear dependent fields
         document.getElementById('programSelection').addEventListener('change', function() {
-            const semesterYearSelect = document.getElementById('semesterYear');
-            const courseCodeSelect = document.getElementById('courseCode');
-            const subjectsContainer = document.getElementById('subjectsContainer');
-            const selectedProgram = this.value;
+            const semesterYearValueSelect = document.getElementById('semesterYearValue');
+            const courseCodeContainer = document.getElementById('courseCodeContainer');
+            const totalAmountSpan = document.getElementById('totalAmount');
             
-            // Clear dependent dropdowns
-            semesterYearSelect.innerHTML = '<option value="">Select semester/year</option>';
-            courseCodeSelect.innerHTML = '<option value="">Select semester/year first</option>';
-            subjectsContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, semester/year, and course code first</p>';
-            
-            if (selectedProgram && programData[selectedProgram]) {
-                // Add semester/year options
-                Object.keys(programData[selectedProgram]).forEach(year => {
-                    const option = document.createElement('option');
-                    option.value = year;
-                    option.textContent = year;
-                    semesterYearSelect.appendChild(option);
-                });
-            }
+            // Clear dependent fields
+            semesterYearValueSelect.innerHTML = '<option value="">Select program and period type first</option>';
+            courseCodeContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, period type, and semester/year first</p>';
+            totalAmountSpan.textContent = '0';
         });
 
-        // Handle semester/year selection to populate course codes
-        document.getElementById('semesterYear').addEventListener('change', function() {
-            const programSelect = document.getElementById('programSelection');
-            const courseCodeSelect = document.getElementById('courseCode');
-            const subjectsContainer = document.getElementById('subjectsContainer');
-            const selectedProgram = programSelect.value;
-            const selectedYear = this.value;
-            
-            // Clear dependent dropdowns
-            courseCodeSelect.innerHTML = '<option value="">Select course code</option>';
-            subjectsContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, semester/year, and course code first</p>';
-            
-            if (selectedProgram && selectedYear && programData[selectedProgram] && programData[selectedProgram][selectedYear]) {
-                // Add course codes for selected program and year
-                Object.entries(programData[selectedProgram][selectedYear]).forEach(([code, name]) => {
-                    const option = document.createElement('option');
-                    option.value = code;
-                    option.textContent = `${code} - ${name}`;
-                    courseCodeSelect.appendChild(option);
-                });
-            }
-        });
-
-        // Handle course code selection to populate subjects
-        document.getElementById('courseCode').addEventListener('change', function() {
-            const subjectsContainer = document.getElementById('subjectsContainer');
-            const selectedCourseCode = this.value;
-            
-            if (selectedCourseCode) {
-                // Generate subject checkboxes based on course code
-                subjectsContainer.innerHTML = '';
-                
-                // Get the course name for display
+        // Handle period type selection (Semester/Year)
+        document.querySelectorAll('input[name="periodType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
                 const programSelect = document.getElementById('programSelection');
-                const semesterYearSelect = document.getElementById('semesterYear');
+                const semesterYearValueSelect = document.getElementById('semesterYearValue');
+                const courseCodeContainer = document.getElementById('courseCodeContainer');
+                const totalAmountSpan = document.getElementById('totalAmount');
                 const selectedProgram = programSelect.value;
-                const selectedYear = semesterYearSelect.value;
+                const selectedPeriodType = this.value;
                 
-                if (programData[selectedProgram] && programData[selectedProgram][selectedYear] && programData[selectedProgram][selectedYear][selectedCourseCode]) {
-                    const courseName = programData[selectedProgram][selectedYear][selectedCourseCode];
-                    
-                    // Create a single checkbox for the selected course
+                // Clear dependent fields
+                semesterYearValueSelect.innerHTML = '<option value="">Select semester/year</option>';
+                courseCodeContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, period type, and semester/year first</p>';
+                totalAmountSpan.textContent = '0';
+                
+                if (selectedProgram && selectedPeriodType && programData[selectedProgram] && programData[selectedProgram][selectedPeriodType]) {
+                    // Add semester/year options based on period type
+                    Object.keys(programData[selectedProgram][selectedPeriodType]).forEach(period => {
+                        const option = document.createElement('option');
+                        option.value = period;
+                        option.textContent = period;
+                        semesterYearValueSelect.appendChild(option);
+                    });
+                }
+            });
+        });
+
+        // Handle semester/year value selection to populate course codes
+        document.getElementById('semesterYearValue').addEventListener('change', function() {
+            const programSelect = document.getElementById('programSelection');
+            const periodTypeRadios = document.querySelectorAll('input[name="periodType"]');
+            const courseCodeContainer = document.getElementById('courseCodeContainer');
+            const totalAmountSpan = document.getElementById('totalAmount');
+            const selectedProgram = programSelect.value;
+            const selectedPeriodType = document.querySelector('input[name="periodType"]:checked')?.value;
+            const selectedPeriod = this.value;
+            
+            // Clear course code container
+            courseCodeContainer.innerHTML = '';
+            totalAmountSpan.textContent = '0';
+            
+            if (selectedProgram && selectedPeriodType && selectedPeriod && 
+                programData[selectedProgram] && 
+                programData[selectedProgram][selectedPeriodType] && 
+                programData[selectedProgram][selectedPeriodType][selectedPeriod]) {
+                
+                // Generate course code checkboxes
+                const courses = programData[selectedProgram][selectedPeriodType][selectedPeriod];
+                Object.entries(courses).forEach(([code, name]) => {
                     const checkboxDiv = document.createElement('div');
                     checkboxDiv.className = 'checkbox-item';
                     checkboxDiv.innerHTML = `
-                        <input type="checkbox" id="subject-${selectedCourseCode}" name="subjects" value="${courseName}" checked>
-                        <label for="subject-${selectedCourseCode}">${selectedCourseCode} - ${courseName}</label>
+                        <input type="checkbox" id="course-${code}" name="courseCodes" value="${code}" data-name="${name}">
+                        <label for="course-${code}">${code} - ${name}</label>
                     `;
-                    subjectsContainer.appendChild(checkboxDiv);
-                }
+                    courseCodeContainer.appendChild(checkboxDiv);
+                });
+                
+                // Add event listeners to course code checkboxes for pricing
+                document.querySelectorAll('input[name="courseCodes"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', updateTotalAmount);
+                });
             } else {
-                subjectsContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, semester/year, and course code first</p>';
+                courseCodeContainer.innerHTML = '<p class="text-gray-600 italic">Please select program, period type, and semester/year first</p>';
             }
         });
+
+        // Function to update total amount based on selected courses
+        function updateTotalAmount() {
+            const selectedCourses = document.querySelectorAll('input[name="courseCodes"]:checked');
+            const totalAmount = selectedCourses.length;
+            document.getElementById('totalAmount').textContent = totalAmount;
+        }
 
         // Handle signature file selection to convert to transparent PNG
         document.getElementById('signature').addEventListener('change', function(e) {
@@ -1389,12 +1488,18 @@
                 
                 const formData = new FormData(document.getElementById('certificateForm'));
                 
-                // Get selected subjects
-                const selectedSubjects = formData.getAll('subjects');
-                if (selectedSubjects.length === 0) {
-                    alert('Please select at least one subject before proceeding.');
+                // Get selected course codes
+                const selectedCourseCodes = Array.from(document.querySelectorAll('input[name="courseCodes"]:checked')).map(cb => ({
+                    code: cb.value,
+                    name: cb.dataset.name
+                }));
+                if (selectedCourseCodes.length === 0) {
+                    alert('Please select at least one course before proceeding.');
                     return;
                 }
+                
+                // Convert to subjects array for backward compatibility
+                const selectedSubjects = selectedCourseCodes.map(course => course.name);
                 
                 // Get required form data
                 const studentName = formData.get('studentName');
@@ -1433,13 +1538,14 @@
                 // Prepare payment data with all form fields
                 const paymentData = {
                     subjects: selectedSubjects,
+                    courseCodes: selectedCourseCodes,
                     studentName: studentName,
                     enrollmentNumber: enrollmentNumber,
                     emailId: emailId,
                     mobileNumber: mobileNumber,
                     programSelection: formData.get('programSelection'),
-                    semesterYear: formData.get('semesterYear'),
-                    courseCode: formData.get('courseCode'),
+                    periodType: formData.get('periodType'),
+                    semesterYearValue: formData.get('semesterYearValue'),
                     studyCenterCode: formData.get('studyCenterCode'),
                     studyCenterAddress: formData.get('studyCenterAddress'),
                     mediumSelection: formData.get('mediumSelection'),
@@ -1484,8 +1590,8 @@
                             emailId: emailId,
                             mobileNumber: mobileNumber,
                             programSelection: formData.get('programSelection'),
-                            semesterYear: formData.get('semesterYear'),
-                            courseCode: formData.get('courseCode'),
+                            periodType: formData.get('periodType'),
+                            semesterYearValue: formData.get('semesterYearValue'),
                             studyCenterCode: formData.get('studyCenterCode'),
                             studyCenterAddress: formData.get('studyCenterAddress'),
                             mediumSelection: formData.get('mediumSelection'),
@@ -1495,6 +1601,7 @@
                             submissionDetails: formData.get('submissionDetails'),
                             confirmation: formData.get('confirmation'),
                             subjects: selectedSubjects,
+                            courseCodes: selectedCourseCodes,
                             amount: amount
                         };
 
@@ -2696,7 +2803,9 @@
                         name: window.paymentData.studentName || 'Not provided',
                         enrollment: window.paymentData.enrollmentNumber || 'Not provided',
                         program: window.paymentData.programmeCode || 'Not provided',
-                        courseCode: window.paymentData.courseCode || 'Not provided',
+                        courseCode: window.paymentData.courseCodes && window.paymentData.courseCodes.length > 0 
+                            ? window.paymentData.courseCodes.map(course => course.code).join(', ')
+                            : 'Not provided',
                         centerAddress: window.paymentData.studyCenterName || 'Not provided',
                         centerCode: window.paymentData.studyCenterCode || 'Not provided',
                         mobile: window.paymentData.mobileNumber || 'Not provided',
@@ -2712,7 +2821,7 @@
                         })(),
                         email: window.paymentData.emailId || 'Not provided',
                         crossChecked: window.paymentData.confirmation || 'Not provided',
-                        semester: window.paymentData.semesterYear || '',
+                        semester: window.paymentData.semesterYearValue || '',
                         year: window.paymentData.yearSelection || new Date().getFullYear().toString(),
                         center: window.paymentData.studyCenterName ? 
                             window.paymentData.studyCenterName.split(' ')[0] : 'Delhi',
@@ -2744,7 +2853,7 @@
                         })(),
                         email: formData.get('emailId') || 'Not provided',
                         crossChecked: formData.get('confirmation') || 'Not provided',
-                        semester: formData.get('semesterYear') || '',
+                        semester: formData.get('semesterYearValue') || '',
                         year: formData.get('yearSelection') || new Date().getFullYear().toString(),
                         center: formData.get('studyCenterAddress') ? 
                             formData.get('studyCenterAddress').split(' ')[0] : 'Delhi',
@@ -2894,14 +3003,16 @@
                 'certStudentName': window.paymentData.studentName,
                 'certEnrollmentNumber': window.paymentData.enrollmentNumber,
                 'certProgramSelection': window.paymentData.programmeCode,
-                'certCourseCode': window.paymentData.courseCode,
+                'certCourseCode': window.paymentData.courseCodes && window.paymentData.courseCodes.length > 0 
+                    ? window.paymentData.courseCodes.map(course => course.code).join(', ')
+                    : 'Not Provided',
                 'certStudyCenterCode': window.paymentData.studyCenterCode,
                 'certStudyCenterAddress': window.paymentData.studyCenterName,
                 'certEmailId': window.paymentData.emailId,
                 'certMobileNumber': window.paymentData.mobileNumber,
                 'certMediumSelection': window.paymentData.mediumSelection,
                 'certExamType': window.paymentData.examType,
-                'certSemesterYear': window.paymentData.semesterYear,
+                'certSemesterYear': window.paymentData.semesterYearValue,
                 'certYearSelection': window.paymentData.yearSelection,
                 'certSubmittedElsewhere': window.paymentData.submittedElsewhere,
                 'certSubmissionDetails': window.paymentData.submissionDetails,
