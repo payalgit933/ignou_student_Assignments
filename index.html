@@ -697,19 +697,6 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="examType" class="required">Exam Type Selection</label>
-                        <div class="radio-group">
-                            <div class="radio-item">
-                                <input type="radio" id="examYearly" name="examType" value="Yearly" required>
-                                <label for="examYearly">Yearly</label>
-                            </div>
-                            <div class="radio-item">
-                                <input type="radio" id="examSemester" name="examType" value="Semester" required>
-                                <label for="examSemester">Semester</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
                         <label for="yearSelection" class="required">Year Selection</label>
                         <select id="yearSelection" name="yearSelection" required>
                             <option value="">Select year</option>
@@ -1634,7 +1621,7 @@
                     studyCenterCode: formData.get('studyCenterCode'),
                     studyCenterAddress: formData.get('studyCenterAddress'),
                     mediumSelection: formData.get('mediumSelection'),
-                    examType: formData.get('examType'),
+                    examType: formData.get('periodType'),
                     yearSelection: formData.get('yearSelection'),
                     submittedElsewhere: formData.get('submittedElsewhere'),
                     submissionDetails: formData.get('submissionDetails'),
@@ -1680,7 +1667,7 @@
                             studyCenterCode: formData.get('studyCenterCode'),
                             studyCenterAddress: formData.get('studyCenterAddress'),
                             mediumSelection: formData.get('mediumSelection'),
-                            examType: formData.get('examType'),
+                            examType: formData.get('periodType'),
                             yearSelection: formData.get('yearSelection'),
                             submittedElsewhere: formData.get('submittedElsewhere'),
                             submissionDetails: formData.get('submissionDetails'),
@@ -2801,22 +2788,32 @@
                     // Fallback to form data
                     const formData = new FormData(document.getElementById('certificateForm'));
                     
+                    // Get selected course codes from checkboxes
+                    const selectedCourseCodes = Array.from(document.querySelectorAll('input[name="courseCodes"]:checked')).map(cb => ({
+                        code: cb.value,
+                        name: cb.dataset.name
+                    }));
+                    const selectedSubjects = selectedCourseCodes.map(course => course.name);
+                    
                     templateData = {
                         name: formData.get('studentName') || 'Not provided',
                         enrollment: formData.get('enrollmentNumber') || 'Not provided',
                         program: formData.get('programSelection') || 'Not provided',
-                        courseCode: formData.get('courseCode') || 'Not provided',
+                        courseCode: selectedCourseCodes.length > 0 
+                            ? selectedCourseCodes.map(course => course.code).join(', ')
+                            : 'Not provided',
                         course: subjectName === 'student_assignment' ? 
-                            (formData.get('courseCode') || 'Not provided') : subjectName,
-                        centerAddress: formData.get('centerAddress') || 'Not provided',
-                        centerCode: formData.get('centerCode') || 'Not provided',
+                            (selectedCourseCodes.length > 0 ? selectedCourseCodes.map(course => course.code).join(', ') : 'Not provided') : subjectName,
+                        centerAddress: formData.get('studyCenterAddress') || 'Not provided',
+                        centerCode: formData.get('studyCenterCode') || 'Not provided',
                         mobile: formData.get('mobileNumber') || 'Not provided',
-                        assignmentAnyWhereElse: formData.get('assignmentAnyWhereElse') || 'Not provided',
-                        email: formData.get('email') || 'Not provided',
-                        crossChecked: formData.get('crossChecked') || 'Not provided',
-                        semester: formData.get('semesterSelection') || '',
+                        assignmentAnyWhereElse: formData.get('submittedElsewhere') || 'Not provided',
+                        email: formData.get('emailId') || 'Not provided',
+                        crossChecked: formData.get('confirmation') || 'Not provided',
+                        semester: formData.get('semesterYearValue') || '',
                         year: formData.get('yearSelection') || new Date().getFullYear().toString(),
-                        center: formData.get('regionalCentre') || 'Delhi',
+                        center: formData.get('studyCenterAddress') ? 
+                            formData.get('studyCenterAddress').split(' ')[0] : 'Delhi',
                         date: new Date().toLocaleDateString('en-GB')
                     };
                     
@@ -2918,11 +2915,19 @@
                     // Fallback to form data
                     const formData = new FormData(document.getElementById('certificateForm'));
                     
+                    // Get selected course codes from checkboxes
+                    const selectedCourseCodes = Array.from(document.querySelectorAll('input[name="courseCodes"]:checked')).map(cb => ({
+                        code: cb.value,
+                        name: cb.dataset.name
+                    }));
+                    
                     baseTemplateData = {
                         name: formData.get('studentName') || 'Not provided',
                         enrollment: formData.get('enrollmentNumber') || 'Not provided',
                         program: formData.get('programSelection') || 'Not provided',
-                        courseCode: formData.get('courseCode') || 'Not provided',
+                        courseCode: selectedCourseCodes.length > 0 
+                            ? selectedCourseCodes.map(course => course.code).join(', ')
+                            : 'Not provided',
                         centerAddress: formData.get('studyCenterAddress') || 'Not provided',
                         centerCode: formData.get('studyCenterCode') || 'Not provided',
                         mobile: formData.get('mobileNumber') || 'Not provided',
@@ -3096,7 +3101,7 @@
                 'certEmailId': window.paymentData.emailId,
                 'certMobileNumber': window.paymentData.mobileNumber,
                 'certMediumSelection': window.paymentData.mediumSelection,
-                'certExamType': window.paymentData.examType,
+                'certExamType': window.paymentData.periodType,
                 'certSemesterYear': window.paymentData.semesterYearValue,
                 'certYearSelection': window.paymentData.yearSelection,
                 'certSubmittedElsewhere': window.paymentData.submittedElsewhere,
