@@ -689,13 +689,13 @@
                         </select>
                     </div>
                     <div class="form-group full-width">
-                        <label class="required">Course Selection</label>
+                        <label class="required">Course Code Selection</label>
                         <div>
                             <input type="checkbox" id="selectAllCourses">
                             <label for="selectAllCourses"><strong>Select All</strong></label>
                         </div>
                         <div class="checkbox-group" id="courseCheckboxes">
-                            <!-- Courses will be populated dynamically -->
+                            <!-- Course codes will be populated dynamically -->
                         </div>
                     </div>
                 </div>
@@ -825,7 +825,7 @@
                             
                             <div class="flex items-start">
                                 <span class="font-bold text-base w-8">5.</span>
-                                <span class="font-bold text-base w-80">Selected Course Codes</span>
+                                <span class="font-bold text-base w-80">Course Code</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certSelectedCourses">_____</span>
                             </div>
@@ -840,7 +840,7 @@
                             
                             <div class="flex items-start">
                                 <span class="font-bold text-base w-8">7.</span>
-                                <span class="font-bold text-base w-80">Name of the Study Centre With complete address</span>
+                                <span class="font-bold text-base w-80">Name of the Study Centre with complete address</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certStudyCenterAddress">_____</span>
                             </div>
@@ -854,21 +854,21 @@
                             
                             <div class="flex items-start">
                                 <span class="font-bold text-base w-8">9.</span>
-                                <span class="font-bold text-base w-80">E-mail ID</span>
+                                <span class="font-bold text-base w-80">Email ID</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certEmailId">_____</span>
                             </div>
                             
                             <div class="flex items-start">
                                 <span class="font-bold text-base w-8">10.</span>
-                                <span class="font-bold text-base w-80">Details if this same assignment has been submitted anywhere else also</span>
+                                <span class="font-bold text-base w-80">Details if assignment submitted elsewhere</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certSubmittedElsewhere">_____</span>
                             </div>
                             
                             <div class="flex items-start">
                                 <span class="font-bold text-base w-8">11.</span>
-                                <span class="font-bold text-base w-80">Above information is cross checked and it is correct: Yes/No</span>
+                                <span class="font-bold text-base w-80">Confirmation Yes/No</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certConfirmation">_____</span>
                             </div>
@@ -905,21 +905,21 @@
             </div>
             
             <div class="download-options">
-                <!-- Download All Subjects as ZIP -->
+                <!-- Download All Course Codes as ZIP -->
                 <div class="download-option">
-                    <h3>📦 Download All Subjects</h3>
-                    <p>Get all selected courses in a single ZIP file</p>
+                    <h3>📦 Download All Course Codes</h3>
+                    <p>Get all selected course codes in a single ZIP file</p>
                     <button id="downloadAllZip" class="btn btn-primary download-all-btn">
-                        📥 Download All Subjects (ZIP)
+                        📥 Download All Course Codes (ZIP)
                     </button>
                 </div>
                 
-                <!-- Individual Subject Downloads -->
+                <!-- Individual Course Code Downloads -->
                 <div class="download-option">
-                    <h3>📚 Individual Subject Downloads</h3>
-                    <p>Download specific subject assignments</p>
+                    <h3>📚 Individual Course Code Downloads</h3>
+                    <p>Download specific course code assignments</p>
                     <div id="individualSubjectButtons" class="subject-buttons">
-                        <!-- Individual subject buttons will be generated here -->
+                        <!-- Individual course code buttons will be generated here -->
                     </div>
                 </div>
                 
@@ -954,11 +954,11 @@
         };
         
         // Function to merge PDFs
-        async function mergePDFs(generatedPDFBytes, subjectName) {
+        async function mergePDFs(generatedPDFBytes, courseCode) {
             try {
                 console.log('Starting PDF merge process...');
                 console.log('PDFLib available:', typeof PDFLib);
-                console.log('Subject name:', subjectName);
+                console.log('Subject name:', courseCode);
                 
                 // Wait for PDFLib to be available
                 let attempts = 0;
@@ -989,10 +989,10 @@
                 console.log('Generated PDF pages added to merged document');
                 
                 // Get the PDF file to attach based on subject
-                const pdfToAttach = subjectPDFMapping[subjectName] || '/get-pdf/MMPC-001';
-                console.log(`Attaching PDF: ${pdfToAttach} for subject: ${subjectName}`);
+                const pdfToAttach = subjectPDFMapping[courseCode] || '/get-pdf/MMPC-001';
+                console.log(`Attaching PDF: ${pdfToAttach} for subject: ${courseCode}`);
                 console.log('Available courses:', Object.keys(subjectPDFMapping));
-                console.log('Subject mapping for this subject:', subjectPDFMapping[subjectName]);
+                console.log('Subject mapping for this subject:', subjectPDFMapping[courseCode]);
                 
                 try {
                     // Fetch the subject-specific PDF from secure endpoint
@@ -1284,7 +1284,7 @@
             updateCourseSelection(selectedProgram);
         });
 
-        // Function to populate courses dynamically
+        // Function to populate course codes dynamically
         function updateCourseSelection(program) {
             const courseContainer = document.getElementById("courseCheckboxes");
             courseContainer.innerHTML = "";
@@ -1296,7 +1296,7 @@
                 div.className = "checkbox-item";
                 div.innerHTML = `
                     <input type="checkbox" name="courses" value="${course.value}" id="chk_${course.value}">
-                    <label for="chk_${course.value}">${course.text}</label>
+                    <label for="chk_${course.value}">${course.value} - ${course.text.split(' - ')[1] || course.text}</label>
                 `;
                 courseContainer.appendChild(div);
             });
@@ -1737,7 +1737,7 @@
             document.getElementById('formSection').classList.add('hidden');
             document.getElementById('downloadPage').classList.remove('hidden');
             
-            // Generate individual course buttons
+            // Generate individual course code buttons
             generateIndividualCourseButtons(selectedCourses);
             
             // Store selected courses and form data for later use
@@ -1762,16 +1762,16 @@
                 button.type = 'button';
                 button.className = 'subject-btn';
                 button.textContent = `📖 ${subject}`;
-                button.onclick = () => downloadSingleSubject(subject);
+                button.onclick = () => downloadSingleCourse(subject);
                 container.appendChild(button);
                 console.log(`Created button for: ${subject}`);
             });
         }
 
         // Download single subject PDF
-        async function downloadSingleSubject(subjectName) {
+        async function downloadSingleCourse(courseCode) {
             try {
-                console.log(`Downloading PDF for subject: ${subjectName}`);
+                console.log(`Downloading PDF for course: ${courseCode}`);
                 
                 // Show loading state
                 const button = event.target;
@@ -1780,17 +1780,17 @@
                 button.disabled = true;
                 
                 // Generate and download the PDF for this specific subject
-                await downloadPDF(subjectName);
+                await downloadPDF(courseCode);
                 
                 // Reset button
                 button.textContent = originalText;
                 button.disabled = false;
                 
-                console.log(`PDF downloaded successfully for: ${subjectName}`);
+                console.log(`PDF downloaded successfully for: ${courseCode}`);
                 
             } catch (error) {
-                console.error(`Failed to download PDF for ${subjectName}:`, error);
-                alert(`Failed to download PDF for ${subjectName}. Please try again.`);
+                console.error(`Failed to download PDF for ${courseCode}:`, error);
+                alert(`Failed to download PDF for ${courseCode}. Please try again.`);
                 
                 // Reset button on error
                 const button = event.target;
@@ -1891,16 +1891,16 @@
                 button.type = 'button';
                 button.className = 'subject-btn';
                 button.textContent = `📖 ${subject}`;
-                button.onclick = () => downloadSingleSubject(subject);
+                button.onclick = () => downloadSingleCourse(subject);
                 container.appendChild(button);
                 console.log(`Created button for: ${subject}`);
             });
         }
 
         // Download single subject PDF
-        async function downloadSingleSubject(subjectName) {
+        async function downloadSingleCourse(courseCode) {
             try {
-                console.log(`Downloading PDF for subject: ${subjectName}`);
+                console.log(`Downloading PDF for course: ${courseCode}`);
                 
                 // Show loading state
                 const button = event.target;
@@ -1909,17 +1909,17 @@
                 button.disabled = true;
                 
                 // Generate and download the PDF for this specific subject
-                await downloadPDF(subjectName);
+                await downloadPDF(courseCode);
                 
                 // Reset button
                 button.textContent = originalText;
                 button.disabled = false;
                 
-                console.log(`PDF downloaded successfully for: ${subjectName}`);
+                console.log(`PDF downloaded successfully for: ${courseCode}`);
                 
             } catch (error) {
-                console.error(`Failed to download PDF for ${subjectName}:`, error);
-                alert(`Failed to download PDF for ${subjectName}. Please try again.`);
+                console.error(`Failed to download PDF for ${courseCode}:`, error);
+                alert(`Failed to download PDF for ${courseCode}. Please try again.`);
                 
                 // Reset button on error
                 const button = event.target;
@@ -2038,9 +2038,9 @@
         }
 
         // Download PDF function using jsPDF
-        async function downloadPDF(subjectName = 'student_assignment', returnBlob = false) {
+        async function downloadPDF(courseCode = 'student_assignment', returnBlob = false) {
             try {
-                // Get form data for the current subject
+                // Get form data for the current course
                 const formData = new FormData(document.getElementById('certificateForm'));
                 
                 // Prepare template data
@@ -2048,10 +2048,12 @@
                     name: formData.get('studentName') || 'Not provided',
                     enrollment: formData.get('enrollmentNumber') || 'Not provided',
                     program: formData.get('programSelection') || 'Not provided',
-                    courseCode: formData.get('courseCode') || 'Not provided',
-                    course: subjectName === 'student_assignment' ? 
+                    courseCode: courseCode === 'student_assignment' ? 
+                        (formData.getAll('courses').length > 0 ? formData.getAll('courses')[0] : 'Not provided') : 
+                        courseCode,
+                    course: courseCode === 'student_assignment' ? 
                         (formData.getAll('courses').length > 0 ? formData.getAll('courses').join(', ') : 'Not provided') : 
-                        subjectName,
+                        courseCode,
                     centerCode: formData.get('studyCenterCode') || 'Not provided',
                     centerAddress: formData.get('studyCenterAddress') || 'Not provided',
                     center: formData.get('studyCenterAddress') ? 
@@ -2111,7 +2113,7 @@
                     return blob;
                 } else {
                     await prepareAndDownloadPDF(templateData, false);
-                    console.log("PDF generation initiated for:", subjectName);
+                    console.log("PDF generation initiated for:", courseCode);
                 }
                 
             } catch (error) {
@@ -2382,14 +2384,14 @@
             const pdfBytes = doc.output('arraybuffer');
             
             // Merge with subject-specific PDF
-            const subjectName = templateData.course || 'General';
-            console.log(`Merging PDF for subject: ${subjectName}`);
+            const courseCode = templateData.course || 'General';
+            console.log(`Merging PDF for subject: ${courseCode}`);
             console.log('Template data course:', templateData.course);
             console.log('Template data keys:', Object.keys(templateData));
             
             try {
                 console.log('Calling mergePDFs function...');
-                const mergedPDFBytes = await mergePDFs(pdfBytes, subjectName);
+                const mergedPDFBytes = await mergePDFs(pdfBytes, courseCode);
                 console.log('Merge completed, merged PDF size:', mergedPDFBytes.byteLength);
                 
                 // Create download link for merged PDF
@@ -2567,15 +2569,15 @@
                 const button = document.createElement('button');
                 button.className = 'btn btn-primary m-2';
                 button.textContent = `📖 ${subject}`;
-                button.onclick = () => downloadSingleSubjectForPayment(subject);
+                button.onclick = () => downloadSingleCourseForPayment(subject);
                 container.appendChild(button);
             });
         }
         
         // Function to download single subject for payment success
-        async function downloadSingleSubjectForPayment(subjectName) {
+        async function downloadSingleCourseForPayment(courseCode) {
             try {
-                console.log(`Downloading PDF for subject: ${subjectName}`);
+                console.log(`Downloading PDF for course: ${courseCode}`);
                 
                 // Use server payment data if available, otherwise fallback to form data
                 let templateData;
@@ -2587,8 +2589,8 @@
                         enrollment: window.paymentData.enrollmentNumber || 'Not provided',
                         program: window.paymentData.programSelection || 'Not provided',
                         courseCode: window.paymentData.courseCode || 'Not provided',
-                        course: subjectName === 'student_assignment' ? 
-                            (window.paymentData.courses ? window.paymentData.courses.join(', ') : 'Not provided') : subjectName,
+                        course: courseCode === 'student_assignment' ? 
+                            (window.paymentData.courses ? window.paymentData.courses.join(', ') : 'Not provided') : courseCode,
                         centerAddress: window.paymentData.studyCenterAddress || 'Not provided',
                         centerCode: window.paymentData.studyCenterCode || 'Not provided',
                         mobile: window.paymentData.mobileNumber || 'Not provided',
@@ -2619,8 +2621,8 @@
                         enrollment: formData.get('enrollmentNumber') || 'Not provided',
                         program: formData.get('programSelection') || 'Not provided',
                         courseCode: formData.get('courseCode') || 'Not provided',
-                        course: subjectName === 'student_assignment' ? 
-                            (formData.get('courseCode') || 'Not provided') : subjectName,
+                        course: courseCode === 'student_assignment' ? 
+                            (formData.get('courseCode') || 'Not provided') : courseCode,
                         centerAddress: formData.get('centerAddress') || 'Not provided',
                         centerCode: formData.get('centerCode') || 'Not provided',
                         mobile: formData.get('mobileNumber') || 'Not provided',
@@ -2665,7 +2667,7 @@
                 // Generate PDF with the collected data
                 await prepareAndDownloadPDF(templateData, false);
                 
-                console.log(`PDF downloaded successfully for ${subjectName}`);
+                console.log(`PDF downloaded successfully for ${courseCode}`);
                 
             } catch (error) {
                 console.error('Error downloading PDF:', error);
@@ -2803,7 +2805,7 @@
                 if (!JSZip) {
                     // If JSZip is not available, download PDFs individually
                     alert('ZIP creation not available. Downloading PDFs individually...');
-                    courses.forEach(subject => downloadSingleSubjectForPayment(subject));
+                    courses.forEach(subject => downloadSingleCourseForPayment(subject));
                     return;
                 }
                 

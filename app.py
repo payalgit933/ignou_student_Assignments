@@ -659,7 +659,7 @@ def debug_form_data():
             "expected_fields": [
                 "studentName", "enrollmentNumber", "programSelection", "courseCode",
                 "studyCenterCode", "studyCenterAddress", "mediumSelection", "examType",
-                "semesterNumber", "yearSelection", "subjects", "mobileNumber", "emailId"
+                "semesterNumber", "yearSelection", "courses", "mobileNumber", "emailId"
             ]
         })
     except Exception as e:
