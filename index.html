@@ -611,11 +611,35 @@
                             <option value="M.Tech">M.Tech</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="courseCode" class="required">Course Code</label>
-                        <select id="courseCode" name="courseCode" required>
-                            <option value="">Select a program first</option>
+                    <div class="form-group" id="semesterYearGroup" style="display: none;">
+                        <label for="semesterSelection" class="required">Semester</label>
+                        <select id="semesterSelection" name="semesterSelection">
+                            <option value="">Select Semester</option>
+                            <option value="1">1st Semester</option>
+                            <option value="2">2nd Semester</option>
+                            <option value="3">3rd Semester</option>
+                            <option value="4">4th Semester</option>
+                            <option value="5">5th Semester</option>
+                            <option value="6">6th Semester</option>
                         </select>
+                    </div>
+                    <div class="form-group" id="yearGroup" style="display: none;">
+                        <label for="yearSelection" class="required">Year</label>
+                        <select id="yearSelection" name="yearSelection">
+                            <option value="">Select Year</option>
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                            <option value="2026">2026</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row" id="courseSelectionGroup" style="display: none;">
+                    <div class="form-group full-width">
+                        <label class="required">Course Selection</label>
+                        <div class="checkbox-group" id="courseCheckboxes">
+                            <!-- Course checkboxes will be populated dynamically -->
+                        </div>
                     </div>
                 </div>
 
@@ -641,17 +665,12 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="required">Medium Selection</label>
-                        <div class="radio-group">
-                            <div class="radio-item">
-                                <input type="radio" id="mediumEnglish" name="mediumSelection" value="English" required>
-                                <label for="mediumEnglish">English</label>
-                            </div>
-                            <div class="radio-item">
-                                <input type="radio" id="mediumHindi" name="mediumSelection" value="Hindi" required>
-                                <label for="mediumHindi">Hindi</label>
-                            </div>
-                        </div>
+                        <label for="mediumSelection" class="required">Medium Selection</label>
+                        <select id="mediumSelection" name="mediumSelection" required>
+                            <option value="">Select Medium</option>
+                            <option value="English">English</option>
+                            <option value="Hindi">Hindi</option>
+                        </select>
                     </div>
                                          <div class="form-group">
                          <label for="examType" class="required">Exam Type Selection</label>
@@ -687,40 +706,6 @@
                             <option value="2025">2025</option>
                             <option value="2026">2026</option>
                         </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="required">Subjects Selection</label>
-                        <div class="checkbox-group">
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="subjectMath" name="subjects" value="Mathematics">
-                                <label for="subjectMath">Mathematics</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="subjectPhysics" name="subjects" value="Physics">
-                                <label for="subjectPhysics">Physics</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="subjectChemistry" name="subjects" value="Chemistry">
-                                <label for="subjectChemistry">Chemistry</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="subjectCS" name="subjects" value="Computer Science">
-                                <label for="subjectCS">Computer Science</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="subjectBusiness" name="subjects" value="Business Studies">
-                                <label for="subjectBusiness">Business Studies</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="subjectEnglish" name="subjects" value="English">
-                                <label for="subjectEnglish">English</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="subjectEconomics" name="subjects" value="Economics">
-                                <label for="subjectEconomics">Economics</label>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
 
@@ -842,56 +827,49 @@
                             
                             <div class="flex items-start">
                                 <span class="font-bold text-base w-8">4.</span>
-                                <span class="font-bold text-base w-80">Course Code</span>
-                                <span class="text-base mx-2">:</span>
-                                <span class="text-base border-b border-gray-400 px-2" id="certCourseCode">_____</span>
-                            </div>
-                            
-                            <div class="flex items-start">
-                                <span class="font-bold text-base w-8">5.</span>
-                                <span class="font-bold text-base w-80">Selected Subjects</span>
+                                <span class="font-bold text-base w-80">Selected Courses</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certSelectedSubjects">_____</span>
                             </div>
                             <p class="text-xs text-gray-600 italic ml-10 mb-4">(Use this format course-wise separately)</p>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">6.</span>
+                                <span class="font-bold text-base w-8">5.</span>
                                 <span class="font-bold text-base w-80">Study Centre Code</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certStudyCenterCode">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">7.</span>
+                                <span class="font-bold text-base w-8">6.</span>
                                 <span class="font-bold text-base w-80">Name of the Study Centre With complete address</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certStudyCenterAddress">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">8.</span>
+                                <span class="font-bold text-base w-8">7.</span>
                                 <span class="font-bold text-base w-80">Mobile Number</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certMobileNumber">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">9.</span>
+                                <span class="font-bold text-base w-8">8.</span>
                                 <span class="font-bold text-base w-80">E-mail ID</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certEmailId">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">10.</span>
+                                <span class="font-bold text-base w-8">9.</span>
                                 <span class="font-bold text-base w-80">Details if this same assignment has been submitted anywhere else also</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certSubmittedElsewhere">_____</span>
                             </div>
                             
                             <div class="flex items-start">
-                                <span class="font-bold text-base w-8">11.</span>
+                                <span class="font-bold text-base w-8">10.</span>
                                 <span class="font-bold text-base w-80">Above information is cross checked and it is correct: Yes/No</span>
                                 <span class="text-base mx-2">:</span>
                                 <span class="text-base border-b border-gray-400 px-2" id="certConfirmation">_____</span>
@@ -1211,99 +1189,135 @@
             });
         });
 
-        // Course code data for different programs
-        const courseCodes = {
-            'MBA': [
-                { value: 'MMPC-001', text: 'MMPC-001 - Management Functions and Behaviour' },
-                { value: 'MMPC-002', text: 'MMPC-002 - Human Resource Management' },
-                { value: 'MMPC-003', text: 'MMPC-003 - Economic and Social Environment' },
-                { value: 'MMPC-004', text: 'MMPC-004 - Accounting and Finance for Managers' },
-                { value: 'MMPC-005', text: 'MMPC-005 - Marketing Management' },
-                { value: 'MMPC-006', text: 'MMPC-006 - Information Systems for Managers' },
-                { value: 'MMPC-007', text: 'MMPC-007 - Quantitative Analysis for Managerial Applications' },
-                { value: 'MMPC-008', text: 'MMPC-008 - Operations Management' },
-                { value: 'MMPC-009', text: 'MMPC-009 - Managerial Economics' },
-                { value: 'MMPC-010', text: 'MMPC-010 - Organisational Design, Development and Change' }
-            ],
-            'BBA': [
-                { value: 'BBAR-101', text: 'BBAR-101 - Business Communication' },
-                { value: 'BBAR-102', text: 'BBAR-102 - Business Mathematics' },
-                { value: 'BBAR-103', text: 'BBAR-103 - Principles of Management' },
-                { value: 'BBAR-104', text: 'BBAR-104 - Business Environment' },
-                { value: 'BBAR-105', text: 'BBAR-105 - Computer Applications in Business' },
-                { value: 'BBAR-106', text: 'BBAR-106 - Financial Accounting' }
-            ],
-            'MCA': [
-                { value: 'MCS-011', text: 'MCS-011 - Problem Solving and Programming' },
-                { value: 'MCS-012', text: 'MCS-012 - Computer Organisation and Assembly Language Programming' },
-                { value: 'MCS-013', text: 'MCS-013 - Discrete Mathematics' },
-                { value: 'MCS-014', text: 'MCS-014 - Systems Analysis and Design' },
-                { value: 'MCS-015', text: 'MCS-015 - Communication Skills' },
-                { value: 'MCS-021', text: 'MCS-021 - Data and File Structures' },
-                { value: 'MCS-022', text: 'MCS-022 - Operating System Concepts and Networking Management' },
-                { value: 'MCS-023', text: 'MCS-023 - Introduction to Database Management Systems' },
-                { value: 'MCS-024', text: 'MCS-024 - Object Oriented Technologies and Java Programming' },
-                { value: 'MCS-025', text: 'MCS-025 - Computer Networks' }
-            ],
-            'BCA': [
-                { value: 'BCS-011', text: 'BCS-011 - Computer Basics and PC Software' },
-                { value: 'BCS-012', text: 'BCS-012 - Mathematics' },
-                { value: 'BCS-013', text: 'BCS-013 - Computer Organization' },
-                { value: 'BCS-014', text: 'BCS-014 - C Language Programming' },
-                { value: 'BCS-015', text: 'BCS-015 - Communication Skills' },
-                { value: 'BCS-021', text: 'BCS-021 - C++ Programming and Data Structures' },
-                { value: 'BCS-022', text: 'BCS-022 - Assembly Language Programming' },
-                { value: 'BCS-023', text: 'BCS-023 - Database Management Systems' },
-                { value: 'BCS-024', text: 'BCS-024 - System Analysis and Design' },
-                { value: 'BCS-025', text: 'BCS-025 - Computer Networks' }
-            ],
-            'B.Tech': [
-                { value: 'BT-101', text: 'BT-101 - Mathematics-I' },
-                { value: 'BT-102', text: 'BT-102 - Physics' },
-                { value: 'BT-103', text: 'BT-103 - Chemistry' },
-                { value: 'BT-104', text: 'BT-104 - Engineering Graphics' },
-                { value: 'BT-105', text: 'BT-105 - Basic Electrical Engineering' },
-                { value: 'BT-106', text: 'BT-106 - Programming in C' },
-                { value: 'BT-201', text: 'BT-201 - Mathematics-II' },
-                { value: 'BT-202', text: 'BT-202 - Data Structures' },
-                { value: 'BT-203', text: 'BT-203 - Digital Electronics' },
-                { value: 'BT-204', text: 'BT-204 - Computer Organization' }
-            ],
-            'M.Tech': [
-                { value: 'MT-501', text: 'MT-501 - Advanced Mathematics' },
-                { value: 'MT-502', text: 'MT-502 - Advanced Data Structures and Algorithms' },
-                { value: 'MT-503', text: 'MT-503 - Computer Networks' },
-                { value: 'MT-504', text: 'MT-504 - Database Systems' },
-                { value: 'MT-505', text: 'MT-505 - Software Engineering' },
-                { value: 'MT-506', text: 'MT-506 - Machine Learning' },
-                { value: 'MT-507', text: 'MT-507 - Artificial Intelligence' },
-                { value: 'MT-508', text: 'MT-508 - Computer Graphics' },
-                { value: 'MT-509', text: 'MT-509 - Distributed Systems' },
-                { value: 'MT-510', text: 'MT-510 - Information Security' }
-            ]
+        // Course data organized by program, semester, and year
+        const courseData = {
+            'MBA': {
+                '1': {
+                    '2024': [
+                        { value: 'MMPC-001', text: 'MMPC-001 - Management Functions and Behaviour' },
+                        { value: 'MMPC-002', text: 'MMPC-002 - Human Resource Management' },
+                        { value: 'MMPC-003', text: 'MMPC-003 - Economic and Social Environment' }
+                    ],
+                    '2025': [
+                        { value: 'MMPC-001', text: 'MMPC-001 - Management Functions and Behaviour' },
+                        { value: 'MMPC-002', text: 'MMPC-002 - Human Resource Management' },
+                        { value: 'MMPC-003', text: 'MMPC-003 - Economic and Social Environment' }
+                    ]
+                },
+                '2': {
+                    '2024': [
+                        { value: 'MMPC-004', text: 'MMPC-004 - Accounting and Finance for Managers' },
+                        { value: 'MMPC-005', text: 'MMPC-005 - Marketing Management' },
+                        { value: 'MMPC-006', text: 'MMPC-006 - Information Systems for Managers' }
+                    ],
+                    '2025': [
+                        { value: 'MMPC-004', text: 'MMPC-004 - Accounting and Finance for Managers' },
+                        { value: 'MMPC-005', text: 'MMPC-005 - Marketing Management' },
+                        { value: 'MMPC-006', text: 'MMPC-006 - Information Systems for Managers' }
+                    ]
+                }
+            },
+            'BBA': {
+                '1': {
+                    '2024': [
+                        { value: 'BBAR-101', text: 'BBAR-101 - Business Communication' },
+                        { value: 'BBAR-102', text: 'BBAR-102 - Business Mathematics' }
+                    ],
+                    '2025': [
+                        { value: 'BBAR-101', text: 'BBAR-101 - Business Communication' },
+                        { value: 'BBAR-102', text: 'BBAR-102 - Business Mathematics' }
+                    ]
+                },
+                '2': {
+                    '2024': [
+                        { value: 'BBAR-103', text: 'BBAR-103 - Principles of Management' },
+                        { value: 'BBAR-104', text: 'BBAR-104 - Business Environment' }
+                    ],
+                    '2025': [
+                        { value: 'BBAR-103', text: 'BBAR-103 - Principles of Management' },
+                        { value: 'BBAR-104', text: 'BBAR-104 - Business Environment' }
+                    ]
+                }
+            },
+            'MCA': {
+                '1': {
+                    '2024': [
+                        { value: 'MCS-011', text: 'MCS-011 - Problem Solving and Programming' },
+                        { value: 'MCS-012', text: 'MCS-012 - Computer Organisation and Assembly Language Programming' }
+                    ],
+                    '2025': [
+                        { value: 'MCS-011', text: 'MCS-011 - Problem Solving and Programming' },
+                        { value: 'MCS-012', text: 'MCS-012 - Computer Organisation and Assembly Language Programming' }
+                    ]
+                },
+                '2': {
+                    '2024': [
+                        { value: 'MCS-013', text: 'MCS-013 - Discrete Mathematics' },
+                        { value: 'MCS-014', text: 'MCS-014 - Systems Analysis and Design' }
+                    ],
+                    '2025': [
+                        { value: 'MCS-013', text: 'MCS-013 - Discrete Mathematics' },
+                        { value: 'MCS-014', text: 'MCS-014 - Systems Analysis and Design' }
+                    ]
+                }
+            }
         };
 
-        // Handle program selection to populate course codes
+        // Handle program selection to show semester and year dropdowns
         document.getElementById('programSelection').addEventListener('change', function() {
-            const courseCodeSelect = document.getElementById('courseCode');
             const selectedProgram = this.value;
+            const semesterYearGroup = document.getElementById('semesterYearGroup');
+            const yearGroup = document.getElementById('yearGroup');
+            const courseSelectionGroup = document.getElementById('courseSelectionGroup');
             
-            // Clear existing options
-            courseCodeSelect.innerHTML = '<option value="">Select a course code</option>';
-            
-            if (selectedProgram && courseCodes[selectedProgram]) {
-                // Add course codes for selected program
-                courseCodes[selectedProgram].forEach(course => {
-                    const option = document.createElement('option');
-                    option.value = course.value;
-                    option.textContent = course.text;
-                    courseCodeSelect.appendChild(option);
-                });
+            if (selectedProgram) {
+                semesterYearGroup.style.display = 'block';
+                yearGroup.style.display = 'block';
+                courseSelectionGroup.style.display = 'none';
             } else {
-                // Reset to default message
-                courseCodeSelect.innerHTML = '<option value="">Select a program first</option>';
+                semesterYearGroup.style.display = 'none';
+                yearGroup.style.display = 'none';
+                courseSelectionGroup.style.display = 'none';
             }
         });
+
+        // Handle semester and year selection to populate course checkboxes
+        document.getElementById('semesterSelection').addEventListener('change', updateCourseSelection);
+        document.getElementById('yearSelection').addEventListener('change', updateCourseSelection);
+
+        function updateCourseSelection() {
+            const selectedProgram = document.getElementById('programSelection').value;
+            const selectedSemester = document.getElementById('semesterSelection').value;
+            const selectedYear = document.getElementById('yearSelection').value;
+            const courseSelectionGroup = document.getElementById('courseSelectionGroup');
+            const courseCheckboxes = document.getElementById('courseCheckboxes');
+            
+            if (selectedProgram && selectedSemester && selectedYear) {
+                // Clear existing checkboxes
+                courseCheckboxes.innerHTML = '';
+                
+                // Get courses for the selected program, semester, and year
+                const courses = courseData[selectedProgram]?.[selectedSemester]?.[selectedYear] || [];
+                
+                if (courses.length > 0) {
+                    courses.forEach((course, index) => {
+                        const checkboxItem = document.createElement('div');
+                        checkboxItem.className = 'checkbox-item';
+                        checkboxItem.innerHTML = `
+                            <input type="checkbox" id="course_${index}" name="subjects" value="${course.value}">
+                            <label for="course_${index}">${course.text}</label>
+                        `;
+                        courseCheckboxes.appendChild(checkboxItem);
+                    });
+                    
+                    courseSelectionGroup.style.display = 'block';
+                } else {
+                    courseSelectionGroup.style.display = 'none';
+                }
+            } else {
+                courseSelectionGroup.style.display = 'none';
+            }
+        }
 
         // Handle signature file selection to convert to transparent PNG
         document.getElementById('signature').addEventListener('change', function(e) {
@@ -2867,7 +2881,6 @@
                 'certStudentName': window.paymentData.studentName,
                 'certEnrollmentNumber': window.paymentData.enrollmentNumber,
                 'certProgramSelection': window.paymentData.programmeCode,
-                'certCourseCode': window.paymentData.courseCode,
                 'certStudyCenterCode': window.paymentData.studyCenterCode,
                 'certStudyCenterAddress': window.paymentData.studyCenterName,
                 'certEmailId': window.paymentData.emailId,
