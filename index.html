@@ -129,6 +129,90 @@
             color: #333;
         }
 
+        /* Multi-select dropdown styles */
+        .multiselect-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .multiselect-dropdown .dropdown-button {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #333;
+            transition: border-color 0.3s ease;
+        }
+
+        .multiselect-dropdown .dropdown-button:hover {
+            border-color: #007bff;
+        }
+
+        .multiselect-dropdown .dropdown-button.open {
+            border-color: #007bff;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .multiselect-dropdown .dropdown-arrow {
+            transition: transform 0.3s ease;
+        }
+
+        .multiselect-dropdown .dropdown-arrow.open {
+            transform: rotate(180deg);
+        }
+
+        .multiselect-dropdown .dropdown-content {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #007bff;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .multiselect-dropdown .dropdown-content.show {
+            display: block;
+        }
+
+        .multiselect-dropdown .dropdown-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s ease;
+        }
+
+        .multiselect-dropdown .dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .multiselect-dropdown .dropdown-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .multiselect-dropdown .dropdown-item label {
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            margin: 0;
+        }
+
         .radio-group {
             display: flex;
             gap: 20px;
@@ -637,8 +721,14 @@
                 <div class="form-row" id="courseSelectionGroup" style="display: none;">
                     <div class="form-group full-width">
                         <label class="required">Course Selection</label>
-                        <div class="checkbox-group" id="courseCheckboxes">
-                            <!-- Course checkboxes will be populated dynamically -->
+                        <div class="multiselect-dropdown" id="courseMultiselect">
+                            <div class="dropdown-button" id="courseDropdownButton">
+                                <span id="courseDropdownText">Select courses...</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div class="dropdown-content" id="courseDropdownContent">
+                                <!-- Course options will be populated dynamically -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -672,19 +762,6 @@
                             <option value="Hindi">Hindi</option>
                         </select>
                     </div>
-                                         <div class="form-group">
-                         <label for="examType" class="required">Exam Type Selection</label>
-                         <div class="radio-group">
-                             <div class="radio-item">
-                                 <input type="radio" id="examYearly" name="examType" value="Yearly" required>
-                                 <label for="examYearly">Yearly</label>
-                             </div>
-                             <div class="radio-item">
-                                 <input type="radio" id="examSemester" name="examType" value="Semester" required>
-                                 <label for="examSemester">Semester</label>
-                             </div>
-                         </div>
-                     </div>
                      <div class="form-group" id="semesterNumberGroup" style="display: none;">
                          <label for="semesterNumber" class="required">Semester Number</label>
                          <select id="semesterNumber" name="semesterNumber">
@@ -1290,24 +1367,24 @@
             const selectedSemester = document.getElementById('semesterSelection').value;
             const selectedYear = document.getElementById('yearSelection').value;
             const courseSelectionGroup = document.getElementById('courseSelectionGroup');
-            const courseCheckboxes = document.getElementById('courseCheckboxes');
+            const courseDropdownContent = document.getElementById('courseDropdownContent');
             
             if (selectedProgram && selectedSemester && selectedYear) {
-                // Clear existing checkboxes
-                courseCheckboxes.innerHTML = '';
+                // Clear existing options
+                courseDropdownContent.innerHTML = '';
                 
                 // Get courses for the selected program, semester, and year
                 const courses = courseData[selectedProgram]?.[selectedSemester]?.[selectedYear] || [];
                 
                 if (courses.length > 0) {
                     courses.forEach((course, index) => {
-                        const checkboxItem = document.createElement('div');
-                        checkboxItem.className = 'checkbox-item';
-                        checkboxItem.innerHTML = `
+                        const dropdownItem = document.createElement('div');
+                        dropdownItem.className = 'dropdown-item';
+                        dropdownItem.innerHTML = `
                             <input type="checkbox" id="course_${index}" name="subjects" value="${course.value}">
                             <label for="course_${index}">${course.text}</label>
                         `;
-                        courseCheckboxes.appendChild(checkboxItem);
+                        courseDropdownContent.appendChild(dropdownItem);
                     });
                     
                     courseSelectionGroup.style.display = 'block';
@@ -1316,6 +1393,60 @@
                 }
             } else {
                 courseSelectionGroup.style.display = 'none';
+            }
+        }
+
+        // Multi-select dropdown functionality
+        function initializeMultiSelectDropdown() {
+            const dropdownButton = document.getElementById('courseDropdownButton');
+            const dropdownContent = document.getElementById('courseDropdownContent');
+            const dropdownText = document.getElementById('courseDropdownText');
+            const dropdownArrow = document.querySelector('.dropdown-arrow');
+
+            // Toggle dropdown
+            dropdownButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isOpen = dropdownContent.classList.contains('show');
+                
+                if (isOpen) {
+                    dropdownContent.classList.remove('show');
+                    dropdownButton.classList.remove('open');
+                    dropdownArrow.classList.remove('open');
+                } else {
+                    dropdownContent.classList.add('show');
+                    dropdownButton.classList.add('open');
+                    dropdownArrow.classList.add('open');
+                }
+            });
+
+            // Handle checkbox changes
+            dropdownContent.addEventListener('change', function(e) {
+                if (e.target.type === 'checkbox') {
+                    updateDropdownText();
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!dropdownButton.contains(e.target) && !dropdownContent.contains(e.target)) {
+                    dropdownContent.classList.remove('show');
+                    dropdownButton.classList.remove('open');
+                    dropdownArrow.classList.remove('open');
+                }
+            });
+
+            function updateDropdownText() {
+                const checkboxes = dropdownContent.querySelectorAll('input[type="checkbox"]:checked');
+                const selectedCount = checkboxes.length;
+                
+                if (selectedCount === 0) {
+                    dropdownText.textContent = 'Select courses...';
+                } else if (selectedCount === 1) {
+                    const selectedLabel = checkboxes[0].nextElementSibling.textContent;
+                    dropdownText.textContent = selectedLabel;
+                } else {
+                    dropdownText.textContent = `${selectedCount} courses selected`;
+                }
             }
         }
 
@@ -1429,8 +1560,7 @@
                     studyCenterCode: formData.get('studyCenterCode'),
                     studyCenterAddress: formData.get('studyCenterAddress'),
                     mediumSelection: formData.get('mediumSelection'),
-                    examType: formData.get('examType'),
-                    semesterNumber: formData.get('semesterNumber'),
+                    semesterNumber: formData.get('semesterSelection'), // Fixed: use semesterSelection
                     yearSelection: formData.get('yearSelection'),
                     submittedElsewhere: formData.get('submittedElsewhere'),
                     submissionDetails: formData.get('submissionDetails'),
@@ -1439,6 +1569,28 @@
                 };
                 
                 console.log('Initiating payment with data:', paymentData);
+                
+                // First, upload images to backend
+                const idCardFile = formData.get('idCard');
+                const signatureFile = formData.get('signature');
+                
+                if (idCardFile && idCardFile.size > 0) {
+                    try {
+                        const idCardDataUrl = await fileToDataURL(idCardFile);
+                        paymentData.idCardPhoto = idCardDataUrl;
+                    } catch (e) {
+                        console.warn("ID card photo conversion failed:", e);
+                    }
+                }
+                
+                if (signatureFile && signatureFile.size > 0) {
+                    try {
+                        const signatureDataUrl = await fileToDataURL(signatureFile);
+                        paymentData.signaturePhoto = signatureDataUrl;
+                    } catch (e) {
+                        console.warn("Signature photo conversion failed:", e);
+                    }
+                }
                 
                 // Call payment initiation endpoint
                 const response = await fetch('/initiate-payment', {
@@ -1466,23 +1618,22 @@
                     // Store student data in localStorage for payment success
                     const storePaymentData = async () => {
                         const paymentData = {
-                            studentName: studentName,
-                            enrollmentNumber: enrollmentNumber,
-                            emailId: emailId,
-                            mobileNumber: mobileNumber,
+                        studentName: studentName,
+                        enrollmentNumber: enrollmentNumber,
+                        emailId: emailId,
+                        mobileNumber: mobileNumber,
                             programSelection: formData.get('programSelection'),
                             courseCode: formData.get('courseCode'),
                             studyCenterCode: formData.get('studyCenterCode'),
                             studyCenterAddress: formData.get('studyCenterAddress'),
                             mediumSelection: formData.get('mediumSelection'),
-                            examType: formData.get('examType'),
-                            semesterNumber: formData.get('semesterNumber'),
+                            semesterNumber: formData.get('semesterSelection'), // Fixed: use semesterSelection
                             yearSelection: formData.get('yearSelection'),
                             submittedElsewhere: formData.get('submittedElsewhere'),
                             submissionDetails: formData.get('submissionDetails'),
                             confirmation: formData.get('confirmation'),
-                            subjects: selectedSubjects,
-                            amount: amount
+                        subjects: selectedSubjects,
+                        amount: amount
                         };
 
                         // Handle ID card photo
@@ -2453,6 +2604,9 @@
         // Add debugging for authentication
         console.log('Authentication check completed');
         
+        // Initialize multi-select dropdown
+        initializeMultiSelectDropdown();
+        
         // Check if this is a payment success redirect
         const urlParams = new URLSearchParams(window.location.search);
         const paymentSuccess = urlParams.get('payment_success') === 'true';
@@ -2871,7 +3025,12 @@
 
         // Function to update PDF elements with payment data
         function updatePDFElementsWithPaymentData() {
-            if (!window.paymentData) return;
+            if (!window.paymentData) {
+                console.log('No payment data available');
+                return;
+            }
+            
+            console.log('Updating PDF elements with payment data:', window.paymentData);
             
             // Update text fields in PDF template
             const elements = {
@@ -2883,7 +3042,6 @@
                 'certEmailId': window.paymentData.emailId,
                 'certMobileNumber': window.paymentData.mobileNumber,
                 'certMediumSelection': window.paymentData.mediumSelection,
-                'certExamType': window.paymentData.examType,
                 'certSemesterNumber': window.paymentData.semesterNumber,
                 'certYearSelection': window.paymentData.yearSelection,
                 'certSubmittedElsewhere': window.paymentData.submittedElsewhere,
@@ -2905,7 +3063,10 @@
                 if (photoElement) {
                     photoElement.src = window.paymentData.idCardPhoto;
                     photoElement.style.display = 'block';
+                    console.log('ID card photo updated in PDF template');
                 }
+            } else {
+                console.log('No ID card photo found in payment data');
             }
             
             if (window.paymentData.signaturePhoto) {
@@ -2913,7 +3074,10 @@
                 if (signatureElement) {
                     signatureElement.src = window.paymentData.signaturePhoto;
                     signatureElement.style.display = 'block';
+                    console.log('Signature photo updated in PDF template');
                 }
+            } else {
+                console.log('No signature photo found in payment data');
             }
             
             // Update subjects
