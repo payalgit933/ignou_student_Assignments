@@ -2712,7 +2712,7 @@
                         })(),
                         email: window.paymentData.emailId || 'Not provided',
                         crossChecked: window.paymentData.confirmation || 'Not provided',
-                        semester: window.paymentData.semesterNumber || '',
+                        semester: window.paymentData.semesterYear || '',
                         year: window.paymentData.yearSelection || new Date().getFullYear().toString(),
                         center: window.paymentData.studyCenterName ? 
                             window.paymentData.studyCenterName.split(' ')[0] : 'Delhi',
@@ -2744,7 +2744,7 @@
                         })(),
                         email: formData.get('emailId') || 'Not provided',
                         crossChecked: formData.get('confirmation') || 'Not provided',
-                        semester: formData.get('semesterNumber') || '',
+                        semester: formData.get('semesterYear') || '',
                         year: formData.get('yearSelection') || new Date().getFullYear().toString(),
                         center: formData.get('studyCenterAddress') ? 
                             formData.get('studyCenterAddress').split(' ')[0] : 'Delhi',
