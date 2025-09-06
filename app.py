@@ -346,6 +346,16 @@ def initiate_payment():
         subjects = data.get("subjects", [])
         student_name = data.get("studentName", "")
         enrollment = data.get("enrollmentNumber", "")
+        programme_code = data.get("programSelection", "")
+        course_code = data.get("courseCode", "")
+        study_center_code = data.get("studyCenterCode", "")
+        study_center_name = data.get("studyCenterAddress", "")
+        medium_selection = data.get("mediumSelection", "")
+        exam_type = data.get("examType", "")
+        semester_number = data.get("semesterNumber", "")
+        year_selection = data.get("yearSelection", "")
+        mobile_number = data.get("mobileNumber", "")
+        email_id = data.get("emailId", "")
 
         if not subjects or not student_name or not enrollment:
             return jsonify({"success": False, "error": "Missing required fields"}), 400
@@ -356,8 +366,8 @@ def initiate_payment():
         order_id = f"ORD{int(time.time())}"
         
         # Validate required data
-        customer_email = data.get("emailId", "test@example.com")
-        customer_phone = data.get("mobileNumber", "9999999999")
+        customer_email = email_id if email_id else "test@example.com"
+        customer_phone = mobile_number if mobile_number else "9999999999"
         
         # Ensure valid email format
         if not customer_email or "@" not in customer_email:
@@ -369,6 +379,11 @@ def initiate_payment():
         
         print(f"🔍 Payment data validation:")
         print(f"   Student: {student_name}")
+        print(f"   Enrollment: {enrollment}")
+        print(f"   Programme Code: {programme_code}")
+        print(f"   Course Code: {course_code}")
+        print(f"   Study Center Code: {study_center_code}")
+        print(f"   Study Center Name: {study_center_name}")
         print(f"   Email: {customer_email}")
         print(f"   Phone: {customer_phone}")
         print(f"   Amount: ₹{amount_rupees}")
@@ -445,6 +460,14 @@ def initiate_payment():
                 "enrollmentNumber": enrollment,
                 "emailId": customer_email,
                 "mobileNumber": customer_phone,
+                "programmeCode": programme_code,
+                "courseCode": course_code,
+                "studyCenterCode": study_center_code,
+                "studyCenterName": study_center_name,
+                "mediumSelection": medium_selection,
+                "examType": exam_type,
+                "semesterNumber": semester_number,
+                "yearSelection": year_selection,
                 "subjects": subjects,
                 "amount": amount_rupees,
                 "order_id": order_id
@@ -520,6 +543,14 @@ def payment_success():
             "enrollmentNumber": session.get("payment_request", {}).get("enrollmentNumber", "Not Provided"),
             "emailId": session.get("payment_request", {}).get("emailId", "Not Provided"),
             "mobileNumber": session.get("payment_request", {}).get("mobileNumber", "Not Provided"),
+            "programmeCode": session.get("payment_request", {}).get("programmeCode", "Not Provided"),
+            "courseCode": session.get("payment_request", {}).get("courseCode", "Not Provided"),
+            "studyCenterCode": session.get("payment_request", {}).get("studyCenterCode", "Not Provided"),
+            "studyCenterName": session.get("payment_request", {}).get("studyCenterName", "Not Provided"),
+            "mediumSelection": session.get("payment_request", {}).get("mediumSelection", "Not Provided"),
+            "examType": session.get("payment_request", {}).get("examType", "Not Provided"),
+            "semesterNumber": session.get("payment_request", {}).get("semesterNumber", "Not Provided"),
+            "yearSelection": session.get("payment_request", {}).get("yearSelection", "Not Provided"),
             "subjects": session.get("payment_request", {}).get("subjects", [])
         }
         
@@ -574,19 +605,49 @@ def payment_status():
 
 @app.route("/payment-status/<transaction_id>", methods=["GET"])
 def get_payment_status(transaction_id):
-    # In a real app, you'd check the database for payment status
-    # For now, we'll return a mock success response
+    # Get payment data from session if available
+    payment_request = session.get('payment_request', {})
+    payment_data = session.get('payment_data', {})
+    
     return jsonify({
         "success": True,
         "status": "PAYMENT_SUCCESS",
-        "amount": 1,  # You might want to store this in the session
-        "subjects": ["Mathematics", "Computer Science"],  # Store this in session too
+        "amount": payment_data.get("amount", 1),
+        "subjects": payment_request.get("subjects", []),
         "userData": {
-            "mobileNumber": "9999999999",
-            "studentName": "Student",
-            "enrollmentNumber": "Unknown"
+            "studentName": payment_request.get("studentName", "Not Provided"),
+            "enrollmentNumber": payment_request.get("enrollmentNumber", "Not Provided"),
+            "emailId": payment_request.get("emailId", "Not Provided"),
+            "mobileNumber": payment_request.get("mobileNumber", "Not Provided"),
+            "programmeCode": payment_request.get("programmeCode", "Not Provided"),
+            "courseCode": payment_request.get("courseCode", "Not Provided"),
+            "studyCenterCode": payment_request.get("studyCenterCode", "Not Provided"),
+            "studyCenterName": payment_request.get("studyCenterName", "Not Provided"),
+            "mediumSelection": payment_request.get("mediumSelection", "Not Provided"),
+            "examType": payment_request.get("examType", "Not Provided"),
+            "semesterNumber": payment_request.get("semesterNumber", "Not Provided"),
+            "yearSelection": payment_request.get("yearSelection", "Not Provided")
         }
     })
+
+# Debug route to check form data
+@app.route("/debug-form-data", methods=["POST"])
+def debug_form_data():
+    """Debug route to check what form data is being received"""
+    try:
+        data = request.json
+        return jsonify({
+            "success": True,
+            "received_data": data,
+            "field_count": len(data) if data else 0,
+            "expected_fields": [
+                "studentName", "enrollmentNumber", "programSelection", "courseCode",
+                "studyCenterCode", "studyCenterAddress", "mediumSelection", "examType",
+                "semesterNumber", "yearSelection", "subjects", "mobileNumber", "emailId"
+            ]
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # Debug route to check payment error
 @app.route("/debug-payment-error")
