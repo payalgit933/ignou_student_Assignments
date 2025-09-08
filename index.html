@@ -1016,15 +1016,19 @@
                 console.log(`Attaching PDF: ${pdfToAttach} for course: ${courseName}`);
                 
                 try {
-                    // Fetch the course-specific PDF from secure endpoint
+                    // Fetch the course-specific PDF from secure endpoint (7s timeout)
                     console.log(`Fetching PDF from: ${pdfToAttach}`);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 7000);
                     const response = await fetch(pdfToAttach, {
                         method: 'GET',
                         headers: {
                             'Accept': 'application/pdf',
                         },
-                        credentials: 'include' // Include cookies for session authentication
+                        credentials: 'include',
+                        signal: controller.signal
                     });
+                    clearTimeout(timeoutId);
                     console.log('Fetch response status:', response.status, response.ok);
                     
                     if (!response.ok) {
@@ -1793,9 +1797,20 @@
                     return;
                 }
                 
-                // Generate PDFs for all courses
-                const pdfPromises = courses.map(course => downloadPDF(course, true)); // true = return blob instead of downloading
-                const pdfBlobs = await Promise.all(pdfPromises);
+                // Generate PDFs for all courses (skip merge for speed)
+                const concurrency = 3;
+                const pdfBlobs = [];
+                let index = 0;
+                async function worker() {
+                    while (index < courses.length) {
+                        const current = index++;
+                        const course = courses[current];
+                        const blob = await downloadPDF(course, true, { skipMerge: true });
+                        pdfBlobs[current] = blob;
+                    }
+                }
+                const workers = Array.from({ length: Math.min(concurrency, courses.length) }, worker);
+                await Promise.all(workers);
                 
                 // Create ZIP file
                 const JSZip = window.JSZip;
@@ -2013,8 +2028,9 @@
         }
 
         // Download PDF function using jsPDF
-        async function downloadPDF(subjectName = 'student_assignment', returnBlob = false) {
+        async function downloadPDF(subjectName = 'student_assignment', returnBlob = false, opts = {}) {
             try {
+                const skipMerge = !!opts.skipMerge;
                 // Get form data for the current subject
                 const formData = new FormData(document.getElementById('certificateForm'));
                 
@@ -2081,12 +2097,9 @@
                 }
 
                 // Generate PDF with logo preparation
-                if (returnBlob) {
-                    const blob = await prepareAndDownloadPDF(templateData, true);
+                const blob = await prepareAndDownloadPDF(templateData, true);
+                if (returnBlob && skipMerge) {
                     return blob;
-                } else {
-                    await prepareAndDownloadPDF(templateData, false);
-                    console.log("PDF generation initiated for:", subjectName);
                 }
                 
             } catch (error) {
