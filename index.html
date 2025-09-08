@@ -2487,7 +2487,8 @@
                             orderId: orderId,
                             amount: parsedData.amount || 1,
                             status: 'PAID',
-                            subjects: parsedData.subjects || [],
+                            // Support both keys from previous flows
+                            subjects: parsedData.subjects || parsedData.courses || [],
                             studentName: parsedData.studentName || 'Not Provided',
                             enrollmentNumber: parsedData.enrollmentNumber || 'Not Provided',
                             emailId: parsedData.emailId || 'Not Provided',
@@ -2515,6 +2516,11 @@
                 }
             }
             
+            // Normalize courses/subjects into both keys
+            const normalizedCourses = (paymentData.courses && paymentData.courses.length ? paymentData.courses : (paymentData.subjects || []));
+            paymentData.courses = normalizedCourses;
+            paymentData.subjects = normalizedCourses;
+
             // Store payment data for PDF generation
             window.paymentData = paymentData;
             
@@ -2523,7 +2529,7 @@
             document.getElementById('downloadPage').classList.remove('hidden');
             
             // Generate individual course buttons
-            generateIndividualCourseButtons(window.paymentData.courses || []);
+            generateIndividualCourseButtons(window.paymentData.courses || window.paymentData.subjects || []);
             
             // Show success message
             alert(`Payment successful! You can now download your assignments for: ${(paymentData.courses || []).join(', ')}`);
