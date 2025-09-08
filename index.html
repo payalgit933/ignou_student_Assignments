@@ -1011,49 +1011,35 @@
                 generatedPages.forEach(page => mergedPdf.addPage(page));
                 console.log('Generated PDF pages added to merged document');
                 
-                // Build the PDF URL directly from the course code
-                const pdfToAttach = `/get-pdf/${courseName}`;
-                console.log(`Attaching PDF: ${pdfToAttach} for course: ${courseName}`);
-                
-                try {
-                    // Fetch the course-specific PDF from secure endpoint (7s timeout)
-                    console.log(`Fetching PDF from: ${pdfToAttach}`);
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 7000);
-                    const response = await fetch(pdfToAttach, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/pdf',
-                        },
-                        credentials: 'include',
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    console.log('Fetch response status:', response.status, response.ok);
-                    
-                    if (!response.ok) {
-                        if (response.status === 403) {
-                            throw new Error('Unauthorized access. Payment required to access PDFs.');
+                // Try to attach a local PDF by course code (works offline like working/index.html)
+                const pdfCandidates = [
+                    `pdfs/MBA/${courseName}.pdf`,
+                    `pdfs/${courseName}.pdf`,
+                ];
+                let attached = false;
+                for (const candidate of pdfCandidates) {
+                    try {
+                        console.log(`Attempting to fetch PDF: ${candidate}`);
+                        const resp = await fetch(candidate, { method: 'GET' });
+                        if (!resp.ok) {
+                            console.log(`Not found or inaccessible: ${candidate} → status ${resp.status}`);
+                            continue;
                         }
-                        throw new Error(`Failed to fetch ${pdfToAttach}: ${response.status} ${response.statusText}`);
+                        const subjectPDFBytes = await resp.arrayBuffer();
+                        console.log('Subject PDF bytes received:', subjectPDFBytes.byteLength);
+                        const subjectPdf = await PDFDocument.load(subjectPDFBytes);
+                        console.log('Subject PDF loaded, pages:', subjectPdf.getPageCount());
+                        const subjectPages = await mergedPdf.copyPages(subjectPdf, subjectPdf.getPageIndices());
+                        subjectPages.forEach(page => mergedPdf.addPage(page));
+                        console.log(`Successfully merged ${subjectPages.length} pages from ${candidate}`);
+                        attached = true;
+                        break;
+                    } catch (err) {
+                        console.warn(`Failed to attach from ${candidate}:`, err.message);
                     }
-                    
-                    const subjectPDFBytes = await response.arrayBuffer();
-                    console.log('Subject PDF bytes received:', subjectPDFBytes.byteLength);
-                    
-                    const subjectPdf = await PDFDocument.load(subjectPDFBytes);
-                    console.log('Subject PDF loaded, pages:', subjectPdf.getPageCount());
-                    
-                    // Add all pages from the subject PDF
-                    const subjectPages = await mergedPdf.copyPages(subjectPdf, subjectPdf.getPageIndices());
-                    subjectPages.forEach(page => mergedPdf.addPage(page));
-                    
-                    console.log(`Successfully merged ${subjectPages.length} pages from ${pdfToAttach}`);
-                    console.log('Total pages in merged PDF:', mergedPdf.getPageCount());
-                    
-                } catch (error) {
-                    console.warn(`Could not attach ${pdfToAttach}:`, error.message);
-                    console.log('Proceeding with generated PDF only');
+                }
+                if (!attached) {
+                    console.log('No subject PDF attached; proceeding with generated PDF only');
                 }
                 
                 // Save the merged PDF
@@ -2464,11 +2450,7 @@
             showPaymentSuccess(orderId);
         }
         
-        // Check if payment data is provided by server
-        {% if payment_success and payment_data %}
-        window.serverPaymentData = {{ payment_data | tojson }};
-        console.log('Server payment data:', window.serverPaymentData);
-        {% endif %}
+        // Server-provided payment data block removed for static HTML. If needed, inject at render time.
 
         // Helper function to get enrollment number
         function getEnrollmentNumber() {
