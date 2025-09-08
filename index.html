@@ -2082,9 +2082,12 @@
                     }
                 }
 
-                // Generate PDF with logo preparation
-                const blob = await prepareAndDownloadPDF(templateData, true);
-                if (returnBlob && skipMerge) {
+                // Generate PDF; when returnBlob is true we need a Blob for ZIPs, otherwise it auto-downloads
+                const blob = await prepareAndDownloadPDF(templateData, returnBlob);
+                if (returnBlob) {
+                    // For ZIP flows, optionally skip merge and just return blob
+                    if (skipMerge) return blob;
+                    // If not skipping merge, generatePDF already performed merge and returned a blob
                     return blob;
                 }
                 
