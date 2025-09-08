@@ -611,12 +611,7 @@
                             <option value="M.Tech">M.Tech</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="courseCode" class="required">Course Code</label>
-                        <select id="courseCode" name="courseCode" required>
-                            <option value="">Select a program first</option>
-                        </select>
-                    </div>
+                    
                 </div>
 
                 <div class="form-row">
@@ -690,10 +685,14 @@
                             </div>
                     <div class="form-group">
                         <label class="required">Courses Selection</label>
-                        <select id="coursesSelect" name="courses" multiple size="6" style="width:100%" required>
-                            <option value="">Select Program, Exam Type and Year/Sem first</option>
-                        </select>
-                        <p class="help-text">Hold Ctrl (Windows) or Cmd (Mac) to select multiple courses</p>
+                        <div id="coursesSelectContainer">
+                            <div style="margin-bottom:8px;">
+                                <label style="font-weight:normal;"><input type="checkbox" id="selectAllCourses"> Select All</label>
+                            </div>
+                            <div id="coursesCheckboxes" class="checkbox-group">
+                                <div>No courses available. Select Program, Exam Type and Year/Sem first</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -944,36 +943,50 @@
             const examType = (document.querySelector('input[name="examType"]:checked') || {}).value || '';
             const year = document.getElementById('yearSelection').value;
             const semester = document.getElementById('semesterNumber').value;
-            const coursesSelect = document.getElementById('coursesSelect');
-            
-            // Clear
-            coursesSelect.innerHTML = '';
+            const container = document.getElementById('coursesCheckboxes');
+            const selectAll = document.getElementById('selectAllCourses');
+            if (!container) return;
+            container.innerHTML = '';
             
             // Guard: require program and exam context
             if (!program || !examType || (!year && examType === 'Yearly') || (examType === 'Semester' && !semester)) {
-                const opt = document.createElement('option');
-                opt.value = '';
-                opt.textContent = 'Select Program, Exam Type and Year/Sem first';
-                coursesSelect.appendChild(opt);
+                const msg = document.createElement('div');
+                msg.textContent = 'Select Program, Exam Type and Year/Sem first';
+                container.appendChild(msg);
                 return;
             }
             
             const list = courseCodes[program] || [];
             if (list.length === 0) {
-                const opt = document.createElement('option');
-                opt.value = '';
-                opt.textContent = 'No courses available for selected criteria';
-                coursesSelect.appendChild(opt);
+                const msg = document.createElement('div');
+                msg.textContent = 'No courses available for selected criteria';
+                container.appendChild(msg);
                 return;
             }
             
-            // Populate with course codes; show friendly text
+            // Populate as checkboxes
             list.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item.value; // e.g., MMPC-001
-                opt.textContent = item.text; // e.g., MMPC-001 - Management Functions and Behaviour
-                coursesSelect.appendChild(opt);
+                const wrapper = document.createElement('label');
+                wrapper.className = 'checkbox-item';
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.name = 'courses';
+                input.value = item.value;
+                const span = document.createElement('span');
+                span.textContent = item.text;
+                wrapper.appendChild(input);
+                wrapper.appendChild(span);
+                container.appendChild(wrapper);
             });
+
+            // Select All binding
+            if (selectAll) {
+                selectAll.checked = false;
+                selectAll.onchange = function() {
+                    const checks = container.querySelectorAll('input[type="checkbox"][name="courses"]');
+                    checks.forEach(c => c.checked = selectAll.checked);
+                };
+            }
         }
         
         // Function to merge PDFs
@@ -1349,8 +1362,8 @@
                 const formData = new FormData(document.getElementById('certificateForm'));
                 
                 // Get selected courses
-                const coursesSelect = document.getElementById('coursesSelect');
-                const selectedCourses = Array.from(coursesSelect.selectedOptions).map(o => o.value).filter(v => v);
+                // Read selected courses from checkboxes
+                const selectedCourses = Array.from(document.querySelectorAll('#coursesCheckboxes input[type="checkbox"][name="courses"]:checked')).map(i => i.value);
                 if (selectedCourses.length === 0) {
                     alert('Please select at least one course before proceeding.');
                     return;
@@ -1398,7 +1411,7 @@
                     emailId: emailId,
                     mobileNumber: mobileNumber,
                     programSelection: formData.get('programSelection'),
-                    courseCode: formData.get('courseCode'),
+                    courseCode: '',
                     studyCenterCode: formData.get('studyCenterCode'),
                     studyCenterAddress: formData.get('studyCenterAddress'),
                     mediumSelection: formData.get('mediumSelection'),
@@ -1546,7 +1559,7 @@
             document.getElementById('certProgramSelection').textContent = formData.get('programSelection') || '_________________';
             
             // Handle selected courses
-            const selectedCourses = Array.from(document.getElementById('coursesSelect').selectedOptions).map(o => o.value);
+            const selectedCourses = Array.from(document.querySelectorAll('#coursesCheckboxes input[type="checkbox"][name="courses"]:checked')).map(i => i.value);
             if (selectedCourses.length > 0) {
                 document.getElementById('certSelectedCourses').textContent = selectedCourses.join(', ');
             } else {
@@ -2027,7 +2040,7 @@
                     name: formData.get('studentName') || pd.studentName || 'Not provided',
                     enrollment: formData.get('enrollmentNumber') || pd.enrollmentNumber || 'Not provided',
                     program: formData.get('programSelection') || pd.programSelection || 'Not provided',
-                    courseCode: formData.get('courseCode') || pd.courseCode || subjectName || 'Not provided',
+                    courseCode: subjectName || pd.courseCode || 'Not provided',
                     course: subjectName === 'student_assignment' ? 
                         (Array.from(document.getElementById('coursesSelect')?.selectedOptions || []).map(o => o.value).join(', ') || pd.courses?.join(', ') || pd.subjects?.join(', ') || 'Not provided') : 
                         subjectName,
