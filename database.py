@@ -45,6 +45,7 @@ class Database:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER,
                 subjects TEXT NOT NULL,
+                courses TEXT,
                 transaction_id TEXT,
                 amount REAL,
                 status TEXT DEFAULT 'pending',
@@ -52,6 +53,21 @@ class Database:
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )
         ''')
+        
+        # Ensure new column 'courses' exists for migration from 'subjects'
+        cursor.execute("PRAGMA table_info(user_assignments)")
+        columns = [row[1] for row in cursor.fetchall()]
+        if 'courses' not in columns:
+            try:
+                cursor.execute("ALTER TABLE user_assignments ADD COLUMN courses TEXT")
+            except Exception:
+                pass
+        
+        # Backfill courses from subjects where missing
+        try:
+            cursor.execute("UPDATE user_assignments SET courses = subjects WHERE (courses IS NULL OR courses = '') AND subjects IS NOT NULL")
+        except Exception:
+            pass
         
         conn.commit()
         conn.close()
@@ -197,16 +213,25 @@ class Database:
         except Exception as e:
             return {"success": False, "error": f"Logout failed: {str(e)}"}
     
-    def save_assignment_request(self, user_id, subjects, transaction_id, amount):
-        """Save assignment request to database"""
+    def save_assignment_request(self, user_id, courses, transaction_id, amount):
+        """Save assignment request to database with courses"""
         try:
             conn = sqlite3.connect(self.db_name)
             cursor = conn.cursor()
             
-            cursor.execute('''
-                INSERT INTO user_assignments (user_id, subjects, transaction_id, amount)
-                VALUES (?, ?, ?, ?)
-            ''', (user_id, ','.join(subjects), transaction_id, amount))
+            # Always store into 'courses'. Keep 'subjects' in sync for backward compatibility
+            courses_csv = ','.join(courses)
+            try:
+                cursor.execute('''
+                    INSERT INTO user_assignments (user_id, courses, subjects, transaction_id, amount)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (user_id, courses_csv, courses_csv, transaction_id, amount))
+            except Exception:
+                # Fallback if older schema without 'courses'
+                cursor.execute('''
+                    INSERT INTO user_assignments (user_id, subjects, transaction_id, amount)
+                    VALUES (?, ?, ?, ?)
+                ''', (user_id, courses_csv, transaction_id, amount))
             
             conn.commit()
             conn.close()

@@ -621,30 +621,22 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="examType" class="required">Exam Type Selection</label>
-                        <div class="radio-group">
-                            <div class="radio-item">
-                                <input type="radio" id="examYearly" name="examType" value="Yearly" required>
-                                <label for="examYearly">Yearly</label>
+                        <label for="studyCenterCode" class="required">Study Center Code</label>
+                        <input type="text" id="studyCenterCode" name="studyCenterCode" required>
                             </div>
-                            <div class="radio-item">
-                                <input type="radio" id="examSemester" name="examType" value="Semester" required>
-                                <label for="examSemester">Semester</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group" id="semesterNumberGroup" style="display: none;">
-                        <label for="semesterNumber" class="required">Semester Number</label>
-                        <select id="semesterNumber" name="semesterNumber">
-                            <option value="">Select Semester</option>
+                    <div class="form-group">
+                        <label for="studyCenterAddress" class="required">Name of Study Center with Complete Address</label>
+                        <select id="studyCenterAddress" name="studyCenterAddress" required>
+                            <option value="">Select a study center</option>
+                            <option value="Kolkata Main Center">Kolkata Main Center</option>
+                            <option value="Delhi Study Center">Delhi Study Center</option>
+                            <option value="Mumbai Study Center">Mumbai Study Center</option>
+                            <option value="Chennai Study Center">Chennai Study Center</option>
+                            <option value="Bangalore Study Center">Bangalore Study Center</option>
                         </select>
                     </div>
-                    <div class="form-group" id="yearNumberGroup" style="display: none;">
-                        <label for="yearNumber" class="required">Year Number</label>
-                        <select id="yearNumber" name="yearNumber">
-                            <option value="">Select Year</option>
-                        </select>
-                    </div>
+
+
                 </div>
 
                 <div class="form-row">
@@ -662,56 +654,46 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="studyCenterCode" class="required">Study Center Code</label>
-                        <input type="text" id="studyCenterCode" name="studyCenterCode" required>
+                         <label for="examType" class="required">Exam Type Selection</label>
+                         <div class="radio-group">
+                             <div class="radio-item">
+                                 <input type="radio" id="examYearly" name="examType" value="Yearly" required>
+                                 <label for="examYearly">Yearly</label>
                     </div>
-                    <div class="form-group">
-                        <label for="studyCenterAddress" class="required">Name of Study Center with Complete Address</label>
-                        <select id="studyCenterAddress" name="studyCenterAddress" required>
-                            <option value="">Select a study center</option>
-                            <option value="Kolkata Main Center">Kolkata Main Center</option>
-                            <option value="Delhi Study Center">Delhi Study Center</option>
-                            <option value="Mumbai Study Center">Mumbai Study Center</option>
-                            <option value="Chennai Study Center">Chennai Study Center</option>
-                            <option value="Bangalore Study Center">Bangalore Study Center</option>
+                             <div class="radio-item">
+                                 <input type="radio" id="examSemester" name="examType" value="Semester" required>
+                                 <label for="examSemester">Semester</label>
+                             </div>
+                         </div>
+                     </div>
+                     <div class="form-group" id="semesterNumberGroup" style="display: none;">
+                         <label for="semesterNumber" class="required">Semester Number</label>
+                         <select id="semesterNumber" name="semesterNumber">
+                             <option value="">Select Semester</option>
+                             <option value="1">1st Semester</option>
+                             <option value="2">2nd Semester</option>
+                             <option value="3">3rd Semester</option>
+                             <option value="4">4th Semester</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="required">Subjects Selection</label>
-                        <div class="checkbox-group">
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="subjectMath" name="subjects" value="Mathematics">
-                                <label for="subjectMath">Mathematics</label>
+                        <label for="yearSelection" class="required">Year Selection</label>
+                        <select id="yearSelection" name="yearSelection" required>
+                            <option value="">Select year</option>
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                            <option value="2026">2026</option>
+                        </select>
                             </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="subjectPhysics" name="subjects" value="Physics">
-                                <label for="subjectPhysics">Physics</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="subjectChemistry" name="subjects" value="Chemistry">
-                                <label for="subjectChemistry">Chemistry</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="subjectCS" name="subjects" value="Computer Science">
-                                <label for="subjectCS">Computer Science</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="subjectBusiness" name="subjects" value="Business Studies">
-                                <label for="subjectBusiness">Business Studies</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="subjectEnglish" name="subjects" value="English">
-                                <label for="subjectEnglish">English</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="subjectEconomics" name="subjects" value="Economics">
-                                <label for="subjectEconomics">Economics</label>
-                            </div>
-                        </div>
-
+                    <div class="form-group">
+                        <label class="required">Courses Selection</label>
+                        <select id="coursesSelect" name="courses" multiple size="6" style="width:100%" required>
+                            <option value="">Select Program, Exam Type and Year/Sem first</option>
+                        </select>
+                        <p class="help-text">Hold Ctrl (Windows) or Cmd (Mac) to select multiple courses</p>
                     </div>
                 </div>
 
@@ -840,9 +822,9 @@
                             
                             <div class="flex items-start">
                                 <span class="font-bold text-base w-8">5.</span>
-                                <span class="font-bold text-base w-80">Selected Subjects</span>
+                                <span class="font-bold text-base w-80">Selected Courses</span>
                                 <span class="text-base mx-2">:</span>
-                                <span class="text-base border-b border-gray-400 px-2" id="certSelectedSubjects">_____</span>
+                                <span class="text-base border-b border-gray-400 px-2" id="certSelectedCourses">_____</span>
                             </div>
                             <p class="text-xs text-gray-600 italic ml-10 mb-4">(Use this format course-wise separately)</p>
                             
@@ -920,21 +902,21 @@
             </div>
             
             <div class="download-options">
-                <!-- Download All Subjects as ZIP -->
+                <!-- Download All Courses as ZIP -->
                 <div class="download-option">
-                    <h3>📦 Download All Subjects</h3>
-                    <p>Get all selected subjects in a single ZIP file</p>
+                    <h3>📦 Download All Courses</h3>
+                    <p>Get all selected courses in a single ZIP file</p>
                     <button id="downloadAllZip" class="btn btn-primary download-all-btn">
-                        📥 Download All Subjects (ZIP)
+                        📥 Download All Courses (ZIP)
                     </button>
                 </div>
                 
-                <!-- Individual Subject Downloads -->
+                <!-- Individual Course Downloads -->
                 <div class="download-option">
-                    <h3>📚 Individual Subject Downloads</h3>
-                    <p>Download specific subject assignments</p>
-                    <div id="individualSubjectButtons" class="subject-buttons">
-                        <!-- Individual subject buttons will be generated here -->
+                    <h3>📚 Individual Course Downloads</h3>
+                    <p>Download specific course assignments</p>
+                    <div id="individualCourseButtons" class="subject-buttons">
+                        <!-- Individual course buttons will be generated here -->
                     </div>
                 </div>
                 
@@ -956,24 +938,50 @@
         // Remove.bg API configuration
         window.removeBgApiKey = 'px2zysgmbvcxprf'; // Stored API key
         
-        // Subject to PDF mapping for automatic attachment - using secure endpoint
-        const subjectPDFMapping = {
-            'Mathematics': '/get-pdf/MMPC-001',
-            'Computer Science': '/get-pdf/MMPC-002',
-            'Economics': '/get-pdf/MMPC-003',
-            'Physics': '/get-pdf/MMPC-004',
-            'Chemistry': '/get-pdf/MMPC-005',
-            'Biology': '/get-pdf/MMPC-006',
-            'Business Studies': '/get-pdf/MMPC-007',
-            'English': '/get-pdf/MMPC-008'
-        };
+        // Populate dynamic Courses multi-select based on Program + Exam Type + Year/Sem
+        function updateCoursesSelect() {
+            const program = document.getElementById('programSelection').value;
+            const examType = (document.querySelector('input[name="examType"]:checked') || {}).value || '';
+            const year = document.getElementById('yearSelection').value;
+            const semester = document.getElementById('semesterNumber').value;
+            const coursesSelect = document.getElementById('coursesSelect');
+            
+            // Clear
+            coursesSelect.innerHTML = '';
+            
+            // Guard: require program and exam context
+            if (!program || !examType || (!year && examType === 'Yearly') || (examType === 'Semester' && !semester)) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'Select Program, Exam Type and Year/Sem first';
+                coursesSelect.appendChild(opt);
+                return;
+            }
+            
+            const list = courseCodes[program] || [];
+            if (list.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'No courses available for selected criteria';
+                coursesSelect.appendChild(opt);
+                return;
+            }
+            
+            // Populate with course codes; show friendly text
+            list.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.value; // e.g., MMPC-001
+                opt.textContent = item.text; // e.g., MMPC-001 - Management Functions and Behaviour
+                coursesSelect.appendChild(opt);
+            });
+        }
         
         // Function to merge PDFs
-        async function mergePDFs(generatedPDFBytes, subjectName) {
+        async function mergePDFs(generatedPDFBytes, courseName) {
             try {
                 console.log('Starting PDF merge process...');
                 console.log('PDFLib available:', typeof PDFLib);
-                console.log('Subject name:', subjectName);
+                console.log('Course name:', courseName);
                 
                 // Wait for PDFLib to be available
                 let attempts = 0;
@@ -1003,14 +1011,12 @@
                 generatedPages.forEach(page => mergedPdf.addPage(page));
                 console.log('Generated PDF pages added to merged document');
                 
-                // Get the PDF file to attach based on subject
-                const pdfToAttach = subjectPDFMapping[subjectName] || '/get-pdf/MMPC-001';
-                console.log(`Attaching PDF: ${pdfToAttach} for subject: ${subjectName}`);
-                console.log('Available subjects:', Object.keys(subjectPDFMapping));
-                console.log('Subject mapping for this subject:', subjectPDFMapping[subjectName]);
+                // Build the PDF URL directly from the course code
+                const pdfToAttach = `/get-pdf/${courseName}`;
+                console.log(`Attaching PDF: ${pdfToAttach} for course: ${courseName}`);
                 
                 try {
-                    // Fetch the subject-specific PDF from secure endpoint
+                    // Fetch the course-specific PDF from secure endpoint
                     console.log(`Fetching PDF from: ${pdfToAttach}`);
                     const response = await fetch(pdfToAttach, {
                         method: 'GET',
@@ -1175,77 +1181,14 @@
         document.querySelectorAll('input[name="examType"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 const semesterGroup = document.getElementById('semesterNumberGroup');
-                const yearGroup = document.getElementById('yearNumberGroup');
-                const semesterSelect = document.getElementById('semesterNumber');
-                const yearSelect = document.getElementById('yearNumber');
-                const selectedProgram = document.getElementById('programSelection').value;
-
-                // Determine counts by program
-                const isMasters = ['MBA', 'MCA', 'M.Tech'].includes(selectedProgram);
-                const isBachelors = ['BBA', 'BCA', 'B.Tech'].includes(selectedProgram);
-                const maxSemesters = isMasters ? 4 : (isBachelors ? 8 : 4);
-                const maxYears = isMasters ? 2 : (isBachelors ? 4 : 2);
-
                 if (this.value === 'Semester') {
-                    // Show semester, hide year
                     semesterGroup.style.display = 'block';
-                    yearGroup.style.display = 'none';
-                    semesterSelect.required = true;
-                    if (yearSelect) yearSelect.required = false;
-
-                    // Populate semesters dynamically
-                    semesterSelect.innerHTML = '<option value="">Select Semester</option>';
-                    for (let i = 1; i <= maxSemesters; i++) {
-                        const opt = document.createElement('option');
-                        opt.value = String(i);
-                        opt.textContent = `${i}${i === 1 ? 'st' : i === 2 ? 'nd' : i === 3 ? 'rd' : 'th'} Semester`;
-                        semesterSelect.appendChild(opt);
-                    }
+                    document.getElementById('semesterNumber').required = true;
                 } else {
-                    // Show year, hide semester
-                    yearGroup.style.display = 'block';
                     semesterGroup.style.display = 'none';
-                    if (semesterSelect) semesterSelect.required = false;
-                    yearSelect.required = true;
-
-                    // Populate years dynamically
-                    yearSelect.innerHTML = '<option value="">Select Year</option>';
-                    for (let i = 1; i <= maxYears; i++) {
-                        const opt = document.createElement('option');
-                        opt.value = String(i);
-                        opt.textContent = `${i}${i === 1 ? 'st' : i === 2 ? 'nd' : i === 3 ? 'rd' : 'th'} Year`;
-                        yearSelect.appendChild(opt);
-                    }
+                    document.getElementById('semesterNumber').required = false;
                 }
             });
-        });
-
-        // Handle program selection to populate course codes
-        document.getElementById('programSelection').addEventListener('change', function() {
-            const courseCodeSelect = document.getElementById('courseCode');
-            const selectedProgram = this.value;
-            
-            // Clear existing options
-            courseCodeSelect.innerHTML = '<option value="">Select a course code</option>';
-            
-            if (selectedProgram && courseCodes[selectedProgram]) {
-                // Add course codes for selected program
-                courseCodes[selectedProgram].forEach(course => {
-                    const option = document.createElement('option');
-                    option.value = course.value;
-                    option.textContent = course.text;
-                    courseCodeSelect.appendChild(option);
-                });
-            } else {
-                // Reset to default message
-                courseCodeSelect.innerHTML = '<option value="">Select a program first</option>';
-            }
-
-            // Also refresh the exam groups if an exam type is already chosen
-            const chosenExamType = document.querySelector('input[name="examType"]:checked');
-            if (chosenExamType) {
-                chosenExamType.dispatchEvent(new Event('change'));
-            }
         });
 
         // Handle assignment submission elsewhere selection to show/hide details input
@@ -1337,6 +1280,27 @@
             ]
         };
 
+        // Re-populate course code single-select and dynamic courses multi-select on Program/Exam/Year/Sem changes
+        document.getElementById('programSelection').addEventListener('change', function() {
+            const courseCodeSelect = document.getElementById('courseCode');
+            const selectedProgram = this.value;
+            courseCodeSelect.innerHTML = '<option value="">Select a course code</option>';
+            if (selectedProgram && courseCodes[selectedProgram]) {
+                courseCodes[selectedProgram].forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course.value;
+                    option.textContent = course.text;
+                    courseCodeSelect.appendChild(option);
+                });
+            } else {
+                courseCodeSelect.innerHTML = '<option value="">Select a program first</option>';
+            }
+            updateCoursesSelect();
+        });
+        document.getElementById('yearSelection').addEventListener('change', updateCoursesSelect);
+        document.getElementById('semesterNumber').addEventListener('change', updateCoursesSelect);
+        document.querySelectorAll('input[name="examType"]').forEach(r => r.addEventListener('change', updateCoursesSelect));
+
         // Handle signature file selection to convert to transparent PNG
         document.getElementById('signature').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -1394,10 +1358,11 @@
                 
                 const formData = new FormData(document.getElementById('certificateForm'));
                 
-                // Get selected subjects
-                const selectedSubjects = formData.getAll('subjects');
-                if (selectedSubjects.length === 0) {
-                    alert('Please select at least one subject before proceeding.');
+                // Get selected courses
+                const coursesSelect = document.getElementById('coursesSelect');
+                const selectedCourses = Array.from(coursesSelect.selectedOptions).map(o => o.value).filter(v => v);
+                if (selectedCourses.length === 0) {
+                    alert('Please select at least one course before proceeding.');
                     return;
                 }
                 
@@ -1412,13 +1377,13 @@
                     return;
                 }
                 
-                // Calculate amount (₹1 per subject)
-                const amount = selectedSubjects.length;
+                // Calculate amount (₹1 per course)
+                const amount = selectedCourses.length;
                 
                 // Show payment confirmation
                 const confirmPayment = confirm(
                     `Payment Confirmation:\n\n` +
-                    `Selected Subjects: ${selectedSubjects.join(', ')}\n` +
+                    `Selected Courses: ${selectedCourses.join(', ')}\n` +
                     `Amount: ₹${amount}\n` +
                     `Student: ${studentName}\n` +
                     `Enrollment: ${enrollmentNumber}\n\n` +
@@ -1437,7 +1402,7 @@
                 
                 // Prepare payment data with all form fields
                 const paymentData = {
-                    subjects: selectedSubjects,
+                    courses: selectedCourses,
                     studentName: studentName,
                     enrollmentNumber: enrollmentNumber,
                     emailId: emailId,
@@ -1476,7 +1441,7 @@
                     window.paymentData = {
                         transactionId: result.transactionId,
                         amount: result.amount,
-                        subjects: result.subjects,
+                        courses: result.courses,
                         paymentUrl: result.paymentUrl,
                         paymentSessionId: result.paymentSessionId
                     };
@@ -1499,7 +1464,7 @@
                             submittedElsewhere: formData.get('submittedElsewhere'),
                             submissionDetails: formData.get('submissionDetails'),
                             confirmation: formData.get('confirmation'),
-                            subjects: selectedSubjects,
+                            courses: selectedCourses,
                             amount: amount
                         };
 
@@ -1590,12 +1555,12 @@
             document.getElementById('certEnrollmentNumber').textContent = formData.get('enrollmentNumber') || '_________________';
             document.getElementById('certProgramSelection').textContent = formData.get('programSelection') || '_________________';
             
-            // Handle selected subjects
-            const selectedSubjects = formData.getAll('subjects');
-            if (selectedSubjects.length > 0) {
-                document.getElementById('certSelectedSubjects').textContent = selectedSubjects.join(', ');
+            // Handle selected courses
+            const selectedCourses = Array.from(document.getElementById('coursesSelect').selectedOptions).map(o => o.value);
+            if (selectedCourses.length > 0) {
+                document.getElementById('certSelectedCourses').textContent = selectedCourses.join(', ');
             } else {
-                document.getElementById('certSelectedSubjects').textContent = '_________________';
+                document.getElementById('certSelectedCourses').textContent = '_________________';
             }
             document.getElementById('certStudyCenterCode').textContent = formData.get('studyCenterCode') || '_________________';
             document.getElementById('certStudyCenterAddress').textContent = formData.get('studyCenterAddress') || '_________________';
@@ -1681,23 +1646,23 @@
             console.log('All form data keys:', Array.from(formData.keys()));
             console.log('All form data values:', Array.from(formData.values()));
             
-            let examDetailText = '';
             if (examType === 'Yearly') {
-                const yearNumber = formData.get('yearNumber');
                 monthText = 'June/Dec';
                 specificMonth = '_______';
-                examDetailText = yearNumber ? ` | Year: ${yearNumber}` : '';
-                console.log('Yearly exam - monthText set to:', monthText, 'yearNumber:', yearNumber);
+                console.log('Yearly exam - monthText set to:', monthText);
             } else if (examType === 'Semester') {
                 const semesterNumber = formData.get('semesterNumber');
                 console.log('Semester exam - semesterNumber:', semesterNumber);
-                if (semesterNumber) {
-                    const semNum = parseInt(semesterNumber, 10);
-                    // Odd semesters -> June, Even -> Dec
-                    specificMonth = semNum % 2 === 1 ? 'June' : 'Dec';
-                    examDetailText = ` | Semester: ${semesterNumber}`;
+                if (semesterNumber === '1' || semesterNumber === '3') {
+                    monthText = 'June/Dec';
+                    specificMonth = 'June';
+                    console.log('Semester 1 or 3 - specificMonth set to:', specificMonth);
+                } else if (semesterNumber === '2' || semesterNumber === '4') {
+                    monthText = 'June/Dec';
+                    specificMonth = 'Dec';
+                    console.log('Semester 2 or 4 - specificMonth set to:', specificMonth);
                 } else {
-                    console.log('Invalid or missing semester number:', semesterNumber);
+                    console.log('Invalid semester number:', semesterNumber);
                 }
             } else {
                 console.log('Invalid exam type:', examType);
@@ -1712,9 +1677,9 @@
             const examInfoElement = document.querySelector('p.text-sm.text-gray-600.italic.mb-1');
             if (examInfoElement) {
                 // Replace the entire text content with the new format
-                examInfoElement.innerHTML = `For Term End Exam ${monthText} - <span class="border-b border-gray-400 px-2" style="color: red; font-weight: bold;">${specificMonth}</span> Year - <span class="border-b border-gray-400 px-2" style="color: red; font-weight: bold;">${yearText}</span>${examDetailText}`;
+                examInfoElement.innerHTML = `For Term End Exam ${monthText} - <span class="border-b border-gray-400 px-2" style="color: red; font-weight: bold;">${specificMonth}</span> Year - <span class="border-b border-gray-400 px-2" style="color: red; font-weight: bold;">${yearText}</span>`;
                 
-                console.log('Exam info updated:', monthText, specificMonth, yearText, examDetailText);
+                console.log('Exam info updated:', monthText, specificMonth, yearText);
             } else {
                 console.error('Exam info element not found');
             }
@@ -1736,10 +1701,10 @@
             }
             
             // Show the download page instead of generating PDFs immediately
-            console.log('Showing download page for subjects:', selectedSubjects);
+            console.log('Showing download page for courses:', selectedCourses);
             
-            if (selectedSubjects.length === 0) {
-                alert('Please select at least one subject before generating the assignment.');
+            if (selectedCourses.length === 0) {
+                alert('Please select at least one course before generating the assignment.');
                 return;
             }
             
@@ -1747,14 +1712,143 @@
             document.getElementById('formSection').classList.add('hidden');
             document.getElementById('downloadPage').classList.remove('hidden');
             
-            // Generate individual subject buttons
-            generateIndividualSubjectButtons(selectedSubjects);
+            // Generate individual course buttons
+            generateIndividualCourseButtons(selectedCourses);
             
-            // Store selected subjects and form data for later use
-            window.selectedSubjects = selectedSubjects;
+            // Store selected courses and form data for later use
+            window.selectedCourses = selectedCourses;
             window.formData = formData;
         }
 
+        // Generate individual course buttons for the download page
+        function generateIndividualCourseButtons(courses) {
+            console.log('Generating individual course buttons for:', courses);
+            const container = document.getElementById('individualCourseButtons');
+            
+            if (!container) {
+                console.error('Individual subject buttons container not found');
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            courses.forEach((course, index) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'subject-btn';
+                button.textContent = `📖 ${course}`;
+                button.onclick = () => downloadSingleCourse(course);
+                container.appendChild(button);
+                console.log(`Created button for: ${course}`);
+            });
+        }
+
+        // Download single course PDF
+        async function downloadSingleCourse(courseName) {
+            try {
+                console.log(`Downloading PDF for course: ${courseName}`);
+                
+                // Show loading state
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '⏳ Generating...';
+                button.disabled = true;
+                
+                // Generate and download the PDF for this specific subject
+                await downloadPDF(courseName);
+                
+                // Reset button
+                button.textContent = originalText;
+                button.disabled = false;
+                
+                console.log(`PDF downloaded successfully for: ${courseName}`);
+                
+            } catch (error) {
+                console.error(`Failed to download PDF for ${courseName}:`, error);
+                alert(`Failed to download PDF for ${courseName}. Please try again.`);
+                
+                // Reset button on error
+                const button = event.target;
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // Download all subjects as ZIP
+        async function downloadAllCoursesZip() {
+            try {
+                console.log('Downloading all subjects as ZIP');
+                
+                // Show loading state
+                const button = document.getElementById('downloadAllZip');
+                const originalText = button.textContent;
+                button.textContent = '⏳ Creating ZIP...';
+                button.disabled = true;
+                
+                // Use payment data courses if available, otherwise use selected courses
+                const courses = window.paymentData?.courses || window.selectedCourses || [];
+                
+                if (courses.length === 0) {
+                    alert('No courses selected. Please go back and select courses.');
+                    return;
+                }
+                
+                // Generate PDFs for all courses
+                const pdfPromises = courses.map(course => downloadPDF(course, true)); // true = return blob instead of downloading
+                const pdfBlobs = await Promise.all(pdfPromises);
+                
+                // Create ZIP file
+                const JSZip = window.JSZip;
+                if (!JSZip) {
+                    // If JSZip is not available, download PDFs individually
+                    alert('ZIP creation not available. Downloading PDFs individually...');
+                    subjects.forEach(subject => downloadPDF(subject));
+                    return;
+                }
+                
+                const zip = new JSZip();
+                
+                // Add each PDF to the ZIP
+                courses.forEach((course, index) => {
+                    if (pdfBlobs[index]) {
+                        const fileName = `Assignment_${course}_${new Date().toISOString().split('T')[0]}.pdf`;
+                        zip.file(fileName, pdfBlobs[index]);
+                    }
+                });
+                
+                // Generate and download ZIP
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(zipBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `All_Courses_Assignment_${new Date().toISOString().split('T')[0]}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                console.log('ZIP file downloaded successfully');
+                
+                // Reset button
+                button.textContent = originalText;
+                button.disabled = false;
+                
+            } catch (error) {
+                console.error('Failed to create ZIP:', error);
+                alert('Failed to create ZIP file. Downloading PDFs individually...');
+                
+                // Fallback to individual downloads
+                // Use payment data courses if available, otherwise use selected courses
+                const courses = window.paymentData?.courses || window.selectedCourses || [];
+                courses.forEach(course => downloadPDF(course));
+                
+                // Reset button
+                const button = document.getElementById('downloadAllZip');
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+
         // Generate individual subject buttons for the download page
         function generateIndividualSubjectButtons(subjects) {
             console.log('Generating individual subject buttons for:', subjects);
@@ -1809,8 +1903,8 @@
             }
         }
 
-        // Download all subjects as ZIP
-        async function downloadAllSubjectsZip() {
+        // Download all courses as ZIP
+        async function downloadAllCoursesZip() {
             try {
                 console.log('Downloading all subjects as ZIP');
                 
@@ -1884,138 +1978,9 @@
             }
         }
 
-        // Generate individual subject buttons for the download page
-        function generateIndividualSubjectButtons(subjects) {
-            console.log('Generating individual subject buttons for:', subjects);
-            const container = document.getElementById('individualSubjectButtons');
-            
-            if (!container) {
-                console.error('Individual subject buttons container not found');
-                return;
-            }
-            
-            container.innerHTML = '';
-            
-            subjects.forEach((subject, index) => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'subject-btn';
-                button.textContent = `📖 ${subject}`;
-                button.onclick = () => downloadSingleSubject(subject);
-                container.appendChild(button);
-                console.log(`Created button for: ${subject}`);
-            });
-        }
-
-        // Download single subject PDF
-        async function downloadSingleSubject(subjectName) {
-            try {
-                console.log(`Downloading PDF for subject: ${subjectName}`);
-                
-                // Show loading state
-                const button = event.target;
-                const originalText = button.textContent;
-                button.textContent = '⏳ Generating...';
-                button.disabled = true;
-                
-                // Generate and download the PDF for this specific subject
-                await downloadPDF(subjectName);
-                
-                // Reset button
-                button.textContent = originalText;
-                button.disabled = false;
-                
-                console.log(`PDF downloaded successfully for: ${subjectName}`);
-                
-            } catch (error) {
-                console.error(`Failed to download PDF for ${subjectName}:`, error);
-                alert(`Failed to download PDF for ${subjectName}. Please try again.`);
-                
-                // Reset button on error
-                const button = event.target;
-                button.textContent = originalText;
-                button.disabled = false;
-            }
-        }
-
-        // Download all subjects as ZIP
-        async function downloadAllSubjectsZip() {
-            try {
-                console.log('Downloading all subjects as ZIP');
-                
-                // Show loading state
-                const button = document.getElementById('downloadAllZip');
-                const originalText = button.textContent;
-                button.textContent = '⏳ Creating ZIP...';
-                button.disabled = true;
-                
-                // Use payment data subjects if available, otherwise use selected subjects
-                const subjects = window.paymentData?.subjects || window.selectedSubjects || [];
-                
-                if (subjects.length === 0) {
-                    alert('No subjects selected. Please go back and select subjects.');
-                    return;
-                }
-                
-                // Generate PDFs for all subjects
-                const pdfPromises = subjects.map(subject => downloadPDF(subject, true)); // true = return blob instead of downloading
-                const pdfBlobs = await Promise.all(pdfPromises);
-                
-                // Create ZIP file
-                const JSZip = window.JSZip;
-                if (!JSZip) {
-                    // If JSZip is not available, download PDFs individually
-                    alert('ZIP creation not available. Downloading PDFs individually...');
-                    subjects.forEach(subject => downloadPDF(subject));
-                    return;
-                }
-                
-                const zip = new JSZip();
-                
-                // Add each PDF to the ZIP
-                subjects.forEach((subject, index) => {
-                    if (pdfBlobs[index]) {
-                        const fileName = `Assignment_${subject}_${new Date().toISOString().split('T')[0]}.pdf`;
-                        zip.file(fileName, pdfBlobs[index]);
-                    }
-                });
-                
-                // Generate and download ZIP
-                const zipBlob = await zip.generateAsync({ type: 'blob' });
-                const url = URL.createObjectURL(zipBlob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `All_Subjects_Assignment_${new Date().toISOString().split('T')[0]}.zip`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                
-                console.log('ZIP file downloaded successfully');
-                
-                // Reset button
-                button.textContent = originalText;
-                button.disabled = false;
-                
-            } catch (error) {
-                console.error('Failed to create ZIP:', error);
-                alert('Failed to create ZIP file. Downloading PDFs individually...');
-                
-                // Fallback to individual downloads
-                // Use payment data subjects if available, otherwise use selected subjects
-                const subjects = window.paymentData?.subjects || window.selectedSubjects || [];
-                subjects.forEach(subject => downloadPDF(subject));
-                
-                // Reset button
-                const button = document.getElementById('downloadAllZip');
-                button.textContent = originalText;
-                button.disabled = false;
-            }
-        }
-
-        // Generate download buttons for each subject
-        function generateDownloadButtons(subjects) {
-            console.log('Generating download buttons for subjects:', subjects);
+        // Generate download buttons for each course
+        function generateDownloadButtons(courses) {
+            console.log('Generating download buttons for courses:', courses);
             const downloadButtonsContainer = document.getElementById('downloadButtons');
             if (!downloadButtonsContainer) {
                 console.error('Download buttons container not found');
@@ -2024,7 +1989,7 @@
             
             downloadButtonsContainer.innerHTML = '';
             
-            if (subjects.length === 0) {
+            if (courses.length === 0) {
                 // If no subjects selected, create one general download button
                 const button = document.createElement('button');
                 button.type = 'button';
@@ -2034,15 +1999,15 @@
                 downloadButtonsContainer.appendChild(button);
                 console.log('Created general download button');
             } else {
-                // Create separate download button for each subject
-                subjects.forEach((subject, index) => {
+                // Create separate download button for each course
+                courses.forEach((course, index) => {
                     const button = document.createElement('button');
                     button.type = 'button';
                     button.className = 'btn btn-secondary w-full';
-                    button.textContent = `Download PDF - ${subject}`;
-                    button.onclick = () => downloadPDF(subject);
+                    button.textContent = `Download PDF - ${course}`;
+                    button.onclick = () => downloadPDF(course);
                     downloadButtonsContainer.appendChild(button);
-                    console.log(`Created download button for: ${subject}`);
+                    console.log(`Created download button for: ${course}`);
                 });
             }
         }
@@ -2060,7 +2025,7 @@
                     program: formData.get('programSelection') || 'Not provided',
                     courseCode: formData.get('courseCode') || 'Not provided',
                     course: subjectName === 'student_assignment' ? 
-                        (formData.getAll('subjects').length > 0 ? formData.getAll('subjects').join(', ') : 'Not provided') : 
+                        (Array.from(document.getElementById('coursesSelect').selectedOptions).map(o => o.value).join(', ') || 'Not provided') : 
                         subjectName,
                     centerCode: formData.get('studyCenterCode') || 'Not provided',
                     centerAddress: formData.get('studyCenterAddress') || 'Not provided',
@@ -2082,7 +2047,6 @@
                     date: new Date().toLocaleDateString('en-GB') || 'Not provided',
                     semester: formData.get('semesterNumber') || '',
                     year: formData.get('yearSelection') || '',
-                    yearNumber: formData.get('yearNumber') || '',
                     photo: null,
                     sign: null
                 };
@@ -2237,18 +2201,17 @@
             // Dynamic exam info based on semester and year
             let examMonth = "June/Dec";
             let specificMonth = "_______";
-            let examDetailText = "";
             if (templateData.semester && templateData.semester !== "") {
-                const semNum = parseInt(templateData.semester, 10);
-                if (!Number.isNaN(semNum)) {
-                    specificMonth = semNum % 2 === 1 ? "June" : "Dec";
-                    examDetailText = ` | Semester: ${templateData.semester}`;
+                if (["1", "3"].includes(templateData.semester)) {
+                    examMonth = "June/Dec";
+                    specificMonth = "June";
+                } else if (["2", "4"].includes(templateData.semester)) {
+                    examMonth = "June/Dec";
+                    specificMonth = "Dec";
                 }
-            } else if (templateData.yearNumber && templateData.yearNumber !== "") {
-                examDetailText = ` | Year: ${templateData.yearNumber}`;
             }
             
-            doc.text(`For Term End Exam ${examMonth} - ${specificMonth} Year - ${templateData.year || "_______"}${examDetailText}`, pageWidth / 2, margin + 115, { align: "center" });
+            doc.text(`For Term End Exam ${examMonth} - ${specificMonth} Year - ${templateData.year || "_______"}`, pageWidth / 2, margin + 115, { align: "center" });
             doc.text("(Please read the instructions given below carefully before submitting assignments)", pageWidth / 2, margin + 135, { align: "center" });
             
             // Reset text color and font
@@ -2462,6 +2425,11 @@
         window.addEventListener('load', function() {
             console.log('Page loaded, testing PDF accessibility...');
             testPDFAccess();
+            // Bind download all button
+            const zipBtn = document.getElementById('downloadAllZip');
+            if (zipBtn) {
+                zipBtn.onclick = downloadAllCoursesZip;
+            }
         });
 
         // Set default date to today
@@ -2505,7 +2473,7 @@
                     orderId: orderId,
                     amount: window.serverPaymentData.amount || 1,
                     status: window.serverPaymentData.status || 'PAID',
-                    subjects: window.serverPaymentData.subjects || [],
+                    courses: window.serverPaymentData.courses || window.serverPaymentData.subjects || [],
                     studentName: window.serverPaymentData.studentName || 'Not Provided',
                     enrollmentNumber: window.serverPaymentData.enrollmentNumber || 'Not Provided',
                     emailId: window.serverPaymentData.emailId || 'Not Provided',
@@ -2534,19 +2502,13 @@
                 
                 // Fallback to form data if localStorage data is not available
                 if (!paymentData) {
-                    const selectedSubjects = [];
-                    const checkboxes = document.querySelectorAll('input[name="subjects"]:checked');
-                    checkboxes.forEach(checkbox => {
-                        selectedSubjects.push(checkbox.value);
-                    });
-                    
-                    const subjectsToUse = selectedSubjects.length > 0 ? selectedSubjects : ["Mathematics"];
-                    
+                    const selectedCourses = Array.from(document.getElementById('coursesSelect').selectedOptions).map(o => o.value);
+                    const coursesToUse = selectedCourses.length > 0 ? selectedCourses : ["MMPC-001"]; 
                     paymentData = {
                         orderId: orderId,
                         amount: 1,
                         status: 'PAID',
-                        subjects: subjectsToUse,
+                        courses: coursesToUse,
                         studentName: 'Not Provided',
                         enrollmentNumber: 'Not Provided',
                         emailId: 'Not Provided',
@@ -2562,24 +2524,22 @@
             document.getElementById('formSection').classList.add('hidden');
             document.getElementById('downloadPage').classList.remove('hidden');
             
-            // Generate individual subject buttons
-            generateIndividualSubjectButtons();
+            // Generate individual course buttons
+            generateIndividualCourseButtons(window.paymentData.courses || []);
             
             // Show success message
-            alert(`Payment successful! You can now download your assignments for: ${paymentData.subjects.join(', ')}`);
+            alert(`Payment successful! You can now download your assignments for: ${(paymentData.courses || []).join(', ')}`);
         }
         
         // Function to generate individual subject buttons
-        function generateIndividualSubjectButtons() {
-            const container = document.getElementById('individualSubjectButtons');
+        function generateIndividualCourseButtons(courses) {
+            const container = document.getElementById('individualCourseButtons');
             container.innerHTML = '';
-            
-            const subjects = window.paymentData.subjects;
-            subjects.forEach(subject => {
+            (courses || []).forEach(subject => {
                 const button = document.createElement('button');
                 button.className = 'btn btn-primary m-2';
                 button.textContent = `📖 ${subject}`;
-                button.onclick = () => downloadSingleSubjectForPayment(subject);
+                button.onclick = () => downloadSingleCourse(subject);
                 container.appendChild(button);
             });
         }

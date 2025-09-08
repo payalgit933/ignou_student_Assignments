@@ -343,7 +343,7 @@ def check_cashfree_config():
 def initiate_payment():
     try:
         data = request.json
-        subjects = data.get("subjects", [])
+        courses = data.get("courses", []) or data.get("subjects", [])
         student_name = data.get("studentName", "")
         enrollment = data.get("enrollmentNumber", "")
         programme_code = data.get("programSelection", "")
@@ -357,10 +357,10 @@ def initiate_payment():
         mobile_number = data.get("mobileNumber", "")
         email_id = data.get("emailId", "")
 
-        if not subjects or not student_name or not enrollment:
+        if not courses or not student_name or not enrollment:
             return jsonify({"success": False, "error": "Missing required fields"}), 400
 
-        amount_rupees = max(len(subjects), 1)  # Minimum ₹1, ₹1 per subject
+        amount_rupees = max(len(courses), 1)  # Minimum ₹1, ₹1 per course
 
         # ✅ Create unique orderId
         order_id = f"ORD{int(time.time())}"
@@ -471,7 +471,7 @@ def initiate_payment():
                 "submittedElsewhere": data.get("submittedElsewhere", ""),
                 "submissionDetails": data.get("submissionDetails", ""),
                 "confirmation": data.get("confirmation", ""),
-                "subjects": subjects,
+                "courses": courses,
                 "amount": amount_rupees,
                 "order_id": order_id
             }
@@ -482,7 +482,7 @@ def initiate_payment():
                 "paymentSessionId": payment_session_id,
                 "transactionId": order_id,
                 "amount": amount_rupees,
-                "subjects": subjects
+                "courses": courses
             })
             
         except json.JSONDecodeError as e:
@@ -563,8 +563,8 @@ def payment_success():
             "submittedElsewhere": payment_request.get("submittedElsewhere", "Not Provided"),
             "submissionDetails": payment_request.get("submissionDetails", "Not Provided"),
             "confirmation": payment_request.get("confirmation", "Not Provided"),
-            # Selected Subjects
-            "subjects": payment_request.get("subjects", []),
+            # Selected Courses
+            "courses": payment_request.get("courses", []) or payment_request.get("subjects", []),
             # File uploads (these will be added by the frontend)
             "idCardPhoto": None,
             "signaturePhoto": None
@@ -629,7 +629,7 @@ def get_payment_status(transaction_id):
         "success": True,
         "status": "PAYMENT_SUCCESS",
         "amount": payment_data.get("amount", 1),
-        "subjects": payment_request.get("subjects", []),
+        "courses": payment_request.get("courses", []) or payment_request.get("subjects", []),
         "userData": {
             "studentName": payment_request.get("studentName", "Not Provided"),
             "enrollmentNumber": payment_request.get("enrollmentNumber", "Not Provided"),
