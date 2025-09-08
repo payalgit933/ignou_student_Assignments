@@ -1026,11 +1026,11 @@
                             continue;
                         }
                         const subjectPDFBytes = await resp.arrayBuffer();
-                        console.log('Subject PDF bytes received:', subjectPDFBytes.byteLength);
-                        const subjectPdf = await PDFDocument.load(subjectPDFBytes);
-                        console.log('Subject PDF loaded, pages:', subjectPdf.getPageCount());
-                        const subjectPages = await mergedPdf.copyPages(subjectPdf, subjectPdf.getPageIndices());
-                        subjectPages.forEach(page => mergedPdf.addPage(page));
+                    console.log('Subject PDF bytes received:', subjectPDFBytes.byteLength);
+                    const subjectPdf = await PDFDocument.load(subjectPDFBytes);
+                    console.log('Subject PDF loaded, pages:', subjectPdf.getPageCount());
+                    const subjectPages = await mergedPdf.copyPages(subjectPdf, subjectPdf.getPageIndices());
+                    subjectPages.forEach(page => mergedPdf.addPage(page));
                         console.log(`Successfully merged ${subjectPages.length} pages from ${candidate}`);
                         attached = true;
                         break;
@@ -2021,36 +2021,36 @@
                 const formData = new FormData(document.getElementById('certificateForm'));
                 
                 // Prepare template data
+                // Prefer form inputs; if empty (e.g., after redirect), fallback to stored payment data
+                const pd = window.paymentData || (JSON.parse(localStorage.getItem('paymentStudentData') || '{}'));
                 const templateData = {
-                    name: formData.get('studentName') || 'Not provided',
-                    enrollment: formData.get('enrollmentNumber') || 'Not provided',
-                    program: formData.get('programSelection') || 'Not provided',
-                    courseCode: formData.get('courseCode') || 'Not provided',
+                    name: formData.get('studentName') || pd.studentName || 'Not provided',
+                    enrollment: formData.get('enrollmentNumber') || pd.enrollmentNumber || 'Not provided',
+                    program: formData.get('programSelection') || pd.programSelection || 'Not provided',
+                    courseCode: formData.get('courseCode') || pd.courseCode || subjectName || 'Not provided',
                     course: subjectName === 'student_assignment' ? 
-                        (Array.from(document.getElementById('coursesSelect').selectedOptions).map(o => o.value).join(', ') || 'Not provided') : 
+                        (Array.from(document.getElementById('coursesSelect')?.selectedOptions || []).map(o => o.value).join(', ') || pd.courses?.join(', ') || pd.subjects?.join(', ') || 'Not provided') : 
                         subjectName,
-                    centerCode: formData.get('studyCenterCode') || 'Not provided',
-                    centerAddress: formData.get('studyCenterAddress') || 'Not provided',
-                    center: formData.get('studyCenterAddress') ? 
-                        formData.get('studyCenterAddress').split(' ')[0] : 'Delhi',
-                    mobile: formData.get('mobileNumber') || 'Not provided',
-                    email: formData.get('emailId') || 'Not provided',
+                    centerCode: formData.get('studyCenterCode') || pd.studyCenterCode || 'Not provided',
+                    centerAddress: formData.get('studyCenterAddress') || pd.studyCenterAddress || 'Not provided',
+                    center: (formData.get('studyCenterAddress') || pd.studyCenterAddress || 'Delhi').split(' ')[0],
+                    mobile: formData.get('mobileNumber') || pd.mobileNumber || 'Not provided',
+                    email: formData.get('emailId') || pd.emailId || 'Not provided',
                     assignmentAnyWhereElse: (() => {
-                        const submittedElsewhere = formData.get('submittedElsewhere');
-                        const submissionDetails = formData.get('submissionDetails');
-                        
+                        const submittedElsewhere = formData.get('submittedElsewhere') || pd.submittedElsewhere;
+                        const submissionDetails = formData.get('submissionDetails') || pd.submissionDetails;
                         if (submittedElsewhere === 'Yes' && submissionDetails) {
                             return `Yes - ${submissionDetails}`;
                         } else {
                             return submittedElsewhere || 'Not provided';
                         }
                     })(),
-                    crossChecked: formData.get('confirmation') || 'Not provided',
+                    crossChecked: formData.get('confirmation') || pd.confirmation || 'Not provided',
                     date: new Date().toLocaleDateString('en-GB') || 'Not provided',
-                    semester: formData.get('semesterNumber') || '',
-                    year: formData.get('yearSelection') || '',
-                    photo: null,
-                    sign: null
+                    semester: formData.get('semesterNumber') || pd.semesterNumber || '',
+                    year: formData.get('yearSelection') || pd.yearSelection || '',
+                    photo: pd.idCardPhoto || null,
+                    sign: pd.signaturePhoto || null
                 };
 
                 // Handle photo upload
@@ -2280,7 +2280,6 @@
              addRow(2, "Enrollment Number", templateData.enrollment);
              addRow(3, "Programme Code", templateData.program);
              addRow(4, "Course Code", templateData.course);
-             addRow(5, "Course Code", templateData.courseCode);
              addRow(6, "Name of the Study Centre With complete address", templateData.centerAddress);
              addRow(7, "Study Centre Code", templateData.centerCode);
              addRow(8, "Mobile Number", templateData.mobile);
@@ -2520,7 +2519,7 @@
             const normalizedCourses = (paymentData.courses && paymentData.courses.length ? paymentData.courses : (paymentData.subjects || []));
             paymentData.courses = normalizedCourses;
             paymentData.subjects = normalizedCourses;
-
+            
             // Store payment data for PDF generation
             window.paymentData = paymentData;
             
