@@ -19,8 +19,9 @@
 
         body {
             font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            padding: 20px;
+            background: linear-gradient(135deg, #eef2f3 0%, #8ec5fc 100%);
+            padding: 24px;
+            min-height: 100vh;
         }
 
         .container {
@@ -177,28 +178,14 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
         }
 
-        .btn-primary {
-            background-color: #4CAF50;
-            color: white;
-        }
+        .btn-primary { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+        .btn-primary:hover { transform: translateY(-1px); }
 
-        .btn-primary:hover {
-            background-color: #45a049;
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background-color: #2196F3;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #1976D2;
-            transform: translateY(-2px);
-        }
+        .btn-secondary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+        .btn-secondary:hover { transform: translateY(-1px); }
 
         .certificate {
             background: white;
@@ -930,6 +917,18 @@
         </div>
     </div>
 
+    <div id="toastContainer"></div>
+    <div id="confirmOverlay">
+        <div id="confirmModal">
+            <div id="confirmHeader">Please Confirm</div>
+            <div id="confirmBody"></div>
+            <div id="confirmActions">
+                <button id="confirmCancel" class="btn btn-outline">Cancel</button>
+                <button id="confirmOk" class="btn btn-danger">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global variable to store the transparent signature PNG
         window.transparentSignature = null;
@@ -1354,7 +1353,7 @@
                 // Check if user is authenticated
                 const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
                 if (!isLoggedIn) {
-                    alert('Please log in to continue with payment.');
+                    showToast('Please log in to continue with payment.', 'warning', 'Login Required');
                     window.location.href = '/login';
                     return;
                 }
@@ -1365,7 +1364,7 @@
                 // Read selected courses from checkboxes
                 const selectedCourses = Array.from(document.querySelectorAll('#coursesCheckboxes input[type="checkbox"][name="courses"]:checked')).map(i => i.value);
                 if (selectedCourses.length === 0) {
-                    alert('Please select at least one course before proceeding.');
+                    showToast('Select at least one course before proceeding.', 'warning');
                     return;
                 }
                 
@@ -1376,7 +1375,7 @@
                 const mobileNumber = formData.get('mobileNumber');
                 
                 if (!studentName || !enrollmentNumber || !emailId || !mobileNumber) {
-                    alert('Please fill in all required fields before proceeding.');
+                    showToast('Fill all required fields before proceeding.', 'warning');
                     return;
                 }
                 
@@ -1384,14 +1383,7 @@
                 const amount = selectedCourses.length;
                 
                 // Show payment confirmation
-                const confirmPayment = confirm(
-                    `Payment Confirmation:\n\n` +
-                    `Selected Courses: ${selectedCourses.join(', ')}\n` +
-                    `Amount: ₹${amount}\n` +
-                    `Student: ${studentName}\n` +
-                    `Enrollment: ${enrollmentNumber}\n\n` +
-                    `Do you want to proceed with payment?`
-                );
+                const confirmPayment = await showConfirm(`Selected Courses: ${selectedCourses.join(', ')}\nAmount: ₹${amount}\nStudent: ${studentName}\nEnrollment: ${enrollmentNumber}\n\nProceed with payment?`);
                 
                 if (!confirmPayment) {
                     return;
@@ -1526,12 +1518,12 @@
                     
                     // Check if it's an authentication error
                     if (response.status === 401 || response.status === 403) {
-                        alert('Please log in to continue with payment.');
+                        showToast('Please log in to continue with payment.', 'warning', 'Login Required');
                         window.location.href = '/login';
                         return;
                     }
                     
-                    alert(`Payment initiation failed: ${result.error || 'Unknown error'}`);
+                    showToast(`Payment initiation failed: ${result.error || 'Unknown error'}`, 'error');
                     
                     // Reset button
                     submitButton.textContent = originalText;
@@ -1540,7 +1532,7 @@
                 
             } catch (error) {
                 console.error('Error initiating payment:', error);
-                alert('An error occurred while initiating payment. Please try again.');
+                showToast('Error initiating payment. Please try again.', 'error');
                 
                 // Reset button
                 const submitButton = document.querySelector('button[type="submit"]');
@@ -1707,7 +1699,7 @@
             console.log('Showing download page for courses:', selectedCourses);
             
             if (selectedCourses.length === 0) {
-                alert('Please select at least one course before generating the assignment.');
+                showToast('Select at least one course before generating.', 'warning');
                 return;
             }
             
@@ -1768,7 +1760,7 @@
                 
             } catch (error) {
                 console.error(`Failed to download PDF for ${courseName}:`, error);
-                alert(`Failed to download PDF for ${courseName}. Please try again.`);
+                showToast(`Failed to download PDF for ${courseName}. Please try again.`, 'error');
                 
                 // Reset button on error
                 const button = event.target;
@@ -1849,7 +1841,7 @@
                 
             } catch (error) {
                 console.error('Failed to create ZIP:', error);
-                alert('Failed to create ZIP file. Downloading PDFs individually...');
+                showToast('Failed to create ZIP. Downloading individually...', 'warning');
                 
                 // Fallback to individual downloads
                 // Use payment data courses if available, otherwise use selected courses
@@ -1908,7 +1900,7 @@
                 
             } catch (error) {
                 console.error(`Failed to download PDF for ${subjectName}:`, error);
-                alert(`Failed to download PDF for ${subjectName}. Please try again.`);
+                showToast(`Failed to download PDF for ${subjectName}. Please try again.`, 'error');
                 
                 // Reset button on error
                 const button = event.target;
@@ -1978,7 +1970,7 @@
                 
             } catch (error) {
                 console.error('Failed to create ZIP:', error);
-                alert('Failed to create ZIP file. Downloading PDFs individually...');
+                showToast('Failed to create ZIP. Downloading individually...', 'warning');
                 
                 // Fallback to individual downloads
                 // Use payment data subjects if available, otherwise use selected subjects
@@ -2109,7 +2101,7 @@
                 if (returnBlob) {
                     return null;
                 }
-                alert("PDF generation failed. Please try again.");
+                showToast('PDF generation failed. Please try again.', 'error');
             }
         }
 
@@ -2159,7 +2151,7 @@
                 if (returnBlob) {
                     return null;
                 }
-                alert("PDF preparation failed. Please try again.");
+                showToast('PDF preparation failed. Please try again.', 'error');
             }
         }
 
@@ -2544,7 +2536,7 @@
             generateIndividualCourseButtons(window.paymentData.courses || window.paymentData.subjects || []);
             
             // Show success message
-            alert(`Payment successful! You can now download your assignments for: ${(paymentData.courses || []).join(', ')}`);
+            showToast(`Payment successful! You can now download your assignments for: ${(paymentData.courses || []).join(', ')}`);
         }
         
         // Function to generate individual subject buttons
@@ -2647,7 +2639,7 @@
                 
             } catch (error) {
                 console.error('Error downloading PDF:', error);
-                alert('Error downloading PDF. Please try again.');
+                showToast('Error downloading PDF. Please try again.', 'error');
             }
         }
 
@@ -2810,7 +2802,7 @@
                 
             } catch (error) {
                 console.error('Error creating ZIP file:', error);
-                alert('Error creating ZIP file. Please try again.');
+                showToast('Error creating ZIP file. Please try again.', 'error');
             } finally {
                 // Restore button state
                 const button = document.getElementById('downloadAllZip');
@@ -2973,6 +2965,33 @@
                 checkAuthStatus();
             }
         });
+
+        // Toast + Confirm helpers
+        function showToast(message, type = 'info', title = '') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const el = document.createElement('div');
+            el.className = `toast ${type}`;
+            el.innerHTML = `${title ? `<div class=\"title\">${title}</div>` : ''}<div class=\"msg\">${message}</div>`;
+            container.appendChild(el);
+            setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(-6px)'; }, 2400);
+            setTimeout(() => { el.remove(); }, 3000);
+        }
+
+        function showConfirm(message, options = {}) {
+            return new Promise(resolve => {
+                const overlay = document.getElementById('confirmOverlay');
+                const body = document.getElementById('confirmBody');
+                const okBtn = document.getElementById('confirmOk');
+                const cancelBtn = document.getElementById('confirmCancel');
+                if (!overlay || !body || !okBtn || !cancelBtn) return resolve(false);
+                body.textContent = message;
+                overlay.style.display = 'flex';
+                const cleanup = () => { overlay.style.display = 'none'; okBtn.onclick = null; cancelBtn.onclick = null; };
+                okBtn.onclick = () => { cleanup(); resolve(true); };
+                cancelBtn.onclick = () => { cleanup(); resolve(false); };
+            });
+        }
     </script>
 </body>
 </html>
