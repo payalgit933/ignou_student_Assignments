@@ -286,162 +286,6 @@
             box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
         }
 
-        /* Modal/Overlay Styling */
-        #confirmOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        #confirmModal {
-            background: white;
-            border-radius: 20px;
-            padding: 0;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow: hidden;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-            animation: slideInModal 0.4s ease-out;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        #confirmHeader {
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            color: white; 
-            padding: 24px 32px;
-            font-size: 20px;
-            font-weight: 600;
-            text-align: center;
-            margin: 0;
-        }
-
-        #confirmBody {
-            padding: 32px;
-            font-size: 16px;
-            line-height: 1.6;
-            color: #374151;
-            text-align: center;
-            white-space: pre-line;
-        }
-
-        #confirmActions {
-            padding: 0 32px 32px 32px;
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-        }
-
-        #confirmActions .btn {
-            padding: 12px 24px;
-            margin: 0;
-            font-size: 16px;
-            min-width: 120px;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid #e5e7eb;
-            color: #6b7280;
-        }
-
-        .btn-outline:hover {
-            background: #f9fafb;
-            border-color: #d1d5db;
-            transform: translateY(-1px);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white; 
-            border: none;
-        }
-
-        .btn-danger:hover {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideInModal {
-            from {
-                opacity: 0;
-                transform: translateY(-50px) scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        /* Toast Styling */
-        #toastContainer {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 10001;
-        }
-
-        .toast {
-            background: white;
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            border-left: 4px solid #8b5cf6;
-            min-width: 300px;
-            animation: slideInToast 0.3s ease-out;
-            transition: all 0.3s ease;
-        }
-
-        .toast.success {
-            border-left-color: #10b981;
-        }
-
-        .toast.error {
-            border-left-color: #ef4444;
-        }
-
-        .toast.warning {
-            border-left-color: #f59e0b;
-        }
-
-        .toast .title {
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 4px;
-        }
-
-        .toast .msg {
-            color: #6b7280;
-            font-size: 14px;
-        }
-
-        @keyframes slideInToast {
-            from {
-                opacity: 0;
-                transform: translateX(100%);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
         .certificate {
             background: white;
             padding: 40px;
@@ -933,15 +777,14 @@
                         </select>
                             </div>
                     <div class="form-group">
-                        <label class="required">Courses Selection</label>
-                        <div id="coursesSelectContainer">
-                            <div style="margin-bottom:8px;">
-                                <label style="font-weight:normal;"><input type="checkbox" id="selectAllCourses"> Select All</label>
+                        <label for="coursesSelection" class="required">Courses Selection</label>
+                        <select id="coursesSelection" name="coursesSelection" multiple required class="courses-dropdown">
+                            <option value="">No courses available. Select Program, Exam Type and Year/Sem first</option>
+                        </select>
+                        <div class="selected-courses-display mt-2">
+                            <small class="text-gray-600">Selected courses will appear here</small>
                             </div>
-                            <div id="coursesCheckboxes" class="checkbox-group">
-                                <div>No courses available. Select Program, Exam Type and Year/Sem first</div>
-                            </div>
-                        </div>
+                        <small class="text-gray-500 mt-1 block">💡 Hold Ctrl/Cmd and click to select multiple courses</small>
                     </div>
                 </div>
 
@@ -1205,31 +1048,34 @@
         // Remove.bg API configuration
         window.removeBgApiKey = 'px2zysgmbvcxprf'; // Stored API key
         
-        // Populate dynamic Courses checkboxes based on Program + Exam Type + Year/Sem
+        // Populate dynamic Courses dropdown based on Program + Exam Type + Year/Sem
         function updateCoursesSelect() {
             const program = document.getElementById('programSelection').value;
             const examType = (document.querySelector('input[name="examType"]:checked') || {}).value || '';
             const year = document.getElementById('yearSelection').value;
             const semester = document.getElementById('semesterNumber').value;
-            const container = document.getElementById('coursesCheckboxes');
-            const selectAll = document.getElementById('selectAllCourses');
+            const dropdown = document.getElementById('coursesSelection');
+            const display = document.querySelector('.selected-courses-display');
             
             console.log('updateCoursesSelect called:', { program, examType, year, semester });
             console.log('courseCodes available:', Object.keys(courseCodes));
             
-            if (!container) {
-                console.error('Courses checkboxes container not found!');
+            if (!dropdown) {
+                console.error('Courses dropdown not found!');
                 return;
             }
             
-            // Clear existing checkboxes
-            container.innerHTML = '';
+            // Clear existing options
+            dropdown.innerHTML = '';
             
             // Simplified logic: only require program to show courses
             if (!program) {
-                const msg = document.createElement('div');
-                msg.textContent = 'Please select a Program first';
-                container.appendChild(msg);
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'Please select a Program first';
+                option.disabled = true;
+                dropdown.appendChild(option);
+                if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
                 return;
             }
             
@@ -1237,41 +1083,50 @@
             console.log('Found courses for program', program, ':', list.length, 'courses');
             
             if (list.length === 0) {
-                const msg = document.createElement('div');
-                msg.textContent = 'No courses available for selected program';
-                container.appendChild(msg);
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No courses available for selected program';
+                option.disabled = true;
+                dropdown.appendChild(option);
+                if (display) display.innerHTML = '<small class="text-gray-600">No courses available</small>';
                 return;
             }
             
-            // Populate checkboxes with courses
-            console.log('Populating checkboxes with courses:', list.length, 'courses');
+            // Populate dropdown with courses
+            console.log('Populating dropdown with courses:', list.length, 'courses');
             list.forEach((item, index) => {
-                const wrapper = document.createElement('label');
-                wrapper.className = 'checkbox-item';
-                const input = document.createElement('input');
-                input.type = 'checkbox';
-                input.name = 'courses';
-                input.value = item.value;
-                const span = document.createElement('span');
-                span.textContent = item.text;
-                wrapper.appendChild(input);
-                wrapper.appendChild(span);
-                container.appendChild(wrapper);
-                console.log(`Added checkbox ${index + 1}:`, item.value, item.text);
+                const option = document.createElement('option');
+                option.value = item.value;
+                option.textContent = item.text;
+                dropdown.appendChild(option);
+                console.log(`Added option ${index + 1}:`, item.value, item.text);
             });
-
-            // Select All binding
-            if (selectAll) {
-                selectAll.checked = false;
-                selectAll.onchange = function() {
-                    const checks = container.querySelectorAll('input[type="checkbox"][name="courses"]');
-                    checks.forEach(c => c.checked = selectAll.checked);
-                };
-            }
             
-            console.log('Courses checkboxes populated successfully with', list.length, 'options');
+            // Clear display initially
+            if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
+            console.log('Courses dropdown populated successfully with', list.length, 'options');
         }
 
+        // Function to update selected courses display
+        function updateSelectedCoursesDisplay() {
+            const dropdown = document.getElementById('coursesSelection');
+            const display = document.querySelector('.selected-courses-display');
+            
+            if (!dropdown || !display) return;
+            
+            const selectedOptions = Array.from(dropdown.selectedOptions);
+            
+            if (selectedOptions.length === 0) {
+                display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
+                return;
+            }
+            
+            const tags = selectedOptions.map(option => {
+                return `<span class="selected-course-tag">${option.textContent}</span>`;
+            }).join('');
+            
+            display.innerHTML = tags;
+        }
         
         // Function to merge PDFs
         async function mergePDFs(generatedPDFBytes, courseName) {
@@ -1311,11 +1166,6 @@
                 // Try to attach a local PDF by course code (works offline like working/index.html)
                 const pdfCandidates = [
                     `pdfs/MBA/${courseName}.pdf`,
-                    `pdfs/BBA/${courseName}.pdf`,
-                    `pdfs/MCA/${courseName}.pdf`,
-                    `pdfs/BCA/${courseName}.pdf`,
-                    `pdfs/B.Tech/${courseName}.pdf`,
-                    `pdfs/M.Tech/${courseName}.pdf`,
                     `pdfs/${courseName}.pdf`,
                 ];
                 let attached = false;
@@ -1341,11 +1191,7 @@
                     }
                 }
                 if (!attached) {
-                    console.log('❌ No subject PDF attached; proceeding with generated PDF only');
-                    console.log('Available PDF candidates were:', pdfCandidates);
-                    console.log('Course name was:', courseName);
-                } else {
-                    console.log('✅ Subject PDF successfully attached!');
+                    console.log('No subject PDF attached; proceeding with generated PDF only');
                 }
                 
                 // Save the merged PDF
@@ -1597,12 +1443,51 @@
         document.getElementById('semesterNumber').addEventListener('change', updateCoursesSelect);
         document.querySelectorAll('input[name="examType"]').forEach(r => r.addEventListener('change', updateCoursesSelect));
         
-        // Initialize courses checkboxes on page load
+        // Add event listener for courses dropdown selection changes
+        document.getElementById('coursesSelection').addEventListener('change', updateSelectedCoursesDisplay);
+        
+        // Test function to manually populate dropdown
+        function testDropdownPopulation() {
+            const dropdown = document.getElementById('coursesSelection');
+            if (!dropdown) {
+                console.error('Dropdown not found for testing');
+                return;
+            }
+            
+            console.log('Testing dropdown population...');
+            dropdown.innerHTML = '';
+            
+            // Add test options
+            const testCourses = [
+                { value: 'TEST-001', text: 'TEST-001 - Test Course 1' },
+                { value: 'TEST-002', text: 'TEST-002 - Test Course 2' },
+                { value: 'TEST-003', text: 'TEST-003 - Test Course 3' }
+            ];
+            
+            testCourses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course.value;
+                option.textContent = course.text;
+                dropdown.appendChild(option);
+                console.log('Added test option:', course.value);
+            });
+            
+            console.log('Test dropdown populated with', testCourses.length, 'options');
+        }
+
+        // Initialize courses dropdown on page load
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing courses checkboxes');
+            console.log('DOM loaded, initializing courses dropdown');
             console.log('courseCodes object:', courseCodes);
             console.log('Available programs:', Object.keys(courseCodes));
-            updateCoursesSelect();
+            
+            // Test dropdown population first
+            testDropdownPopulation();
+            
+            // Then try normal population
+            setTimeout(() => {
+                updateCoursesSelect();
+            }, 1000);
         });
 
         // Handle signature file selection to convert to transparent PNG
@@ -1662,8 +1547,8 @@
                 
                 const formData = new FormData(document.getElementById('certificateForm'));
                 
-                // Get selected courses from checkboxes
-                const selectedCourses = Array.from(document.querySelectorAll('#coursesCheckboxes input[type="checkbox"][name="courses"]:checked')).map(i => i.value);
+                // Get selected courses from dropdown
+                const selectedCourses = Array.from(document.getElementById('coursesSelection').selectedOptions).map(option => option.value);
                 if (selectedCourses.length === 0) {
                     showToast('Select at least one course before proceeding.', 'warning');
                     return;
@@ -1684,21 +1569,7 @@
                 const amount = selectedCourses.length;
                 
                 // Show payment confirmation
-                const confirmPayment = await showConfirm(
-                    `🎓 Payment Summary\n\n` +
-                    `📚 Selected Courses: ${selectedCourses.length}\n` +
-                    `   ${selectedCourses.join(', ')}\n\n` +
-                    `💰 Amount: ₹${amount}\n` +
-                    `👤 Student: ${studentName}\n` +
-                    `🆔 Enrollment: ${enrollmentNumber}\n\n` +
-                    `🔒 You will be redirected to Cashfree payment gateway.\n` +
-                    `Do you want to proceed with the payment?`,
-                    {
-                        title: '💳 Payment Confirmation',
-                        okText: '💳 Pay Now',
-                        cancelText: '❌ Cancel'
-                    }
-                );
+                const confirmPayment = await showConfirm(`Selected Courses: ${selectedCourses.join(', ')}\nAmount: ₹${amount}\nStudent: ${studentName}\nEnrollment: ${enrollmentNumber}\n\nProceed with payment?`);
                 
                 if (!confirmPayment) {
                     return;
@@ -1865,8 +1736,8 @@
             document.getElementById('certEnrollmentNumber').textContent = formData.get('enrollmentNumber') || '_________________';
             document.getElementById('certProgramSelection').textContent = formData.get('programSelection') || '_________________';
             
-            // Handle selected courses from checkboxes
-            const selectedCourses = Array.from(document.querySelectorAll('#coursesCheckboxes input[type="checkbox"][name="courses"]:checked')).map(i => i.value);
+            // Handle selected courses from dropdown
+            const selectedCourses = Array.from(document.getElementById('coursesSelection').selectedOptions).map(option => option.value);
             if (selectedCourses.length > 0) {
                 document.getElementById('certSelectedCourses').textContent = selectedCourses.join(', ');
             } else {
@@ -2288,9 +2159,9 @@
                 showToast('Failed to create ZIP. Downloading individually...', 'warning');
                 
                 // Fallback to individual downloads
-                // Use payment data courses if available, otherwise use selected courses
-                const courses = window.paymentData?.courses || window.selectedCourses || [];
-                courses.forEach(course => downloadPDF(course));
+                // Use payment data subjects if available, otherwise use selected subjects
+                const subjects = window.paymentData?.subjects || window.selectedSubjects || [];
+                subjects.forEach(subject => downloadPDF(subject));
                 
                 // Reset button
                 const button = document.getElementById('downloadAllZip');
@@ -2302,7 +2173,7 @@
         // Generate download buttons for each course
         function generateDownloadButtons(courses) {
             console.log('Generating download buttons for courses:', courses);
-            const downloadButtonsContainer = document.getElementById('individualCourseButtons');
+            const downloadButtonsContainer = document.getElementById('downloadButtons');
             if (!downloadButtonsContainer) {
                 console.error('Download buttons container not found');
                 return;
@@ -2311,7 +2182,7 @@
             downloadButtonsContainer.innerHTML = '';
             
             if (courses.length === 0) {
-                // If no courses selected, create one general download button
+                // If no subjects selected, create one general download button
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'btn btn-secondary w-full';
@@ -2349,7 +2220,7 @@
                     program: formData.get('programSelection') || pd.programSelection || 'Not provided',
                     courseCode: subjectName || pd.courseCode || 'Not provided',
                     course: subjectName === 'student_assignment' ? 
-                        (Array.from(document.querySelectorAll('#coursesCheckboxes input[type="checkbox"][name="courses"]:checked')).map(i => i.value).join(', ') || pd.courses?.join(', ') || pd.subjects?.join(', ') || 'Not provided') : 
+                        (Array.from(document.getElementById('coursesSelect')?.selectedOptions || []).map(o => o.value).join(', ') || pd.courses?.join(', ') || pd.subjects?.join(', ') || 'Not provided') : 
                         subjectName,
                     centerCode: formData.get('studyCenterCode') || pd.studyCenterCode || 'Not provided',
                     centerAddress: formData.get('studyCenterAddress') || pd.studyCenterAddress || 'Not provided',
@@ -2678,15 +2549,14 @@
             const pdfBytes = doc.output('arraybuffer');
             
             // Merge with subject-specific PDF
-            const mergeSubjectName = subjectName || templateData.course || 'General';
-            console.log(`Merging PDF for subject: ${mergeSubjectName}`);
+            const subjectName = templateData.course || 'General';
+            console.log(`Merging PDF for subject: ${subjectName}`);
             console.log('Template data course:', templateData.course);
-            console.log('Subject name parameter:', subjectName);
             console.log('Template data keys:', Object.keys(templateData));
             
             try {
                 console.log('Calling mergePDFs function...');
-                const mergedPDFBytes = await mergePDFs(pdfBytes, mergeSubjectName);
+                const mergedPDFBytes = await mergePDFs(pdfBytes, subjectName);
                 console.log('Merge completed, merged PDF size:', mergedPDFBytes.byteLength);
                 
                 // Create download link for merged PDF
@@ -2726,28 +2596,27 @@
 
         // Test PDF accessibility function
         async function testPDFAccess() {
-            console.log('🔍 Testing PDF accessibility...');
-            const testPaths = [
-                'pdfs/MBA/MMPC-001.pdf',
-                'pdfs/MBA/MMPC-002.pdf',
-                'pdfs/BBA/BBAR-101.pdf',
-                'pdfs/MCA/MCS-011.pdf'
-            ];
+            console.log('Testing PDF accessibility...');
+            const testFiles = ['BCS-53-EM-2025-26.pdf', 'BCS-54-EM-2025-26.pdf'];
             
-            for (const path of testPaths) {
+            for (const file of testFiles) {
                 try {
-                    const response = await fetch(path, { method: 'HEAD' });
-                    console.log(`${response.ok ? '✅' : '❌'} ${path} - Status: ${response.status}`);
+                    const response = await fetch(`pdfs/${file}`);
+                    console.log(`${file}: Status ${response.status}, OK: ${response.ok}`);
+                    if (response.ok) {
+                        const bytes = await response.arrayBuffer();
+                        console.log(`${file}: Size ${bytes.byteLength} bytes`);
+                    }
                 } catch (error) {
-                    console.log(`❌ ${path} - Error: ${error.message}`);
+                    console.error(`${file}: Error -`, error.message);
                 }
             }
         }
         
-        // Call test function on page load
-        window.addEventListener('load', () => {
-            setTimeout(testPDFAccess, 2000); // Test after 2 seconds
-        });
+        // Test PDF access on page load
+        window.addEventListener('load', function() {
+            console.log('Page loaded, testing PDF accessibility...');
+            testPDFAccess();
             // Bind download all button
             const zipBtn = document.getElementById('downloadAllZip');
             if (zipBtn) {
@@ -3298,67 +3167,15 @@
         function showConfirm(message, options = {}) {
             return new Promise(resolve => {
                 const overlay = document.getElementById('confirmOverlay');
-                const header = document.getElementById('confirmHeader');
                 const body = document.getElementById('confirmBody');
                 const okBtn = document.getElementById('confirmOk');
                 const cancelBtn = document.getElementById('confirmCancel');
-                
                 if (!overlay || !body || !okBtn || !cancelBtn) return resolve(false);
-                
-                // Update header if provided
-                if (options.title) {
-                    header.textContent = options.title;
-                } else {
-                    header.textContent = 'Please Confirm';
-                }
-                
-                // Update body with message
                 body.textContent = message;
-                
-                // Update button texts if provided
-                if (options.okText) {
-                    okBtn.textContent = options.okText;
-                } else {
-                    okBtn.textContent = 'OK';
-                }
-                
-                if (options.cancelText) {
-                    cancelBtn.textContent = options.cancelText;
-                } else {
-                    cancelBtn.textContent = 'Cancel';
-                }
-                
-                // Show modal with animation
                 overlay.style.display = 'flex';
-                
-                // Add click outside to close
-                const handleOverlayClick = (e) => {
-                    if (e.target === overlay) {
-                        cleanup();
-                        resolve(false);
-                    }
-                };
-                
-                // Add escape key to close
-                const handleEscapeKey = (e) => {
-                    if (e.key === 'Escape') {
-                        cleanup();
-                        resolve(false);
-                    }
-                };
-                
-                const cleanup = () => { 
-                    overlay.style.display = 'none'; 
-                    okBtn.onclick = null; 
-                    cancelBtn.onclick = null;
-                    overlay.removeEventListener('click', handleOverlayClick);
-                    document.removeEventListener('keydown', handleEscapeKey);
-                };
-                
+                const cleanup = () => { overlay.style.display = 'none'; okBtn.onclick = null; cancelBtn.onclick = null; };
                 okBtn.onclick = () => { cleanup(); resolve(true); };
                 cancelBtn.onclick = () => { cleanup(); resolve(false); };
-                overlay.addEventListener('click', handleOverlayClick);
-                document.addEventListener('keydown', handleEscapeKey);
             });
         }
     </script>
