@@ -317,7 +317,7 @@
 
         #confirmHeader {
             background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            color: white;
+            color: white; 
             padding: 24px 32px;
             font-size: 20px;
             font-weight: 600;
@@ -362,7 +362,7 @@
 
         .btn-danger {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
+            color: white; 
             border: none;
         }
 
@@ -1311,6 +1311,11 @@
                 // Try to attach a local PDF by course code (works offline like working/index.html)
                 const pdfCandidates = [
                     `pdfs/MBA/${courseName}.pdf`,
+                    `pdfs/BBA/${courseName}.pdf`,
+                    `pdfs/MCA/${courseName}.pdf`,
+                    `pdfs/BCA/${courseName}.pdf`,
+                    `pdfs/B.Tech/${courseName}.pdf`,
+                    `pdfs/M.Tech/${courseName}.pdf`,
                     `pdfs/${courseName}.pdf`,
                 ];
                 let attached = false;
@@ -1336,7 +1341,11 @@
                     }
                 }
                 if (!attached) {
-                    console.log('No subject PDF attached; proceeding with generated PDF only');
+                    console.log('❌ No subject PDF attached; proceeding with generated PDF only');
+                    console.log('Available PDF candidates were:', pdfCandidates);
+                    console.log('Course name was:', courseName);
+                } else {
+                    console.log('✅ Subject PDF successfully attached!');
                 }
                 
                 // Save the merged PDF
@@ -2669,14 +2678,15 @@
             const pdfBytes = doc.output('arraybuffer');
             
             // Merge with subject-specific PDF
-            const subjectName = templateData.course || 'General';
-            console.log(`Merging PDF for subject: ${subjectName}`);
+            const mergeSubjectName = subjectName || templateData.course || 'General';
+            console.log(`Merging PDF for subject: ${mergeSubjectName}`);
             console.log('Template data course:', templateData.course);
+            console.log('Subject name parameter:', subjectName);
             console.log('Template data keys:', Object.keys(templateData));
             
             try {
                 console.log('Calling mergePDFs function...');
-                const mergedPDFBytes = await mergePDFs(pdfBytes, subjectName);
+                const mergedPDFBytes = await mergePDFs(pdfBytes, mergeSubjectName);
                 console.log('Merge completed, merged PDF size:', mergedPDFBytes.byteLength);
                 
                 // Create download link for merged PDF
@@ -2716,27 +2726,28 @@
 
         // Test PDF accessibility function
         async function testPDFAccess() {
-            console.log('Testing PDF accessibility...');
-            const testFiles = ['BCS-53-EM-2025-26.pdf', 'BCS-54-EM-2025-26.pdf'];
+            console.log('🔍 Testing PDF accessibility...');
+            const testPaths = [
+                'pdfs/MBA/MMPC-001.pdf',
+                'pdfs/MBA/MMPC-002.pdf',
+                'pdfs/BBA/BBAR-101.pdf',
+                'pdfs/MCA/MCS-011.pdf'
+            ];
             
-            for (const file of testFiles) {
+            for (const path of testPaths) {
                 try {
-                    const response = await fetch(`pdfs/${file}`);
-                    console.log(`${file}: Status ${response.status}, OK: ${response.ok}`);
-                    if (response.ok) {
-                        const bytes = await response.arrayBuffer();
-                        console.log(`${file}: Size ${bytes.byteLength} bytes`);
-                    }
+                    const response = await fetch(path, { method: 'HEAD' });
+                    console.log(`${response.ok ? '✅' : '❌'} ${path} - Status: ${response.status}`);
                 } catch (error) {
-                    console.error(`${file}: Error -`, error.message);
+                    console.log(`❌ ${path} - Error: ${error.message}`);
                 }
             }
         }
         
-        // Test PDF access on page load
-        window.addEventListener('load', function() {
-            console.log('Page loaded, testing PDF accessibility...');
-            testPDFAccess();
+        // Call test function on page load
+        window.addEventListener('load', () => {
+            setTimeout(testPDFAccess, 2000); // Test after 2 seconds
+        });
             // Bind download all button
             const zipBtn = document.getElementById('downloadAllZip');
             if (zipBtn) {
