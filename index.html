@@ -777,14 +777,15 @@
                         </select>
                             </div>
                     <div class="form-group">
-                        <label for="coursesSelection" class="required">Courses Selection</label>
-                        <select id="coursesSelection" name="coursesSelection" multiple required class="courses-dropdown">
-                            <option value="">No courses available. Select Program, Exam Type and Year/Sem first</option>
-                        </select>
-                        <div class="selected-courses-display mt-2">
-                            <small class="text-gray-600">Selected courses will appear here</small>
+                        <label class="required">Courses Selection</label>
+                        <div id="coursesSelectContainer">
+                            <div style="margin-bottom:8px;">
+                                <label style="font-weight:normal;"><input type="checkbox" id="selectAllCourses"> Select All</label>
                             </div>
-                        <small class="text-gray-500 mt-1 block">💡 Hold Ctrl/Cmd and click to select multiple courses</small>
+                            <div id="coursesCheckboxes" class="checkbox-group">
+                                <div>No courses available. Select Program, Exam Type and Year/Sem first</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1048,34 +1049,31 @@
         // Remove.bg API configuration
         window.removeBgApiKey = 'px2zysgmbvcxprf'; // Stored API key
         
-        // Populate dynamic Courses dropdown based on Program + Exam Type + Year/Sem
+        // Populate dynamic Courses checkboxes based on Program + Exam Type + Year/Sem
         function updateCoursesSelect() {
             const program = document.getElementById('programSelection').value;
             const examType = (document.querySelector('input[name="examType"]:checked') || {}).value || '';
             const year = document.getElementById('yearSelection').value;
             const semester = document.getElementById('semesterNumber').value;
-            const dropdown = document.getElementById('coursesSelection');
-            const display = document.querySelector('.selected-courses-display');
+            const container = document.getElementById('coursesCheckboxes');
+            const selectAll = document.getElementById('selectAllCourses');
             
             console.log('updateCoursesSelect called:', { program, examType, year, semester });
             console.log('courseCodes available:', Object.keys(courseCodes));
             
-            if (!dropdown) {
-                console.error('Courses dropdown not found!');
+            if (!container) {
+                console.error('Courses checkboxes container not found!');
                 return;
             }
             
-            // Clear existing options
-            dropdown.innerHTML = '';
+            // Clear existing checkboxes
+            container.innerHTML = '';
             
             // Simplified logic: only require program to show courses
             if (!program) {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'Please select a Program first';
-                option.disabled = true;
-                dropdown.appendChild(option);
-                if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
+                const msg = document.createElement('div');
+                msg.textContent = 'Please select a Program first';
+                container.appendChild(msg);
                 return;
             }
             
@@ -1083,50 +1081,41 @@
             console.log('Found courses for program', program, ':', list.length, 'courses');
             
             if (list.length === 0) {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'No courses available for selected program';
-                option.disabled = true;
-                dropdown.appendChild(option);
-                if (display) display.innerHTML = '<small class="text-gray-600">No courses available</small>';
+                const msg = document.createElement('div');
+                msg.textContent = 'No courses available for selected program';
+                container.appendChild(msg);
                 return;
             }
             
-            // Populate dropdown with courses
-            console.log('Populating dropdown with courses:', list.length, 'courses');
+            // Populate checkboxes with courses
+            console.log('Populating checkboxes with courses:', list.length, 'courses');
             list.forEach((item, index) => {
-                const option = document.createElement('option');
-                option.value = item.value;
-                option.textContent = item.text;
-                dropdown.appendChild(option);
-                console.log(`Added option ${index + 1}:`, item.value, item.text);
+                const wrapper = document.createElement('label');
+                wrapper.className = 'checkbox-item';
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.name = 'courses';
+                input.value = item.value;
+                const span = document.createElement('span');
+                span.textContent = item.text;
+                wrapper.appendChild(input);
+                wrapper.appendChild(span);
+                container.appendChild(wrapper);
+                console.log(`Added checkbox ${index + 1}:`, item.value, item.text);
             });
+
+            // Select All binding
+            if (selectAll) {
+                selectAll.checked = false;
+                selectAll.onchange = function() {
+                    const checks = container.querySelectorAll('input[type="checkbox"][name="courses"]');
+                    checks.forEach(c => c.checked = selectAll.checked);
+                };
+            }
             
-            // Clear display initially
-            if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
-            console.log('Courses dropdown populated successfully with', list.length, 'options');
+            console.log('Courses checkboxes populated successfully with', list.length, 'options');
         }
 
-        // Function to update selected courses display
-        function updateSelectedCoursesDisplay() {
-            const dropdown = document.getElementById('coursesSelection');
-            const display = document.querySelector('.selected-courses-display');
-            
-            if (!dropdown || !display) return;
-            
-            const selectedOptions = Array.from(dropdown.selectedOptions);
-            
-            if (selectedOptions.length === 0) {
-                display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
-                return;
-            }
-            
-            const tags = selectedOptions.map(option => {
-                return `<span class="selected-course-tag">${option.textContent}</span>`;
-            }).join('');
-            
-            display.innerHTML = tags;
-        }
         
         // Function to merge PDFs
         async function mergePDFs(generatedPDFBytes, courseName) {
@@ -1443,51 +1432,12 @@
         document.getElementById('semesterNumber').addEventListener('change', updateCoursesSelect);
         document.querySelectorAll('input[name="examType"]').forEach(r => r.addEventListener('change', updateCoursesSelect));
         
-        // Add event listener for courses dropdown selection changes
-        document.getElementById('coursesSelection').addEventListener('change', updateSelectedCoursesDisplay);
-        
-        // Test function to manually populate dropdown
-        function testDropdownPopulation() {
-            const dropdown = document.getElementById('coursesSelection');
-            if (!dropdown) {
-                console.error('Dropdown not found for testing');
-                return;
-            }
-            
-            console.log('Testing dropdown population...');
-            dropdown.innerHTML = '';
-            
-            // Add test options
-            const testCourses = [
-                { value: 'TEST-001', text: 'TEST-001 - Test Course 1' },
-                { value: 'TEST-002', text: 'TEST-002 - Test Course 2' },
-                { value: 'TEST-003', text: 'TEST-003 - Test Course 3' }
-            ];
-            
-            testCourses.forEach(course => {
-                const option = document.createElement('option');
-                option.value = course.value;
-                option.textContent = course.text;
-                dropdown.appendChild(option);
-                console.log('Added test option:', course.value);
-            });
-            
-            console.log('Test dropdown populated with', testCourses.length, 'options');
-        }
-
-        // Initialize courses dropdown on page load
+        // Initialize courses checkboxes on page load
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing courses dropdown');
+            console.log('DOM loaded, initializing courses checkboxes');
             console.log('courseCodes object:', courseCodes);
             console.log('Available programs:', Object.keys(courseCodes));
-            
-            // Test dropdown population first
-            testDropdownPopulation();
-            
-            // Then try normal population
-            setTimeout(() => {
-                updateCoursesSelect();
-            }, 1000);
+            updateCoursesSelect();
         });
 
         // Handle signature file selection to convert to transparent PNG
@@ -1547,8 +1497,8 @@
                 
                 const formData = new FormData(document.getElementById('certificateForm'));
                 
-                // Get selected courses from dropdown
-                const selectedCourses = Array.from(document.getElementById('coursesSelection').selectedOptions).map(option => option.value);
+                // Get selected courses from checkboxes
+                const selectedCourses = Array.from(document.querySelectorAll('#coursesCheckboxes input[type="checkbox"][name="courses"]:checked')).map(i => i.value);
                 if (selectedCourses.length === 0) {
                     showToast('Select at least one course before proceeding.', 'warning');
                     return;
@@ -1736,8 +1686,8 @@
             document.getElementById('certEnrollmentNumber').textContent = formData.get('enrollmentNumber') || '_________________';
             document.getElementById('certProgramSelection').textContent = formData.get('programSelection') || '_________________';
             
-            // Handle selected courses from dropdown
-            const selectedCourses = Array.from(document.getElementById('coursesSelection').selectedOptions).map(option => option.value);
+            // Handle selected courses from checkboxes
+            const selectedCourses = Array.from(document.querySelectorAll('#coursesCheckboxes input[type="checkbox"][name="courses"]:checked')).map(i => i.value);
             if (selectedCourses.length > 0) {
                 document.getElementById('certSelectedCourses').textContent = selectedCourses.join(', ');
             } else {
@@ -2159,9 +2109,9 @@
                 showToast('Failed to create ZIP. Downloading individually...', 'warning');
                 
                 // Fallback to individual downloads
-                // Use payment data subjects if available, otherwise use selected subjects
-                const subjects = window.paymentData?.subjects || window.selectedSubjects || [];
-                subjects.forEach(subject => downloadPDF(subject));
+                // Use payment data courses if available, otherwise use selected courses
+                const courses = window.paymentData?.courses || window.selectedCourses || [];
+                courses.forEach(course => downloadPDF(course));
                 
                 // Reset button
                 const button = document.getElementById('downloadAllZip');
@@ -2173,7 +2123,7 @@
         // Generate download buttons for each course
         function generateDownloadButtons(courses) {
             console.log('Generating download buttons for courses:', courses);
-            const downloadButtonsContainer = document.getElementById('downloadButtons');
+            const downloadButtonsContainer = document.getElementById('individualCourseButtons');
             if (!downloadButtonsContainer) {
                 console.error('Download buttons container not found');
                 return;
@@ -2182,7 +2132,7 @@
             downloadButtonsContainer.innerHTML = '';
             
             if (courses.length === 0) {
-                // If no subjects selected, create one general download button
+                // If no courses selected, create one general download button
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'btn btn-secondary w-full';
@@ -2220,7 +2170,7 @@
                     program: formData.get('programSelection') || pd.programSelection || 'Not provided',
                     courseCode: subjectName || pd.courseCode || 'Not provided',
                     course: subjectName === 'student_assignment' ? 
-                        (Array.from(document.getElementById('coursesSelect')?.selectedOptions || []).map(o => o.value).join(', ') || pd.courses?.join(', ') || pd.subjects?.join(', ') || 'Not provided') : 
+                        (Array.from(document.querySelectorAll('#coursesCheckboxes input[type="checkbox"][name="courses"]:checked')).map(i => i.value).join(', ') || pd.courses?.join(', ') || pd.subjects?.join(', ') || 'Not provided') : 
                         subjectName,
                     centerCode: formData.get('studyCenterCode') || pd.studyCenterCode || 'Not provided',
                     centerAddress: formData.get('studyCenterAddress') || pd.studyCenterAddress || 'Not provided',
