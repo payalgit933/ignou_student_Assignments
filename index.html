@@ -140,6 +140,10 @@
             min-height: 120px;
             max-height: 200px;
             overflow-y: auto;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
         }
 
         .courses-dropdown option {
@@ -779,7 +783,8 @@
                         </select>
                         <div class="selected-courses-display mt-2">
                             <small class="text-gray-600">Selected courses will appear here</small>
-                        </div>
+                            </div>
+                        <small class="text-gray-500 mt-1 block">💡 Hold Ctrl/Cmd and click to select multiple courses</small>
                     </div>
                 </div>
 
@@ -1052,43 +1057,54 @@
             const dropdown = document.getElementById('coursesSelection');
             const display = document.querySelector('.selected-courses-display');
             
-            if (!dropdown) return;
+            console.log('updateCoursesSelect called:', { program, examType, year, semester });
+            console.log('courseCodes available:', Object.keys(courseCodes));
+            
+            if (!dropdown) {
+                console.error('Courses dropdown not found!');
+                return;
+            }
             
             // Clear existing options
             dropdown.innerHTML = '';
             
-            // Guard: require program and exam context
-            if (!program || !examType || (!year && examType === 'Yearly') || (examType === 'Semester' && !semester)) {
+            // Simplified logic: only require program to show courses
+            if (!program) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.textContent = 'Select Program, Exam Type and Year/Sem first';
+                option.textContent = 'Please select a Program first';
                 option.disabled = true;
                 dropdown.appendChild(option);
-                display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
+                if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
                 return;
             }
             
             const list = courseCodes[program] || [];
+            console.log('Found courses for program', program, ':', list.length, 'courses');
+            
             if (list.length === 0) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.textContent = 'No courses available for selected criteria';
+                option.textContent = 'No courses available for selected program';
                 option.disabled = true;
                 dropdown.appendChild(option);
-                display.innerHTML = '<small class="text-gray-600">No courses available</small>';
+                if (display) display.innerHTML = '<small class="text-gray-600">No courses available</small>';
                 return;
             }
             
             // Populate dropdown with courses
-            list.forEach(item => {
+            console.log('Populating dropdown with courses:', list.length, 'courses');
+            list.forEach((item, index) => {
                 const option = document.createElement('option');
                 option.value = item.value;
                 option.textContent = item.text;
                 dropdown.appendChild(option);
+                console.log(`Added option ${index + 1}:`, item.value, item.text);
             });
             
             // Clear display initially
-            display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
+            if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
+            console.log('Courses dropdown populated successfully with', list.length, 'options');
         }
 
         // Function to update selected courses display
@@ -1429,6 +1445,50 @@
         
         // Add event listener for courses dropdown selection changes
         document.getElementById('coursesSelection').addEventListener('change', updateSelectedCoursesDisplay);
+        
+        // Test function to manually populate dropdown
+        function testDropdownPopulation() {
+            const dropdown = document.getElementById('coursesSelection');
+            if (!dropdown) {
+                console.error('Dropdown not found for testing');
+                return;
+            }
+            
+            console.log('Testing dropdown population...');
+            dropdown.innerHTML = '';
+            
+            // Add test options
+            const testCourses = [
+                { value: 'TEST-001', text: 'TEST-001 - Test Course 1' },
+                { value: 'TEST-002', text: 'TEST-002 - Test Course 2' },
+                { value: 'TEST-003', text: 'TEST-003 - Test Course 3' }
+            ];
+            
+            testCourses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course.value;
+                option.textContent = course.text;
+                dropdown.appendChild(option);
+                console.log('Added test option:', course.value);
+            });
+            
+            console.log('Test dropdown populated with', testCourses.length, 'options');
+        }
+
+        // Initialize courses dropdown on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing courses dropdown');
+            console.log('courseCodes object:', courseCodes);
+            console.log('Available programs:', Object.keys(courseCodes));
+            
+            // Test dropdown population first
+            testDropdownPopulation();
+            
+            // Then try normal population
+            setTimeout(() => {
+                updateCoursesSelect();
+            }, 1000);
+        });
 
         // Handle signature file selection to convert to transparent PNG
         document.getElementById('signature').addEventListener('change', function(e) {
