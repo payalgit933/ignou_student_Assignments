@@ -342,6 +342,51 @@
                         <button onclick="showAddCourseModal()" class="btn btn-primary">Add Course</button>
                     </div>
                     
+                    <!-- Filter Controls -->
+                    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                        <h4 class="text-md font-medium mb-3">Filter Courses</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Program</label>
+                                <select id="filterProgram" class="form-input w-full" onchange="filterCourses()">
+                                    <option value="">All Programs</option>
+                                    <option value="MBA">MBA</option>
+                                    <option value="MCA">MCA</option>
+                                    <option value="BCA">BCA</option>
+                                    <option value="BBA">BBA</option>
+                                    <option value="BTECH">BTECH</option>
+                                    <option value="MTECH">MTECH</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                                <select id="filterYear" class="form-input w-full" onchange="filterCourses()">
+                                    <option value="">All Years</option>
+                                    <option value="1st Year">1st Year</option>
+                                    <option value="2nd Year">2nd Year</option>
+                                    <option value="3rd Year">3rd Year</option>
+                                    <option value="2024">2024</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2026">2026</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                                <select id="filterSemester" class="form-input w-full" onchange="filterCourses()">
+                                    <option value="">All Semesters</option>
+                                    <option value="1st Semester">1st Semester</option>
+                                    <option value="2nd Semester">2nd Semester</option>
+                                    <option value="3rd Semester">3rd Semester</option>
+                                    <option value="4th Semester">4th Semester</option>
+                                    <option value="Yearly">Yearly</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="clearFilters()" class="btn btn-secondary w-full">Clear Filters</button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="overflow-x-auto">
                         <table class="table">
                             <thead>
@@ -635,12 +680,34 @@
         
         async function loadCourses() {
             try {
-                const response = await fetch('/api/admin/courses');
+                // Get filter values
+                const program = document.getElementById('filterProgram')?.value || '';
+                const year = document.getElementById('filterYear')?.value || '';
+                const semester = document.getElementById('filterSemester')?.value || '';
+                
+                // Build API URL with filters
+                const params = new URLSearchParams();
+                if (program) params.append('program', program);
+                if (year) params.append('year', year);
+                if (semester) params.append('semester', semester);
+                
+                const url = params.toString() ? 
+                    `/api/admin/courses/filter?${params.toString()}` : 
+                    '/api/admin/courses';
+                
+                const response = await fetch(url);
                 const data = await response.json();
                 
                 if (data.success) {
                     const tbody = document.getElementById('coursesTableBody');
                     tbody.innerHTML = '';
+                    
+                    if (data.courses.length === 0) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = '<td colspan="8" class="text-center py-8 text-gray-500">No courses found for the selected filters</td>';
+                        tbody.appendChild(row);
+                        return;
+                    }
                     
                     data.courses.forEach(course => {
                         const row = document.createElement('tr');
@@ -843,6 +910,20 @@
             } catch (error) {
                 showAlert('Error deleting course', 'error');
             }
+        }
+        
+        // Course filtering functions
+        function filterCourses() {
+            if (currentSection === 'courses') {
+                loadCourses();
+            }
+        }
+        
+        function clearFilters() {
+            document.getElementById('filterProgram').value = '';
+            document.getElementById('filterYear').value = '';
+            document.getElementById('filterSemester').value = '';
+            loadCourses();
         }
     </script>
 </body>

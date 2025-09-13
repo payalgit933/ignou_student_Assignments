@@ -1078,6 +1078,41 @@ def admin_add_program():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+# Public API for course filtering (for main form)
+@app.route("/api/courses/filter")
+def get_filtered_courses():
+    try:
+        program = request.args.get('program')
+        year = request.args.get('year')
+        semester = request.args.get('semester')
+        
+        result = db.get_courses_by_filter(program=program, year=year, semester=semester)
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Admin filtered courses endpoint
+@app.route("/api/admin/courses/filter")
+@require_admin_auth
+def admin_get_filtered_courses():
+    try:
+        program = request.args.get('program')
+        year = request.args.get('year')
+        semester = request.args.get('semester')
+        include_inactive = request.args.get('include_inactive', 'false').lower() == 'true'
+        
+        result = db.get_courses_by_filter(
+            program=program, 
+            year=year, 
+            semester=semester, 
+            is_active=None if include_inactive else True
+        )
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 # Admin analytics
 @app.route("/api/admin/analytics")
 @require_admin_auth

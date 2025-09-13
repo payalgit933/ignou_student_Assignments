@@ -651,6 +651,60 @@ class Database:
         except Exception as e:
             return {"success": False, "error": f"Failed to get courses: {str(e)}"}
     
+    def get_courses_by_filter(self, program=None, year=None, semester=None, is_active=True):
+        """Get courses filtered by program, year, and semester"""
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+            
+            # Build dynamic query
+            query = '''
+                SELECT id, course_code, course_name, program, year, semester, pdf_filename, is_active, created_at
+                FROM courses 
+                WHERE 1=1
+            '''
+            params = []
+            
+            if program:
+                query += ' AND program = ?'
+                params.append(program)
+            
+            if year:
+                query += ' AND year = ?'
+                params.append(year)
+            
+            if semester:
+                query += ' AND semester = ?'
+                params.append(semester)
+            
+            if is_active is not None:
+                query += ' AND is_active = ?'
+                params.append(is_active)
+            
+            query += ' ORDER BY course_code'
+            
+            cursor.execute(query, params)
+            courses = cursor.fetchall()
+            conn.close()
+            
+            return {
+                "success": True,
+                "courses": [{
+                    "id": course[0],
+                    "course_code": course[1],
+                    "course_name": course[2],
+                    "program": course[3],
+                    "year": course[4],
+                    "semester": course[5],
+                    "pdf_filename": course[6],
+                    "is_active": course[7],
+                    "created_at": course[8]
+                } for course in courses]
+            }
+            
+        except Exception as e:
+            return {"success": False, "error": f"Failed to get filtered courses: {str(e)}"}
+    
     def update_course(self, course_id, course_code=None, course_name=None, program=None, year=None, semester=None, pdf_filename=None, is_active=None):
         """Update course information"""
         try:
@@ -807,15 +861,147 @@ class Database:
             course_count = cursor.fetchone()[0]
             
             if course_count == 0:
-                # Add some default courses
+                # Add comprehensive course data for different years and semesters
                 default_courses = [
+                    # MBA 1st Year 1st Semester
                     ("MMPC-001", "Management Functions and Behaviour", "MBA", "1st Year", "1st Semester", "MMPC-001.pdf"),
                     ("MMPC-002", "Human Resource Management", "MBA", "1st Year", "1st Semester", "MMPC-002.pdf"),
                     ("MMPC-003", "Economics for Managers", "MBA", "1st Year", "1st Semester", "MMPC-003.pdf"),
+                    ("MMPC-004", "Accounting for Managers", "MBA", "1st Year", "1st Semester", "MMPC-004.pdf"),
+                    ("MMPC-005", "Quantitative Methods for Management", "MBA", "1st Year", "1st Semester", "MMPC-005.pdf"),
+                    
+                    # MBA 1st Year 2nd Semester
+                    ("MMPC-006", "Marketing for Managers", "MBA", "1st Year", "2nd Semester", "MMPC-006.pdf"),
+                    ("MMPC-007", "Information Systems for Managers", "MBA", "1st Year", "2nd Semester", "MMPC-007.pdf"),
+                    ("MMPC-008", "Organizational Behaviour", "MBA", "1st Year", "2nd Semester", "MMPC-008.pdf"),
+                    ("MMPC-009", "Business Environment", "MBA", "1st Year", "2nd Semester", "MMPC-009.pdf"),
+                    ("MMPC-010", "Managerial Economics", "MBA", "1st Year", "2nd Semester", "MMPC-010.pdf"),
+                    
+                    # MBA 2nd Year 1st Semester
+                    ("MMPC-011", "Strategic Management", "MBA", "2nd Year", "1st Semester", "MMPC-011.pdf"),
+                    ("MMPC-012", "Financial Management", "MBA", "2nd Year", "1st Semester", "MMPC-012.pdf"),
+                    ("MMPC-013", "Operations Management", "MBA", "2nd Year", "1st Semester", "MMPC-013.pdf"),
+                    ("MMPC-014", "Business Research Methods", "MBA", "2nd Year", "1st Semester", "MMPC-014.pdf"),
+                    ("MMPC-015", "International Business", "MBA", "2nd Year", "1st Semester", "MMPC-015.pdf"),
+                    
+                    # MBA 2nd Year 2nd Semester
+                    ("MMPC-016", "Project Management", "MBA", "2nd Year", "2nd Semester", "MMPC-016.pdf"),
+                    ("MMPC-017", "Entrepreneurship Development", "MBA", "2nd Year", "2nd Semester", "MMPC-017.pdf"),
+                    ("MMPC-018", "Business Ethics and Corporate Governance", "MBA", "2nd Year", "2nd Semester", "MMPC-018.pdf"),
+                    ("MMPC-019", "Total Quality Management", "MBA", "2nd Year", "2nd Semester", "MMPC-019.pdf"),
+                    ("MMPC-020", "Business Communication", "MBA", "2nd Year", "2nd Semester", "MMPC-020.pdf"),
+                    
+                    # MCA 1st Year 1st Semester
                     ("MCS-011", "Problem Solving and Programming", "MCA", "1st Year", "1st Semester", "MCS-011.pdf"),
                     ("MCS-012", "Computer Organization and Assembly Language Programming", "MCA", "1st Year", "1st Semester", "MCS-012.pdf"),
+                    ("MCS-013", "Discrete Mathematics", "MCA", "1st Year", "1st Semester", "MCS-013.pdf"),
+                    ("MCS-014", "Systems Analysis and Design", "MCA", "1st Year", "1st Semester", "MCS-014.pdf"),
+                    ("MCS-015", "Communication Skills", "MCA", "1st Year", "1st Semester", "MCS-015.pdf"),
+                    
+                    # MCA 1st Year 2nd Semester
+                    ("MCS-021", "Data and File Structures", "MCA", "1st Year", "2nd Semester", "MCS-021.pdf"),
+                    ("MCS-022", "Database Management Systems", "MCA", "1st Year", "2nd Semester", "MCS-022.pdf"),
+                    ("MCS-023", "Introduction to Database Management Systems", "MCA", "1st Year", "2nd Semester", "MCS-023.pdf"),
+                    ("MCS-024", "Object Oriented Technologies and Java Programming", "MCA", "1st Year", "2nd Semester", "MCS-024.pdf"),
+                    ("MCS-025", "Computer Networks", "MCA", "1st Year", "2nd Semester", "MCS-025.pdf"),
+                    
+                    # MCA 2nd Year 1st Semester
+                    ("MCS-031", "Design and Analysis of Algorithms", "MCA", "2nd Year", "1st Semester", "MCS-031.pdf"),
+                    ("MCS-032", "Object Oriented Analysis and Design", "MCA", "2nd Year", "1st Semester", "MCS-032.pdf"),
+                    ("MCS-033", "Advanced Discrete Mathematics", "MCA", "2nd Year", "1st Semester", "MCS-033.pdf"),
+                    ("MCS-034", "Software Engineering", "MCA", "2nd Year", "1st Semester", "MCS-034.pdf"),
+                    ("MCS-035", "Accountancy and Financial Management", "MCA", "2nd Year", "1st Semester", "MCS-035.pdf"),
+                    
+                    # MCA 2nd Year 2nd Semester
+                    ("MCS-041", "Operating Systems", "MCA", "2nd Year", "2nd Semester", "MCS-041.pdf"),
+                    ("MCS-042", "Data Communication and Computer Networks", "MCA", "2nd Year", "2nd Semester", "MCS-042.pdf"),
+                    ("MCS-043", "Advanced Database Management Systems", "MCA", "2nd Year", "2nd Semester", "MCS-043.pdf"),
+                    ("MCS-044", "Mini Project", "MCA", "2nd Year", "2nd Semester", "MCS-044.pdf"),
+                    ("MCS-045", "Unix Programming", "MCA", "2nd Year", "2nd Semester", "MCS-045.pdf"),
+                    
+                    # BCA 1st Year 1st Semester
                     ("BCS-011", "Computer Basics and PC Software", "BCA", "1st Year", "1st Semester", "BCS-011.pdf"),
-                    ("BCS-012", "Basic Mathematics", "BCA", "1st Year", "1st Semester", "BCS-012.pdf")
+                    ("BCS-012", "Basic Mathematics", "BCA", "1st Year", "1st Semester", "BCS-012.pdf"),
+                    ("BCS-013", "Programming Methodology Using C", "BCA", "1st Year", "1st Semester", "BCS-013.pdf"),
+                    ("BCS-014", "Computer System Architecture", "BCA", "1st Year", "1st Semester", "BCS-014.pdf"),
+                    ("BCS-015", "Communication Skills", "BCA", "1st Year", "1st Semester", "BCS-015.pdf"),
+                    
+                    # BCA 1st Year 2nd Semester
+                    ("BCS-021", "Data Structures and Algorithms", "BCA", "1st Year", "2nd Semester", "BCS-021.pdf"),
+                    ("BCS-022", "Assembly Language Programming", "BCA", "1st Year", "2nd Semester", "BCS-021.pdf"),
+                    ("BCS-023", "Computer Networks", "BCA", "1st Year", "2nd Semester", "BCS-023.pdf"),
+                    ("BCS-024", "Database Management Systems", "BCA", "1st Year", "2nd Semester", "BCS-024.pdf"),
+                    ("BCS-025", "Operating Systems", "BCA", "1st Year", "2nd Semester", "BCS-025.pdf"),
+                    
+                    # BCA 2nd Year 1st Semester
+                    ("BCS-031", "Programming in Java", "BCA", "2nd Year", "1st Semester", "BCS-031.pdf"),
+                    ("BCS-032", "Web Programming", "BCA", "2nd Year", "1st Semester", "BCS-032.pdf"),
+                    ("BCS-033", "Software Engineering", "BCA", "2nd Year", "1st Semester", "BCS-033.pdf"),
+                    ("BCS-034", "Computer Graphics", "BCA", "2nd Year", "1st Semester", "BCS-034.pdf"),
+                    ("BCS-035", "Internet Concepts and Web Design", "BCA", "2nd Year", "1st Semester", "BCS-035.pdf"),
+                    
+                    # BCA 2nd Year 2nd Semester
+                    ("BCS-041", "Fundamentals of Computer Networks", "BCA", "2nd Year", "2nd Semester", "BCS-041.pdf"),
+                    ("BCS-042", "Introduction to Algorithm Design", "BCA", "2nd Year", "2nd Semester", "BCS-042.pdf"),
+                    ("BCS-043", "Introduction to Database Management Systems", "BCA", "2nd Year", "2nd Semester", "BCS-043.pdf"),
+                    ("BCS-044", "Statistical Techniques", "BCA", "2nd Year", "2nd Semester", "BCS-044.pdf"),
+                    ("BCS-045", "Introduction to Software Engineering", "BCA", "2nd Year", "2nd Semester", "BCS-045.pdf"),
+                    
+                    # BCA 3rd Year 1st Semester
+                    ("BCS-051", "Introduction to Programming Logic", "BCA", "3rd Year", "1st Semester", "BCS-051.pdf"),
+                    ("BCS-052", "Network Programming and Administration", "BCA", "3rd Year", "1st Semester", "BCS-052.pdf"),
+                    ("BCS-053", "Web Technologies", "BCA", "3rd Year", "1st Semester", "BCS-053.pdf"),
+                    ("BCS-054", "Computer Oriented Numerical Methods", "BCA", "3rd Year", "1st Semester", "BCS-054.pdf"),
+                    ("BCS-055", "Business Communication", "BCA", "3rd Year", "1st Semester", "BCS-055.pdf"),
+                    
+                    # BCA 3rd Year 2nd Semester
+                    ("BCS-061", "Computer Networks and Internet Technology", "BCA", "3rd Year", "2nd Semester", "BCS-061.pdf"),
+                    ("BCS-062", "E-Commerce", "BCA", "3rd Year", "2nd Semester", "BCS-062.pdf"),
+                    ("BCS-063", "Unix Programming", "BCA", "3rd Year", "2nd Semester", "BCS-063.pdf"),
+                    ("BCS-064", "Introduction to Microprocessors", "BCA", "3rd Year", "2nd Semester", "BCS-064.pdf"),
+                    ("BCS-065", "Computer Graphics and Multimedia", "BCA", "3rd Year", "2nd Semester", "BCS-065.pdf"),
+                    
+                    # BBA 1st Year 1st Semester
+                    ("BBAR-101", "Business Communication", "BBA", "1st Year", "1st Semester", "BBAR-101.pdf"),
+                    ("BBAR-102", "Principles of Management", "BBA", "1st Year", "1st Semester", "BBAR-102.pdf"),
+                    ("BBAR-103", "Business Mathematics", "BBA", "1st Year", "1st Semester", "BBAR-103.pdf"),
+                    ("BBAR-104", "Financial Accounting", "BBA", "1st Year", "1st Semester", "BBAR-104.pdf"),
+                    ("BBAR-105", "Business Environment", "BBA", "1st Year", "1st Semester", "BBAR-105.pdf"),
+                    
+                    # BBA 1st Year 2nd Semester
+                    ("BBAR-106", "Business Economics", "BBA", "1st Year", "2nd Semester", "BBAR-106.pdf"),
+                    ("BBAR-107", "Computer Applications in Business", "BBA", "1st Year", "2nd Semester", "BBAR-107.pdf"),
+                    ("BBAR-108", "Organizational Behaviour", "BBA", "1st Year", "2nd Semester", "BBAR-108.pdf"),
+                    ("BBAR-109", "Business Statistics", "BBA", "1st Year", "2nd Semester", "BBAR-109.pdf"),
+                    ("BBAR-110", "Marketing Management", "BBA", "1st Year", "2nd Semester", "BBAR-110.pdf"),
+                    
+                    # BBA 2nd Year 1st Semester
+                    ("BBAR-201", "Human Resource Management", "BBA", "2nd Year", "1st Semester", "BBAR-201.pdf"),
+                    ("BBAR-202", "Financial Management", "BBA", "2nd Year", "1st Semester", "BBAR-202.pdf"),
+                    ("BBAR-203", "Production and Operations Management", "BBA", "2nd Year", "1st Semester", "BBAR-203.pdf"),
+                    ("BBAR-204", "Business Research Methods", "BBA", "2nd Year", "1st Semester", "BBAR-204.pdf"),
+                    ("BBAR-205", "Entrepreneurship Development", "BBA", "2nd Year", "1st Semester", "BBAR-205.pdf"),
+                    
+                    # BBA 2nd Year 2nd Semester
+                    ("BBAR-206", "International Business", "BBA", "2nd Year", "2nd Semester", "BBAR-206.pdf"),
+                    ("BBAR-207", "Strategic Management", "BBA", "2nd Year", "2nd Semester", "BBAR-207.pdf"),
+                    ("BBAR-208", "Business Ethics and Corporate Governance", "BBA", "2nd Year", "2nd Semester", "BBAR-208.pdf"),
+                    ("BBAR-209", "Project Management", "BBA", "2nd Year", "2nd Semester", "BBAR-209.pdf"),
+                    ("BBAR-210", "E-Commerce", "BBA", "2nd Year", "2nd Semester", "BBAR-210.pdf"),
+                    
+                    # BBA 3rd Year 1st Semester
+                    ("BBAR-301", "Consumer Behaviour", "BBA", "3rd Year", "1st Semester", "BBAR-301.pdf"),
+                    ("BBAR-302", "Investment Management", "BBA", "3rd Year", "1st Semester", "BBAR-302.pdf"),
+                    ("BBAR-303", "Supply Chain Management", "BBA", "3rd Year", "1st Semester", "BBAR-303.pdf"),
+                    ("BBAR-304", "Digital Marketing", "BBA", "3rd Year", "1st Semester", "BBAR-304.pdf"),
+                    ("BBAR-305", "Business Analytics", "BBA", "3rd Year", "1st Semester", "BBAR-305.pdf"),
+                    
+                    # BBA 3rd Year 2nd Semester
+                    ("BBAR-306", "International Marketing", "BBA", "3rd Year", "2nd Semester", "BBAR-306.pdf"),
+                    ("BBAR-307", "Risk Management", "BBA", "3rd Year", "2nd Semester", "BBAR-307.pdf"),
+                    ("BBAR-308", "Quality Management", "BBA", "3rd Year", "2nd Semester", "BBAR-308.pdf"),
+                    ("BBAR-309", "Business Process Reengineering", "BBA", "3rd Year", "2nd Semester", "BBAR-309.pdf"),
+                    ("BBAR-310", "Leadership and Team Management", "BBA", "3rd Year", "2nd Semester", "BBAR-310.pdf")
                 ]
                 
                 for course_code, course_name, program, year, semester, pdf_filename in default_courses:
