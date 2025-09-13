@@ -145,6 +145,61 @@
             background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(10px);
         }
+        
+        /* Checkbox dropdown styles */
+        .courses-dropdown-container {
+            position: relative;
+        }
+        
+        .courses-dropdown-toggle {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .courses-dropdown-toggle:hover {
+            border-color: #3B82F6;
+        }
+        
+        .course-checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .course-checkbox-item:hover {
+            background-color: #F3F4F6;
+        }
+        
+        .course-checkbox-item input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        .course-checkbox-item label {
+            cursor: pointer;
+            flex: 1;
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .selected-course-tag {
+            display: inline-block;
+            background-color: #3B82F6;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 2px;
+            cursor: pointer;
+        }
+        
+        .selected-course-tag:hover {
+            background-color: #2563EB;
+        }
 
         .courses-dropdown option {
             padding: 8px 12px;
@@ -745,23 +800,19 @@
                          <label for="examType" class="required">Exam Type Selection</label>
                          <div class="radio-group">
                              <div class="radio-item">
-                                 <input type="radio" id="examYearly" name="examType" value="Yearly" required>
-                                 <label for="examYearly">Yearly</label>
-                    </div>
-                             <div class="radio-item">
-                                 <input type="radio" id="examSemester" name="examType" value="Semester" required>
+                                 <input type="radio" id="examSemester" name="examType" value="Semester" required checked>
                                  <label for="examSemester">Semester</label>
                              </div>
                          </div>
                      </div>
-                     <div class="form-group" id="semesterNumberGroup" style="display: none;">
+                     <div class="form-group" id="semesterNumberGroup">
                          <label for="semesterNumber" class="required">Semester Number</label>
-                         <select id="semesterNumber" name="semesterNumber">
+                         <select id="semesterNumber" name="semesterNumber" required>
                              <option value="">Select Semester</option>
-                             <option value="1">1st Semester</option>
-                             <option value="2">2nd Semester</option>
-                             <option value="3">3rd Semester</option>
-                             <option value="4">4th Semester</option>
+                             <option value="1st Semester">1st Semester</option>
+                             <option value="2nd Semester">2nd Semester</option>
+                             <option value="3rd Semester">3rd Semester</option>
+                             <option value="4th Semester">4th Semester</option>
                         </select>
                     </div>
                 </div>
@@ -771,26 +822,38 @@
                         <label for="yearSelection" class="required">Year Selection</label>
                         <select id="yearSelection" name="yearSelection" required>
                             <option value="">Select year</option>
-                            <!-- Semester Exam Years -->
-                            <option value="1">1st Year</option>
-                            <option value="2">2nd Year</option>
-                            <option value="3">3rd Year</option>
-                            <option value="4">4th Year</option>
-                            <!-- Yearly Exam Years -->
-                            <option value="2024">2024</option>
-                            <option value="2025">2025</option>
-                            <option value="2026">2026</option>
+                            <option value="1st Year">1st Year</option>
+                            <option value="2nd Year">2nd Year</option>
+                            <option value="3rd Year">3rd Year</option>
+                            <option value="4th Year">4th Year</option>
                         </select>
                             </div>
                     <div class="form-group">
-                        <label for="coursesSelection" class="required">Courses Selection</label>
-                        <select id="coursesSelection" name="coursesSelection" multiple required class="courses-dropdown">
-                            <option value="">No courses available. Select Program, Exam Type and Year/Sem first</option>
-                        </select>
+                        <label class="required">Courses Selection</label>
+                        <div class="courses-dropdown-container relative">
+                            <button type="button" id="coursesDropdownToggle" class="courses-dropdown-toggle w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-left bg-white">
+                                <span id="coursesDropdownText">Select courses...</span>
+                                <span class="float-right">▼</span>
+                            </button>
+                            <div id="coursesDropdown" class="courses-dropdown absolute w-full bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto" style="display: none;">
+                                <div class="p-2">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-sm font-medium text-gray-700">Available Courses</span>
+                                        <div class="flex gap-2">
+                                            <button type="button" onclick="selectAllCourses()" class="text-xs text-blue-600 hover:text-blue-800">Select All</button>
+                                            <button type="button" onclick="clearAllCourses()" class="text-xs text-gray-600 hover:text-gray-800">Clear All</button>
+                                        </div>
+                                    </div>
+                                    <div id="coursesList" class="space-y-1">
+                                        <!-- Course checkboxes will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="selected-courses-display mt-2">
                             <small class="text-gray-600">Selected courses will appear here</small>
-                            </div>
-                        <small class="text-gray-500 mt-1 block">💡 Hold Ctrl/Cmd and click to select multiple courses</small>
+                        </div>
+                        <input type="hidden" id="selectedCourses" name="coursesSelection" required>
                     </div>
                 </div>
 
@@ -1054,159 +1117,145 @@
         // Remove.bg API configuration
         window.removeBgApiKey = 'px2zysgmbvcxprf'; // Stored API key
         
-        // Populate dynamic Courses dropdown based on Program + Year + Semester from API
+        // Populate dynamic Courses dropdown with checkboxes based on Program + Year + Semester from API
         async function updateCoursesSelect() {
             const program = document.getElementById('programSelection').value;
-            const yearSelect = document.getElementById('yearSelection');
-            const semesterSelect = document.getElementById('semesterNumber');
-            const dropdown = document.getElementById('coursesSelection');
+            const year = document.getElementById('yearSelection').value;
+            const semester = document.getElementById('semesterNumber').value;
+            const coursesList = document.getElementById('coursesList');
             const display = document.querySelector('.selected-courses-display');
+            const dropdownText = document.getElementById('coursesDropdownText');
             
-            console.log('updateCoursesSelect called:', { 
-                program, 
-                year: yearSelect?.value, 
-                semester: semesterSelect?.value 
-            });
+            console.log('updateCoursesSelect called:', { program, year, semester });
             
-            if (!dropdown) {
-                console.error('Courses dropdown not found!');
+            if (!coursesList) {
+                console.error('Courses list not found!');
                 return;
             }
             
             // Clear existing options
-            dropdown.innerHTML = '';
+            coursesList.innerHTML = '';
             
-            // Check if we have minimum required selections
+            // Check if we have all required selections
             if (!program) {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'Please select a Program first';
-                option.disabled = true;
-                dropdown.appendChild(option);
+                dropdownText.textContent = 'Please select a Program first';
                 if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
                 return;
             }
             
-            // For yearly exams, we need year
-            const examType = (document.querySelector('input[name="examType"]:checked') || {}).value || '';
-            let year = null;
-            let semester = null;
+            if (!year) {
+                dropdownText.textContent = 'Please select a Year first';
+                if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
+                return;
+            }
             
-            if (examType === 'Yearly') {
-                year = yearSelect?.value;
-                if (!year) {
-                    const option = document.createElement('option');
-                    option.value = '';
-                    option.textContent = 'Please select a Year first (2024, 2025, or 2026)';
-                    option.disabled = true;
-                    dropdown.appendChild(option);
-                    if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
-                    return;
-                }
-                // For yearly exams, use "Yearly" as semester and year as calendar year
-                semester = "Yearly";
-                // year stays as 2024, 2025, 2026 for yearly exams
-            } else if (examType === 'Semester') {
-                year = yearSelect?.value;
-                semester = semesterSelect?.value;
-                if (!year || !semester) {
-                    const option = document.createElement('option');
-                    option.value = '';
-                    option.textContent = 'Please select Year (1st-4th) and Semester first';
-                    option.disabled = true;
-                    dropdown.appendChild(option);
-                    if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
-                    return;
-                }
-                // Convert semester number to semester name
-                semester = semester === '1' ? '1st Semester' : 
-                         semester === '2' ? '2nd Semester' : 
-                         semester === '3' ? '3rd Semester' : 
-                         semester === '4' ? '4th Semester' : semester;
-                // Convert year number to academic year for semester exams
-                year = year === '1' ? '1st Year' : 
-                      year === '2' ? '2nd Year' : 
-                      year === '3' ? '3rd Year' : 
-                      year === '4' ? '4th Year' : year;
+            if (!semester) {
+                dropdownText.textContent = 'Please select a Semester first';
+                if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
+                return;
             }
             
             try {
                 // Show loading state
-                const loadingOption = document.createElement('option');
-                loadingOption.value = '';
-                loadingOption.textContent = 'Loading courses...';
-                loadingOption.disabled = true;
-                dropdown.appendChild(loadingOption);
+                dropdownText.textContent = 'Loading courses...';
                 
                 // Fetch courses from API
                 const params = new URLSearchParams();
                 params.append('program', program);
-                if (year) params.append('year', year);
-                if (semester) params.append('semester', semester);
+                params.append('year', year);
+                params.append('semester', semester);
                 
                 console.log('Fetching courses with params:', params.toString());
                 
                 const response = await fetch(`/api/courses/filter?${params.toString()}`);
                 const data = await response.json();
                 
-                // Clear loading option
-                dropdown.innerHTML = '';
-                
                 if (data.success && data.courses && data.courses.length > 0) {
                     console.log('Found courses:', data.courses.length);
                     
-                    // Populate dropdown with courses
+                    // Populate dropdown with course checkboxes
                     data.courses.forEach(course => {
-                        const option = document.createElement('option');
-                        option.value = course.course_code;
-                        option.textContent = `${course.course_code} - ${course.course_name}`;
-                        option.selected = false;
-                        dropdown.appendChild(option);
+                        const courseItem = document.createElement('div');
+                        courseItem.className = 'course-checkbox-item';
+                        courseItem.innerHTML = `
+                            <input type="checkbox" id="course_${course.course_code}" value="${course.course_code}" onchange="updateSelectedCourses()">
+                            <label for="course_${course.course_code}">${course.course_code} - ${course.course_name}</label>
+                        `;
+                        coursesList.appendChild(courseItem);
                     });
                     
+                    dropdownText.textContent = `Select courses (${data.courses.length} available)`;
                     if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
                     console.log('Courses dropdown populated successfully with', data.courses.length, 'options');
                 } else {
-                    const option = document.createElement('option');
-                    option.value = '';
-                    option.textContent = 'No courses available for selected criteria';
-                    option.disabled = true;
-                    dropdown.appendChild(option);
+                    dropdownText.textContent = 'No courses available for selected criteria';
                     if (display) display.innerHTML = '<small class="text-gray-600">No courses available</small>';
                     console.log('No courses found for the selected criteria');
                 }
                 
             } catch (error) {
                 console.error('Error fetching courses:', error);
-                dropdown.innerHTML = '';
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'Error loading courses. Please try again.';
-                option.disabled = true;
-                dropdown.appendChild(option);
+                dropdownText.textContent = 'Error loading courses. Please try again.';
                 if (display) display.innerHTML = '<small class="text-red-600">Error loading courses</small>';
             }
         }
 
-        // Function to update selected courses display
-        function updateSelectedCoursesDisplay() {
-            const dropdown = document.getElementById('coursesSelection');
+        // Function to update selected courses display and hidden input
+        function updateSelectedCourses() {
+            const checkboxes = document.querySelectorAll('#coursesList input[type="checkbox"]:checked');
             const display = document.querySelector('.selected-courses-display');
+            const hiddenInput = document.getElementById('selectedCourses');
+            const dropdownText = document.getElementById('coursesDropdownText');
             
-            if (!dropdown || !display) return;
+            if (!display || !hiddenInput) return;
             
-            const selectedOptions = Array.from(dropdown.selectedOptions);
+            const selectedCourses = Array.from(checkboxes).map(cb => cb.value);
             
-            if (selectedOptions.length === 0) {
+            // Update hidden input for form submission
+            hiddenInput.value = selectedCourses.join(',');
+            
+            // Update dropdown text
+            if (selectedCourses.length === 0) {
+                dropdownText.textContent = 'Select courses...';
                 display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
-                return;
+            } else {
+                dropdownText.textContent = `${selectedCourses.length} course(s) selected`;
+                
+                // Create course tags for display
+                const courseTags = selectedCourses.map(courseCode => {
+                    return `<span class="selected-course-tag" onclick="removeCourse('${courseCode}')">${courseCode} ×</span>`;
+                }).join('');
+                
+                display.innerHTML = `
+                    <div class="selected-courses">
+                        <strong class="text-sm text-gray-700">Selected Courses (${selectedCourses.length}):</strong>
+                        <div class="mt-1">${courseTags}</div>
+                    </div>
+                `;
             }
-            
-            const tags = selectedOptions.map(option => {
-                return `<span class="selected-course-tag">${option.textContent}</span>`;
-            }).join('');
-            
-            display.innerHTML = tags;
+        }
+        
+        // Function to remove a course from selection
+        function removeCourse(courseCode) {
+            const checkbox = document.getElementById(`course_${courseCode}`);
+            if (checkbox) {
+                checkbox.checked = false;
+                updateSelectedCourses();
+            }
+        }
+        
+        // Function to select all courses
+        function selectAllCourses() {
+            const checkboxes = document.querySelectorAll('#coursesList input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = true);
+            updateSelectedCourses();
+        }
+        
+        // Function to clear all course selections
+        function clearAllCourses() {
+            const checkboxes = document.querySelectorAll('#coursesList input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+            updateSelectedCourses();
         }
         
         // Function to merge PDFs
@@ -1400,41 +1449,7 @@
 
 
 
-        // Handle exam type selection to show/hide semester number and update year options
-        document.querySelectorAll('input[name="examType"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const semesterGroup = document.getElementById('semesterNumberGroup');
-                const yearSelect = document.getElementById('yearSelection');
-                
-                if (this.value === 'Semester') {
-                    semesterGroup.style.display = 'block';
-                    document.getElementById('semesterNumber').required = true;
-                    
-                    // Update year options for semester exams
-                    yearSelect.innerHTML = `
-                        <option value="">Select year</option>
-                        <option value="1">1st Year</option>
-                        <option value="2">2nd Year</option>
-                        <option value="3">3rd Year</option>
-                        <option value="4">4th Year</option>
-                    `;
-                } else if (this.value === 'Yearly') {
-                    semesterGroup.style.display = 'none';
-                    document.getElementById('semesterNumber').required = false;
-                    
-                    // Update year options for yearly exams
-                    yearSelect.innerHTML = `
-                        <option value="">Select year</option>
-                        <option value="2024">2024</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                    `;
-                }
-                
-                // Clear courses when exam type changes
-                updateCoursesSelect();
-            });
-        });
+        // Semester field is always shown now since we only use semester exams
 
         // Handle assignment submission elsewhere selection to show/hide details input
         document.querySelectorAll('input[name="submittedElsewhere"]').forEach(radio => {
@@ -1544,10 +1559,23 @@
         });
         document.getElementById('yearSelection').addEventListener('change', updateCoursesSelect);
         document.getElementById('semesterNumber').addEventListener('change', updateCoursesSelect);
-        document.querySelectorAll('input[name="examType"]').forEach(r => r.addEventListener('change', updateCoursesSelect));
         
-        // Add event listener for courses dropdown selection changes
-        document.getElementById('coursesSelection').addEventListener('change', updateSelectedCoursesDisplay);
+        // Dropdown toggle functionality
+        document.getElementById('coursesDropdownToggle').addEventListener('click', function() {
+            const dropdown = document.getElementById('coursesDropdown');
+            const isVisible = dropdown.style.display !== 'none';
+            dropdown.style.display = isVisible ? 'none' : 'block';
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('coursesDropdown');
+            const toggle = document.getElementById('coursesDropdownToggle');
+            
+            if (!dropdown.contains(event.target) && !toggle.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
         
         // Test function to manually populate dropdown
         function testDropdownPopulation() {
@@ -1650,8 +1678,9 @@
                 
                 const formData = new FormData(document.getElementById('certificateForm'));
                 
-                // Get selected courses from dropdown
-                const selectedCourses = Array.from(document.getElementById('coursesSelection').selectedOptions).map(option => option.value);
+                // Get selected courses from hidden input
+                const selectedCoursesInput = document.getElementById('selectedCourses');
+                const selectedCourses = selectedCoursesInput.value ? selectedCoursesInput.value.split(',') : [];
                 if (selectedCourses.length === 0) {
                     showToast('Select at least one course before proceeding.', 'warning');
                     return;
@@ -1839,8 +1868,9 @@
             document.getElementById('certEnrollmentNumber').textContent = formData.get('enrollmentNumber') || '_________________';
             document.getElementById('certProgramSelection').textContent = formData.get('programSelection') || '_________________';
             
-            // Handle selected courses from dropdown
-            const selectedCourses = Array.from(document.getElementById('coursesSelection').selectedOptions).map(option => option.value);
+            // Handle selected courses from hidden input
+            const selectedCoursesInput = document.getElementById('selectedCourses');
+            const selectedCourses = selectedCoursesInput.value ? selectedCoursesInput.value.split(',') : [];
             if (selectedCourses.length > 0) {
                 document.getElementById('certSelectedCourses').textContent = selectedCourses.join(', ');
             } else {
