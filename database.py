@@ -1001,7 +1001,52 @@ class Database:
                     ("BBAR-307", "Risk Management", "BBA", "3rd Year", "2nd Semester", "BBAR-307.pdf"),
                     ("BBAR-308", "Quality Management", "BBA", "3rd Year", "2nd Semester", "BBAR-308.pdf"),
                     ("BBAR-309", "Business Process Reengineering", "BBA", "3rd Year", "2nd Semester", "BBAR-309.pdf"),
-                    ("BBAR-310", "Leadership and Team Management", "BBA", "3rd Year", "2nd Semester", "BBAR-310.pdf")
+                    ("BBAR-310", "Leadership and Team Management", "BBA", "3rd Year", "2nd Semester", "BBAR-310.pdf"),
+                    
+                    # Yearly Exam Courses (for yearly exam type)
+                    # MBA Yearly
+                    ("MMPC-Y01", "Management Functions and Behaviour (Yearly)", "MBA", "2024", "Yearly", "MMPC-Y01.pdf"),
+                    ("MMPC-Y02", "Human Resource Management (Yearly)", "MBA", "2024", "Yearly", "MMPC-Y02.pdf"),
+                    ("MMPC-Y03", "Economics for Managers (Yearly)", "MBA", "2024", "Yearly", "MMPC-Y03.pdf"),
+                    ("MMPC-Y04", "Marketing for Managers (Yearly)", "MBA", "2024", "Yearly", "MMPC-Y04.pdf"),
+                    ("MMPC-Y05", "Financial Management (Yearly)", "MBA", "2024", "Yearly", "MMPC-Y05.pdf"),
+                    ("MMPC-Y06", "Strategic Management (Yearly)", "MBA", "2025", "Yearly", "MMPC-Y06.pdf"),
+                    ("MMPC-Y07", "Operations Management (Yearly)", "MBA", "2025", "Yearly", "MMPC-Y07.pdf"),
+                    ("MMPC-Y08", "Business Research Methods (Yearly)", "MBA", "2025", "Yearly", "MMPC-Y08.pdf"),
+                    
+                    # MCA Yearly
+                    ("MCS-Y01", "Problem Solving and Programming (Yearly)", "MCA", "2024", "Yearly", "MCS-Y01.pdf"),
+                    ("MCS-Y02", "Computer Organization (Yearly)", "MCA", "2024", "Yearly", "MCS-Y02.pdf"),
+                    ("MCS-Y03", "Discrete Mathematics (Yearly)", "MCA", "2024", "Yearly", "MCS-Y03.pdf"),
+                    ("MCS-Y04", "Data and File Structures (Yearly)", "MCA", "2024", "Yearly", "MCS-Y04.pdf"),
+                    ("MCS-Y05", "Database Management Systems (Yearly)", "MCA", "2024", "Yearly", "MCS-Y05.pdf"),
+                    ("MCS-Y06", "Design and Analysis of Algorithms (Yearly)", "MCA", "2025", "Yearly", "MCS-Y06.pdf"),
+                    ("MCS-Y07", "Software Engineering (Yearly)", "MCA", "2025", "Yearly", "MCS-Y07.pdf"),
+                    ("MCS-Y08", "Operating Systems (Yearly)", "MCA", "2025", "Yearly", "MCS-Y08.pdf"),
+                    
+                    # BCA Yearly
+                    ("BCS-Y01", "Computer Basics and PC Software (Yearly)", "BCA", "2024", "Yearly", "BCS-Y01.pdf"),
+                    ("BCS-Y02", "Basic Mathematics (Yearly)", "BCA", "2024", "Yearly", "BCS-Y02.pdf"),
+                    ("BCS-Y03", "Programming Methodology Using C (Yearly)", "BCA", "2024", "Yearly", "BCS-Y03.pdf"),
+                    ("BCS-Y04", "Data Structures and Algorithms (Yearly)", "BCA", "2024", "Yearly", "BCS-Y04.pdf"),
+                    ("BCS-Y05", "Computer Networks (Yearly)", "BCA", "2024", "Yearly", "BCS-Y05.pdf"),
+                    ("BCS-Y06", "Programming in Java (Yearly)", "BCA", "2025", "Yearly", "BCS-Y06.pdf"),
+                    ("BCS-Y07", "Web Programming (Yearly)", "BCA", "2025", "Yearly", "BCS-Y07.pdf"),
+                    ("BCS-Y08", "Software Engineering (Yearly)", "BCA", "2025", "Yearly", "BCS-Y08.pdf"),
+                    ("BCS-Y09", "Computer Graphics and Multimedia (Yearly)", "BCA", "2026", "Yearly", "BCS-Y09.pdf"),
+                    ("BCS-Y10", "E-Commerce (Yearly)", "BCA", "2026", "Yearly", "BCS-Y10.pdf"),
+                    
+                    # BBA Yearly
+                    ("BBAR-Y01", "Business Communication (Yearly)", "BBA", "2024", "Yearly", "BBAR-Y01.pdf"),
+                    ("BBAR-Y02", "Principles of Management (Yearly)", "BBA", "2024", "Yearly", "BBAR-Y02.pdf"),
+                    ("BBAR-Y03", "Business Mathematics (Yearly)", "BBA", "2024", "Yearly", "BBAR-Y03.pdf"),
+                    ("BBAR-Y04", "Financial Accounting (Yearly)", "BBA", "2024", "Yearly", "BBAR-Y04.pdf"),
+                    ("BBAR-Y05", "Business Environment (Yearly)", "BBA", "2024", "Yearly", "BBAR-Y05.pdf"),
+                    ("BBAR-Y06", "Human Resource Management (Yearly)", "BBA", "2025", "Yearly", "BBAR-Y06.pdf"),
+                    ("BBAR-Y07", "Financial Management (Yearly)", "BBA", "2025", "Yearly", "BBAR-Y07.pdf"),
+                    ("BBAR-Y08", "Marketing Management (Yearly)", "BBA", "2025", "Yearly", "BBAR-Y08.pdf"),
+                    ("BBAR-Y09", "Strategic Management (Yearly)", "BBA", "2026", "Yearly", "BBAR-Y09.pdf"),
+                    ("BBAR-Y10", "International Business (Yearly)", "BBA", "2026", "Yearly", "BBAR-Y10.pdf")
                 ]
                 
                 for course_code, course_name, program, year, semester, pdf_filename in default_courses:

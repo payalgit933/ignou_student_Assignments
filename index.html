@@ -771,10 +771,15 @@
                         <label for="yearSelection" class="required">Year Selection</label>
                         <select id="yearSelection" name="yearSelection" required>
                             <option value="">Select year</option>
+                            <!-- Semester Exam Years -->
                             <option value="1">1st Year</option>
                             <option value="2">2nd Year</option>
                             <option value="3">3rd Year</option>
                             <option value="4">4th Year</option>
+                            <!-- Yearly Exam Years -->
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                            <option value="2026">2026</option>
                         </select>
                             </div>
                     <div class="form-group">
@@ -1092,21 +1097,22 @@
                 if (!year) {
                     const option = document.createElement('option');
                     option.value = '';
-                    option.textContent = 'Please select a Year first';
+                    option.textContent = 'Please select a Year first (2024, 2025, or 2026)';
                     option.disabled = true;
                     dropdown.appendChild(option);
                     if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
                     return;
                 }
-                // For yearly, use "Yearly" as semester
+                // For yearly exams, use "Yearly" as semester and year as calendar year
                 semester = "Yearly";
+                // year stays as 2024, 2025, 2026 for yearly exams
             } else if (examType === 'Semester') {
                 year = yearSelect?.value;
                 semester = semesterSelect?.value;
                 if (!year || !semester) {
                     const option = document.createElement('option');
                     option.value = '';
-                    option.textContent = 'Please select Year and Semester first';
+                    option.textContent = 'Please select Year (1st-4th) and Semester first';
                     option.disabled = true;
                     dropdown.appendChild(option);
                     if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
@@ -1117,20 +1123,11 @@
                          semester === '2' ? '2nd Semester' : 
                          semester === '3' ? '3rd Semester' : 
                          semester === '4' ? '4th Semester' : semester;
-            }
-            
-            // Convert year to year format
-            let yearFormatted = null;
-            if (year) {
-                if (examType === 'Yearly') {
-                    yearFormatted = year; // Use year as is for yearly
-                } else {
-                    // For semester, map year number to academic year
-                    yearFormatted = year === '1' ? '1st Year' : 
-                                   year === '2' ? '2nd Year' : 
-                                   year === '3' ? '3rd Year' : 
-                                   year === '4' ? '4th Year' : year;
-                }
+                // Convert year number to academic year for semester exams
+                year = year === '1' ? '1st Year' : 
+                      year === '2' ? '2nd Year' : 
+                      year === '3' ? '3rd Year' : 
+                      year === '4' ? '4th Year' : year;
             }
             
             try {
@@ -1144,7 +1141,7 @@
                 // Fetch courses from API
                 const params = new URLSearchParams();
                 params.append('program', program);
-                if (yearFormatted) params.append('year', yearFormatted);
+                if (year) params.append('year', year);
                 if (semester) params.append('semester', semester);
                 
                 console.log('Fetching courses with params:', params.toString());
@@ -1403,17 +1400,39 @@
 
 
 
-        // Handle exam type selection to show/hide semester number
+        // Handle exam type selection to show/hide semester number and update year options
         document.querySelectorAll('input[name="examType"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 const semesterGroup = document.getElementById('semesterNumberGroup');
+                const yearSelect = document.getElementById('yearSelection');
+                
                 if (this.value === 'Semester') {
                     semesterGroup.style.display = 'block';
                     document.getElementById('semesterNumber').required = true;
-                } else {
+                    
+                    // Update year options for semester exams
+                    yearSelect.innerHTML = `
+                        <option value="">Select year</option>
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
+                    `;
+                } else if (this.value === 'Yearly') {
                     semesterGroup.style.display = 'none';
                     document.getElementById('semesterNumber').required = false;
+                    
+                    // Update year options for yearly exams
+                    yearSelect.innerHTML = `
+                        <option value="">Select year</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    `;
                 }
+                
+                // Clear courses when exam type changes
+                updateCoursesSelect();
             });
         });
 
