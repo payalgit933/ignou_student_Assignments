@@ -1011,6 +1011,84 @@ class Database:
                     ''', (course_code, course_name, program, year, semester, pdf_filename))
                 
                 print("✅ Default courses created")
+                
+                # Add yearly courses for different programs and years
+                yearly_courses = [
+                    # MBA Yearly Courses
+                    ("MMPC-101", "Management Functions and Behaviour", "MBA", "2023", "Yearly", "MMPC-101.pdf"),
+                    ("MMPC-102", "Human Resource Management", "MBA", "2023", "Yearly", "MMPC-102.pdf"),
+                    ("MMPC-103", "Economics for Managers", "MBA", "2023", "Yearly", "MMPC-103.pdf"),
+                    ("MMPC-104", "Strategic Management", "MBA", "2023", "Yearly", "MMPC-104.pdf"),
+                    ("MMPC-105", "Financial Management", "MBA", "2023", "Yearly", "MMPC-105.pdf"),
+                    
+                    ("MMPC-201", "Management Functions and Behaviour", "MBA", "2024", "Yearly", "MMPC-201.pdf"),
+                    ("MMPC-202", "Human Resource Management", "MBA", "2024", "Yearly", "MMPC-202.pdf"),
+                    ("MMPC-203", "Economics for Managers", "MBA", "2024", "Yearly", "MMPC-203.pdf"),
+                    ("MMPC-204", "Strategic Management", "MBA", "2024", "Yearly", "MMPC-204.pdf"),
+                    ("MMPC-205", "Financial Management", "MBA", "2024", "Yearly", "MMPC-205.pdf"),
+                    
+                    ("MMPC-301", "Management Functions and Behaviour", "MBA", "2025", "Yearly", "MMPC-301.pdf"),
+                    ("MMPC-302", "Human Resource Management", "MBA", "2025", "Yearly", "MMPC-302.pdf"),
+                    ("MMPC-303", "Economics for Managers", "MBA", "2025", "Yearly", "MMPC-303.pdf"),
+                    ("MMPC-304", "Strategic Management", "MBA", "2025", "Yearly", "MMPC-304.pdf"),
+                    ("MMPC-305", "Financial Management", "MBA", "2025", "Yearly", "MMPC-305.pdf"),
+                    
+                    # MCA Yearly Courses
+                    ("MCS-101", "Problem Solving and Programming", "MCA", "2023", "Yearly", "MCS-101.pdf"),
+                    ("MCS-102", "Computer Organization", "MCA", "2023", "Yearly", "MCS-102.pdf"),
+                    ("MCS-103", "Discrete Mathematics", "MCA", "2023", "Yearly", "MCS-103.pdf"),
+                    ("MCS-104", "Systems Analysis and Design", "MCA", "2023", "Yearly", "MCS-104.pdf"),
+                    
+                    ("MCS-201", "Problem Solving and Programming", "MCA", "2024", "Yearly", "MCS-201.pdf"),
+                    ("MCS-202", "Computer Organization", "MCA", "2024", "Yearly", "MCS-202.pdf"),
+                    ("MCS-203", "Discrete Mathematics", "MCA", "2024", "Yearly", "MCS-203.pdf"),
+                    ("MCS-204", "Systems Analysis and Design", "MCA", "2024", "Yearly", "MCS-204.pdf"),
+                    
+                    ("MCS-301", "Problem Solving and Programming", "MCA", "2025", "Yearly", "MCS-301.pdf"),
+                    ("MCS-302", "Computer Organization", "MCA", "2025", "Yearly", "MCS-302.pdf"),
+                    ("MCS-303", "Discrete Mathematics", "MCA", "2025", "Yearly", "MCS-303.pdf"),
+                    ("MCS-304", "Systems Analysis and Design", "MCA", "2025", "Yearly", "MCS-304.pdf"),
+                    
+                    # BCA Yearly Courses
+                    ("BCS-101", "Computer Basics and PC Software", "BCA", "2023", "Yearly", "BCS-101.pdf"),
+                    ("BCS-102", "Basic Mathematics", "BCA", "2023", "Yearly", "BCS-102.pdf"),
+                    ("BCS-103", "Programming Methodology Using C", "BCA", "2023", "Yearly", "BCS-103.pdf"),
+                    ("BCS-104", "Computer System Architecture", "BCA", "2023", "Yearly", "BCS-104.pdf"),
+                    
+                    ("BCS-201", "Computer Basics and PC Software", "BCA", "2024", "Yearly", "BCS-201.pdf"),
+                    ("BCS-202", "Basic Mathematics", "BCA", "2024", "Yearly", "BCS-202.pdf"),
+                    ("BCS-203", "Programming Methodology Using C", "BCA", "2024", "Yearly", "BCS-203.pdf"),
+                    ("BCS-204", "Computer System Architecture", "BCA", "2024", "Yearly", "BCS-204.pdf"),
+                    
+                    ("BCS-301", "Computer Basics and PC Software", "BCA", "2025", "Yearly", "BCS-301.pdf"),
+                    ("BCS-302", "Basic Mathematics", "BCA", "2025", "Yearly", "BCS-302.pdf"),
+                    ("BCS-303", "Programming Methodology Using C", "BCA", "2025", "Yearly", "BCS-303.pdf"),
+                    ("BCS-304", "Computer System Architecture", "BCA", "2025", "Yearly", "BCS-304.pdf"),
+                    
+                    # BBA Yearly Courses
+                    ("BBAR-101", "Business Communication", "BBA", "2023", "Yearly", "BBAR-101.pdf"),
+                    ("BBAR-102", "Principles of Management", "BBA", "2023", "Yearly", "BBAR-102.pdf"),
+                    ("BBAR-103", "Business Mathematics", "BBA", "2023", "Yearly", "BBAR-103.pdf"),
+                    ("BBAR-104", "Financial Accounting", "BBA", "2023", "Yearly", "BBAR-104.pdf"),
+                    
+                    ("BBAR-201", "Business Communication", "BBA", "2024", "Yearly", "BBAR-201.pdf"),
+                    ("BBAR-202", "Principles of Management", "BBA", "2024", "Yearly", "BBAR-202.pdf"),
+                    ("BBAR-203", "Business Mathematics", "BBA", "2024", "Yearly", "BBAR-203.pdf"),
+                    ("BBAR-204", "Financial Accounting", "BBA", "2024", "Yearly", "BBAR-204.pdf"),
+                    
+                    ("BBAR-301", "Business Communication", "BBA", "2025", "Yearly", "BBAR-301.pdf"),
+                    ("BBAR-302", "Principles of Management", "BBA", "2025", "Yearly", "BBAR-302.pdf"),
+                    ("BBAR-303", "Business Mathematics", "BBA", "2025", "Yearly", "BBAR-303.pdf"),
+                    ("BBAR-304", "Financial Accounting", "BBA", "2025", "Yearly", "BBAR-304.pdf"),
+                ]
+                
+                for course_code, course_name, program, year, semester, pdf_filename in yearly_courses:
+                    cursor.execute('''
+                        INSERT INTO courses (course_code, course_name, program, year, semester, pdf_filename)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    ''', (course_code, course_name, program, year, semester, pdf_filename))
+                
+                print("✅ Yearly courses created")
             
             conn.commit()
             conn.close()
