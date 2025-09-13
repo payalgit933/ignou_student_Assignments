@@ -818,5 +818,308 @@ def get_pdf(course_code):
         print(f"❌ Error serving PDF for course {course_code}: {str(e)}")
         return jsonify({"success": False, "error": "Internal server error"}), 500
 
+# Admin routes
+@app.route("/admin/login")
+def admin_login_page():
+    return send_from_directory('.', 'admin_login.html')
+
+@app.route("/admin/dashboard")
+def admin_dashboard_page():
+    return send_from_directory('.', 'admin_dashboard.html')
+
+# Admin authentication API
+@app.route("/api/admin/login", methods=["POST"])
+def admin_login():
+    try:
+        data = request.json
+        username = data.get("username")
+        password = data.get("password")
+        
+        if not username or not password:
+            return jsonify({"success": False, "error": "Username and password are required"}), 400
+        
+        result = db.login_admin(username, password)
+        
+        if result["success"]:
+            session['admin_token'] = result['session_token']
+            session['admin_data'] = result['admin']
+            return jsonify(result)
+        else:
+            return jsonify(result), 401
+            
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/admin/logout", methods=["POST"])
+def admin_logout():
+    try:
+        admin_token = session.get('admin_token')
+        if admin_token:
+            db.logout_admin(admin_token)
+            session.pop('admin_token', None)
+            session.pop('admin_data', None)
+        return jsonify({"success": True, "message": "Admin logged out successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/admin/verify")
+def verify_admin_session():
+    try:
+        admin_token = session.get('admin_token')
+        if not admin_token:
+            return jsonify({"success": False, "error": "No admin session"}), 401
+        
+        result = db.verify_admin_session(admin_token)
+        if result["success"]:
+            return jsonify(result)
+        else:
+            session.pop('admin_token', None)
+            session.pop('admin_data', None)
+            return jsonify({"success": False, "error": "Session expired"}), 401
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Admin protected route decorator
+def require_admin_auth(f):
+    def decorated_function(*args, **kwargs):
+        admin_token = session.get('admin_token')
+        if not admin_token:
+            return jsonify({"success": False, "error": "Admin authentication required"}), 401
+        
+        result = db.verify_admin_session(admin_token)
+        if not result["success"]:
+            session.pop('admin_token', None)
+            session.pop('admin_data', None)
+            return jsonify({"success": False, "error": "Admin session expired"}), 401
+        
+        return f(*args, **kwargs)
+    decorated_function.__name__ = f.__name__
+    return decorated_function
+
+# Admin dashboard statistics
+@app.route("/api/admin/statistics")
+@require_admin_auth
+def admin_statistics():
+    try:
+        # Get user count
+        user_result = db.get_all_users(limit=1, offset=0)
+        total_users = user_result.get("total_count", 0) if user_result["success"] else 0
+        
+        # Get assignment statistics
+        assignment_stats = db.get_assignment_statistics()
+        
+        if assignment_stats["success"]:
+            stats = assignment_stats["statistics"]
+            stats["total_users"] = total_users
+            return jsonify({"success": True, "statistics": stats})
+        else:
+            return jsonify(assignment_stats), 500
+            
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Admin user management
+@app.route("/api/admin/users")
+@require_admin_auth
+def admin_get_users():
+    try:
+        page = request.args.get('page', 1, type=int)
+        limit = request.args.get('limit', 50, type=int)
+        offset = (page - 1) * limit
+        
+        result = db.get_all_users(limit=limit, offset=offset)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/admin/users/<int:user_id>/status", methods=["PUT"])
+@require_admin_auth
+def admin_update_user_status(user_id):
+    try:
+        data = request.json
+        is_active = data.get("is_active")
+        
+        if is_active is None:
+            return jsonify({"success": False, "error": "is_active field is required"}), 400
+        
+        result = db.update_user_status(user_id, is_active)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Admin assignment management
+@app.route("/api/admin/assignments")
+@require_admin_auth
+def admin_get_assignments():
+    try:
+        conn = sqlite3.connect(db.db_name)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT ua.id, u.name, u.email, ua.courses, ua.amount, ua.status, ua.created_at
+            FROM user_assignments ua
+            JOIN users u ON ua.user_id = u.id
+            ORDER BY ua.created_at DESC
+            LIMIT 100
+        ''')
+        
+        assignments = cursor.fetchall()
+        conn.close()
+        
+        return jsonify({
+            "success": True,
+            "assignments": [{
+                "id": assignment[0],
+                "user_name": assignment[1],
+                "user_email": assignment[2],
+                "courses": assignment[3],
+                "amount": assignment[4],
+                "status": assignment[5],
+                "created_at": assignment[6]
+            } for assignment in assignments]
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Admin course management
+@app.route("/api/admin/courses")
+@require_admin_auth
+def admin_get_courses():
+    try:
+        page = request.args.get('page', 1, type=int)
+        limit = request.args.get('limit', 50, type=int)
+        offset = (page - 1) * limit
+        
+        result = db.get_all_courses(limit=limit, offset=offset)
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/admin/courses", methods=["POST"])
+@require_admin_auth
+def admin_add_course():
+    try:
+        data = request.json
+        course_code = data.get("course_code")
+        course_name = data.get("course_name")
+        program = data.get("program")
+        year = data.get("year")
+        semester = data.get("semester")
+        pdf_filename = data.get("pdf_filename")
+        
+        if not all([course_code, course_name, program, year, semester]):
+            return jsonify({"success": False, "error": "All required fields must be provided"}), 400
+        
+        result = db.add_course(course_code, course_name, program, year, semester, pdf_filename)
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/admin/courses/<int:course_id>", methods=["PUT"])
+@require_admin_auth
+def admin_update_course(course_id):
+    try:
+        data = request.json
+        
+        result = db.update_course(
+            course_id,
+            course_code=data.get("course_code"),
+            course_name=data.get("course_name"),
+            program=data.get("program"),
+            year=data.get("year"),
+            semester=data.get("semester"),
+            pdf_filename=data.get("pdf_filename"),
+            is_active=data.get("is_active")
+        )
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/admin/courses/<int:course_id>", methods=["DELETE"])
+@require_admin_auth
+def admin_delete_course(course_id):
+    try:
+        result = db.delete_course(course_id)
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Admin programs management
+@app.route("/api/admin/programs")
+@require_admin_auth
+def admin_get_programs():
+    try:
+        result = db.get_all_programs()
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/admin/programs", methods=["POST"])
+@require_admin_auth
+def admin_add_program():
+    try:
+        data = request.json
+        program_code = data.get("program_code")
+        program_name = data.get("program_name")
+        description = data.get("description")
+        
+        if not all([program_code, program_name]):
+            return jsonify({"success": False, "error": "Program code and name are required"}), 400
+        
+        result = db.add_program(program_code, program_name, description)
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Admin analytics
+@app.route("/api/admin/analytics")
+@require_admin_auth
+def admin_analytics():
+    try:
+        conn = sqlite3.connect(db.db_name)
+        cursor = conn.cursor()
+        
+        # Get user registration trends (last 30 days)
+        cursor.execute('''
+            SELECT DATE(created_at) as date, COUNT(*) as count
+            FROM users 
+            WHERE created_at >= datetime('now', '-30 days')
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        ''')
+        
+        user_trends = cursor.fetchall()
+        
+        # Get revenue trends (last 30 days)
+        cursor.execute('''
+            SELECT DATE(created_at) as date, SUM(amount) as revenue
+            FROM user_assignments 
+            WHERE created_at >= datetime('now', '-30 days') AND status = 'completed'
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        ''')
+        
+        revenue_trends = cursor.fetchall()
+        
+        conn.close()
+        
+        return jsonify({
+            "success": True,
+            "analytics": {
+                "user_trends": [{"date": trend[0], "count": trend[1]} for trend in user_trends],
+                "revenue_trends": [{"date": trend[0], "revenue": trend[1] or 0} for trend in revenue_trends]
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == "__main__":
     app.run(port=5000, debug=True)

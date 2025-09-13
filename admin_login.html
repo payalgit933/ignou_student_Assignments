@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - IGNOU Assignment Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-container {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            animation: slideInUp 0.6s ease-out;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .alert-error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        
+        .alert-success {
+            background: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Admin Portal</h1>
+            <p class="text-gray-600">IGNOU Assignment Management System</p>
+        </div>
+        
+        <div id="alert-container"></div>
+        
+        <form id="adminLoginForm">
+            <div class="mb-6">
+                <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                    Username
+                </label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    class="form-input" 
+                    placeholder="Enter your username"
+                    required
+                >
+            </div>
+            
+            <div class="mb-6">
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                </label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="form-input" 
+                    placeholder="Enter your password"
+                    required
+                >
+            </div>
+            
+            <button type="submit" class="btn-primary">
+                <span id="login-text">Sign In</span>
+                <span id="login-spinner" class="spinner hidden"></span>
+            </button>
+        </form>
+        
+        <div class="mt-6 text-center">
+            <a href="/" class="text-gray-600 hover:text-gray-800 text-sm">
+                ← Back to Main Portal
+            </a>
+        </div>
+        
+        <div class="mt-8 text-center text-sm text-gray-500">
+            <p>Default Admin Credentials:</p>
+            <p>Username: <code class="bg-gray-100 px-2 py-1 rounded">admin</code></p>
+            <p>Password: <code class="bg-gray-100 px-2 py-1 rounded">admin123</code></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginText = document.getElementById('login-text');
+            const loginSpinner = document.getElementById('login-spinner');
+            const form = document.getElementById('adminLoginForm');
+            
+            // Show loading state
+            form.classList.add('loading');
+            loginText.classList.add('hidden');
+            loginSpinner.classList.remove('hidden');
+            
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('Login successful! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/admin/dashboard';
+                    }, 1000);
+                } else {
+                    showAlert(data.error || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showAlert('Network error. Please try again.', 'error');
+            } finally {
+                // Hide loading state
+                form.classList.remove('loading');
+                loginText.classList.remove('hidden');
+                loginSpinner.classList.add('hidden');
+            }
+        });
+        
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alert-container');
+            const alertClass = type === 'error' ? 'alert-error' : 'alert-success';
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass}">
+                    ${message}
+                </div>
+            `;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
