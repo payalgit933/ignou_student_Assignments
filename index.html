@@ -1211,19 +1211,7 @@
             yearSelect.innerHTML = '<option value="">Select year</option>';
             
             if (examType === 'Yearly') {
-                // For yearly, show calendar years and hide semester selection
-                const currentYear = new Date().getFullYear();
-                for (let year = currentYear - 2; year <= currentYear + 2; year++) {
-                    const option = document.createElement('option');
-                    option.value = year.toString();
-                    option.textContent = year.toString();
-                    yearSelect.appendChild(option);
-                }
-                semesterGroup.style.display = 'none';
-                semesterSelect.required = false;
-                semesterSelect.value = ''; // Clear semester selection
-            } else if (examType === 'Semester') {
-                // For semester, show academic years and show semester selection
+                // For yearly, show academic years (1st, 2nd, 3rd, 4th Year) and hide semester selection
                 const academicYears = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
                 academicYears.forEach(year => {
                     const option = document.createElement('option');
@@ -1231,6 +1219,13 @@
                     option.textContent = year;
                     yearSelect.appendChild(option);
                 });
+                semesterGroup.style.display = 'none';
+                semesterSelect.required = false;
+                semesterSelect.value = ''; // Clear semester selection
+            } else if (examType === 'Semester') {
+                // For semester, hide year selection and show only semester selection
+                yearSelect.innerHTML = '<option value="">Not Required</option>';
+                yearSelect.value = ''; // Clear year selection
                 semesterGroup.style.display = 'block';
                 semesterSelect.required = true;
             }
@@ -1267,7 +1262,8 @@
                 return;
             }
             
-            if (!year) {
+            // For yearly exam type, year is required
+            if (examType === 'Yearly' && !year) {
                 dropdownText.textContent = 'Please select a Year first';
                 if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
                 return;
@@ -1287,10 +1283,14 @@
                 // Fetch courses from API
                 const params = new URLSearchParams();
                 params.append('program', program);
-                params.append('year', year);
                 
-                // For yearly exams, don't include semester parameter
-                // For semester exams, include semester parameter
+                // For yearly exams, include year parameter and semester = "Yearly"
+                if (examType === 'Yearly' && year) {
+                    params.append('year', year);
+                    params.append('semester', 'Yearly');
+                }
+                
+                // For semester exams, include semester parameter only
                 if (examType === 'Semester' && semester) {
                     params.append('semester', semester);
                 }

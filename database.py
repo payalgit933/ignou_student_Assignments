@@ -1012,74 +1012,107 @@ class Database:
                 
                 print("✅ Default courses created")
                 
-                # Add yearly courses for different programs and years
+                # Add yearly courses for different programs and academic years
                 yearly_courses = [
-                    # MBA Yearly Courses
-                    ("MMPC-101", "Management Functions and Behaviour", "MBA", "2023", "Yearly", "MMPC-101.pdf"),
-                    ("MMPC-102", "Human Resource Management", "MBA", "2023", "Yearly", "MMPC-102.pdf"),
-                    ("MMPC-103", "Economics for Managers", "MBA", "2023", "Yearly", "MMPC-103.pdf"),
-                    ("MMPC-104", "Strategic Management", "MBA", "2023", "Yearly", "MMPC-104.pdf"),
-                    ("MMPC-105", "Financial Management", "MBA", "2023", "Yearly", "MMPC-105.pdf"),
+                    # MBA Yearly Courses - 1st Year
+                    ("MMPC-101", "Management Functions and Behaviour", "MBA", "1st Year", "Yearly", "MMPC-101.pdf"),
+                    ("MMPC-102", "Human Resource Management", "MBA", "1st Year", "Yearly", "MMPC-102.pdf"),
+                    ("MMPC-103", "Economics for Managers", "MBA", "1st Year", "Yearly", "MMPC-103.pdf"),
+                    ("MMPC-104", "Strategic Management", "MBA", "1st Year", "Yearly", "MMPC-104.pdf"),
+                    ("MMPC-105", "Financial Management", "MBA", "1st Year", "Yearly", "MMPC-105.pdf"),
                     
-                    ("MMPC-201", "Management Functions and Behaviour", "MBA", "2024", "Yearly", "MMPC-201.pdf"),
-                    ("MMPC-202", "Human Resource Management", "MBA", "2024", "Yearly", "MMPC-202.pdf"),
-                    ("MMPC-203", "Economics for Managers", "MBA", "2024", "Yearly", "MMPC-203.pdf"),
-                    ("MMPC-204", "Strategic Management", "MBA", "2024", "Yearly", "MMPC-204.pdf"),
-                    ("MMPC-205", "Financial Management", "MBA", "2024", "Yearly", "MMPC-205.pdf"),
+                    # MBA Yearly Courses - 2nd Year
+                    ("MMPC-201", "Advanced Management Functions", "MBA", "2nd Year", "Yearly", "MMPC-201.pdf"),
+                    ("MMPC-202", "Advanced Human Resource Management", "MBA", "2nd Year", "Yearly", "MMPC-202.pdf"),
+                    ("MMPC-203", "Advanced Economics for Managers", "MBA", "2nd Year", "Yearly", "MMPC-203.pdf"),
+                    ("MMPC-204", "Advanced Strategic Management", "MBA", "2nd Year", "Yearly", "MMPC-204.pdf"),
+                    ("MMPC-205", "Advanced Financial Management", "MBA", "2nd Year", "Yearly", "MMPC-205.pdf"),
                     
-                    ("MMPC-301", "Management Functions and Behaviour", "MBA", "2025", "Yearly", "MMPC-301.pdf"),
-                    ("MMPC-302", "Human Resource Management", "MBA", "2025", "Yearly", "MMPC-302.pdf"),
-                    ("MMPC-303", "Economics for Managers", "MBA", "2025", "Yearly", "MMPC-303.pdf"),
-                    ("MMPC-304", "Strategic Management", "MBA", "2025", "Yearly", "MMPC-304.pdf"),
-                    ("MMPC-305", "Financial Management", "MBA", "2025", "Yearly", "MMPC-305.pdf"),
+                    # MBA Yearly Courses - 3rd Year
+                    ("MMPC-301", "Executive Management Functions", "MBA", "3rd Year", "Yearly", "MMPC-301.pdf"),
+                    ("MMPC-302", "Executive Human Resource Management", "MBA", "3rd Year", "Yearly", "MMPC-302.pdf"),
+                    ("MMPC-303", "Executive Economics for Managers", "MBA", "3rd Year", "Yearly", "MMPC-303.pdf"),
+                    ("MMPC-304", "Executive Strategic Management", "MBA", "3rd Year", "Yearly", "MMPC-304.pdf"),
+                    ("MMPC-305", "Executive Financial Management", "MBA", "3rd Year", "Yearly", "MMPC-305.pdf"),
                     
-                    # MCA Yearly Courses
-                    ("MCS-101", "Problem Solving and Programming", "MCA", "2023", "Yearly", "MCS-101.pdf"),
-                    ("MCS-102", "Computer Organization", "MCA", "2023", "Yearly", "MCS-102.pdf"),
-                    ("MCS-103", "Discrete Mathematics", "MCA", "2023", "Yearly", "MCS-103.pdf"),
-                    ("MCS-104", "Systems Analysis and Design", "MCA", "2023", "Yearly", "MCS-104.pdf"),
+                    # MBA Yearly Courses - 4th Year
+                    ("MMPC-401", "Senior Management Functions", "MBA", "4th Year", "Yearly", "MMPC-401.pdf"),
+                    ("MMPC-402", "Senior Human Resource Management", "MBA", "4th Year", "Yearly", "MMPC-402.pdf"),
+                    ("MMPC-403", "Senior Economics for Managers", "MBA", "4th Year", "Yearly", "MMPC-403.pdf"),
+                    ("MMPC-404", "Senior Strategic Management", "MBA", "4th Year", "Yearly", "MMPC-404.pdf"),
+                    ("MMPC-405", "Senior Financial Management", "MBA", "4th Year", "Yearly", "MMPC-405.pdf"),
                     
-                    ("MCS-201", "Problem Solving and Programming", "MCA", "2024", "Yearly", "MCS-201.pdf"),
-                    ("MCS-202", "Computer Organization", "MCA", "2024", "Yearly", "MCS-202.pdf"),
-                    ("MCS-203", "Discrete Mathematics", "MCA", "2024", "Yearly", "MCS-203.pdf"),
-                    ("MCS-204", "Systems Analysis and Design", "MCA", "2024", "Yearly", "MCS-204.pdf"),
+                    # MCA Yearly Courses - 1st Year
+                    ("MCS-101", "Problem Solving and Programming", "MCA", "1st Year", "Yearly", "MCS-101.pdf"),
+                    ("MCS-102", "Computer Organization", "MCA", "1st Year", "Yearly", "MCS-102.pdf"),
+                    ("MCS-103", "Discrete Mathematics", "MCA", "1st Year", "Yearly", "MCS-103.pdf"),
+                    ("MCS-104", "Systems Analysis and Design", "MCA", "1st Year", "Yearly", "MCS-104.pdf"),
                     
-                    ("MCS-301", "Problem Solving and Programming", "MCA", "2025", "Yearly", "MCS-301.pdf"),
-                    ("MCS-302", "Computer Organization", "MCA", "2025", "Yearly", "MCS-302.pdf"),
-                    ("MCS-303", "Discrete Mathematics", "MCA", "2025", "Yearly", "MCS-303.pdf"),
-                    ("MCS-304", "Systems Analysis and Design", "MCA", "2025", "Yearly", "MCS-304.pdf"),
+                    # MCA Yearly Courses - 2nd Year
+                    ("MCS-201", "Advanced Problem Solving and Programming", "MCA", "2nd Year", "Yearly", "MCS-201.pdf"),
+                    ("MCS-202", "Advanced Computer Organization", "MCA", "2nd Year", "Yearly", "MCS-202.pdf"),
+                    ("MCS-203", "Advanced Discrete Mathematics", "MCA", "2nd Year", "Yearly", "MCS-203.pdf"),
+                    ("MCS-204", "Advanced Systems Analysis and Design", "MCA", "2nd Year", "Yearly", "MCS-204.pdf"),
                     
-                    # BCA Yearly Courses
-                    ("BCS-101", "Computer Basics and PC Software", "BCA", "2023", "Yearly", "BCS-101.pdf"),
-                    ("BCS-102", "Basic Mathematics", "BCA", "2023", "Yearly", "BCS-102.pdf"),
-                    ("BCS-103", "Programming Methodology Using C", "BCA", "2023", "Yearly", "BCS-103.pdf"),
-                    ("BCS-104", "Computer System Architecture", "BCA", "2023", "Yearly", "BCS-104.pdf"),
+                    # MCA Yearly Courses - 3rd Year
+                    ("MCS-301", "Expert Problem Solving and Programming", "MCA", "3rd Year", "Yearly", "MCS-301.pdf"),
+                    ("MCS-302", "Expert Computer Organization", "MCA", "3rd Year", "Yearly", "MCS-302.pdf"),
+                    ("MCS-303", "Expert Discrete Mathematics", "MCA", "3rd Year", "Yearly", "MCS-303.pdf"),
+                    ("MCS-304", "Expert Systems Analysis and Design", "MCA", "3rd Year", "Yearly", "MCS-304.pdf"),
                     
-                    ("BCS-201", "Computer Basics and PC Software", "BCA", "2024", "Yearly", "BCS-201.pdf"),
-                    ("BCS-202", "Basic Mathematics", "BCA", "2024", "Yearly", "BCS-202.pdf"),
-                    ("BCS-203", "Programming Methodology Using C", "BCA", "2024", "Yearly", "BCS-203.pdf"),
-                    ("BCS-204", "Computer System Architecture", "BCA", "2024", "Yearly", "BCS-204.pdf"),
+                    # MCA Yearly Courses - 4th Year
+                    ("MCS-401", "Master Problem Solving and Programming", "MCA", "4th Year", "Yearly", "MCS-401.pdf"),
+                    ("MCS-402", "Master Computer Organization", "MCA", "4th Year", "Yearly", "MCS-402.pdf"),
+                    ("MCS-403", "Master Discrete Mathematics", "MCA", "4th Year", "Yearly", "MCS-403.pdf"),
+                    ("MCS-404", "Master Systems Analysis and Design", "MCA", "4th Year", "Yearly", "MCS-404.pdf"),
                     
-                    ("BCS-301", "Computer Basics and PC Software", "BCA", "2025", "Yearly", "BCS-301.pdf"),
-                    ("BCS-302", "Basic Mathematics", "BCA", "2025", "Yearly", "BCS-302.pdf"),
-                    ("BCS-303", "Programming Methodology Using C", "BCA", "2025", "Yearly", "BCS-303.pdf"),
-                    ("BCS-304", "Computer System Architecture", "BCA", "2025", "Yearly", "BCS-304.pdf"),
+                    # BCA Yearly Courses - 1st Year
+                    ("BCS-101", "Computer Basics and PC Software", "BCA", "1st Year", "Yearly", "BCS-101.pdf"),
+                    ("BCS-102", "Basic Mathematics", "BCA", "1st Year", "Yearly", "BCS-102.pdf"),
+                    ("BCS-103", "Programming Methodology Using C", "BCA", "1st Year", "Yearly", "BCS-103.pdf"),
+                    ("BCS-104", "Computer System Architecture", "BCA", "1st Year", "Yearly", "BCS-104.pdf"),
                     
-                    # BBA Yearly Courses
-                    ("BBAR-101", "Business Communication", "BBA", "2023", "Yearly", "BBAR-101.pdf"),
-                    ("BBAR-102", "Principles of Management", "BBA", "2023", "Yearly", "BBAR-102.pdf"),
-                    ("BBAR-103", "Business Mathematics", "BBA", "2023", "Yearly", "BBAR-103.pdf"),
-                    ("BBAR-104", "Financial Accounting", "BBA", "2023", "Yearly", "BBAR-104.pdf"),
+                    # BCA Yearly Courses - 2nd Year
+                    ("BCS-201", "Advanced Computer Basics and PC Software", "BCA", "2nd Year", "Yearly", "BCS-201.pdf"),
+                    ("BCS-202", "Advanced Basic Mathematics", "BCA", "2nd Year", "Yearly", "BCS-202.pdf"),
+                    ("BCS-203", "Advanced Programming Methodology Using C", "BCA", "2nd Year", "Yearly", "BCS-203.pdf"),
+                    ("BCS-204", "Advanced Computer System Architecture", "BCA", "2nd Year", "Yearly", "BCS-204.pdf"),
                     
-                    ("BBAR-201", "Business Communication", "BBA", "2024", "Yearly", "BBAR-201.pdf"),
-                    ("BBAR-202", "Principles of Management", "BBA", "2024", "Yearly", "BBAR-202.pdf"),
-                    ("BBAR-203", "Business Mathematics", "BBA", "2024", "Yearly", "BBAR-203.pdf"),
-                    ("BBAR-204", "Financial Accounting", "BBA", "2024", "Yearly", "BBAR-204.pdf"),
+                    # BCA Yearly Courses - 3rd Year
+                    ("BCS-301", "Expert Computer Basics and PC Software", "BCA", "3rd Year", "Yearly", "BCS-301.pdf"),
+                    ("BCS-302", "Expert Basic Mathematics", "BCA", "3rd Year", "Yearly", "BCS-302.pdf"),
+                    ("BCS-303", "Expert Programming Methodology Using C", "BCA", "3rd Year", "Yearly", "BCS-303.pdf"),
+                    ("BCS-304", "Expert Computer System Architecture", "BCA", "3rd Year", "Yearly", "BCS-304.pdf"),
                     
-                    ("BBAR-301", "Business Communication", "BBA", "2025", "Yearly", "BBAR-301.pdf"),
-                    ("BBAR-302", "Principles of Management", "BBA", "2025", "Yearly", "BBAR-302.pdf"),
-                    ("BBAR-303", "Business Mathematics", "BBA", "2025", "Yearly", "BBAR-303.pdf"),
-                    ("BBAR-304", "Financial Accounting", "BBA", "2025", "Yearly", "BBAR-304.pdf"),
+                    # BCA Yearly Courses - 4th Year
+                    ("BCS-401", "Master Computer Basics and PC Software", "BCA", "4th Year", "Yearly", "BCS-401.pdf"),
+                    ("BCS-402", "Master Basic Mathematics", "BCA", "4th Year", "Yearly", "BCS-402.pdf"),
+                    ("BCS-403", "Master Programming Methodology Using C", "BCA", "4th Year", "Yearly", "BCS-403.pdf"),
+                    ("BCS-404", "Master Computer System Architecture", "BCA", "4th Year", "Yearly", "BCS-404.pdf"),
+                    
+                    # BBA Yearly Courses - 1st Year
+                    ("BBAR-101", "Business Communication", "BBA", "1st Year", "Yearly", "BBAR-101.pdf"),
+                    ("BBAR-102", "Principles of Management", "BBA", "1st Year", "Yearly", "BBAR-102.pdf"),
+                    ("BBAR-103", "Business Mathematics", "BBA", "1st Year", "Yearly", "BBAR-103.pdf"),
+                    ("BBAR-104", "Financial Accounting", "BBA", "1st Year", "Yearly", "BBAR-104.pdf"),
+                    
+                    # BBA Yearly Courses - 2nd Year
+                    ("BBAR-201", "Advanced Business Communication", "BBA", "2nd Year", "Yearly", "BBAR-201.pdf"),
+                    ("BBAR-202", "Advanced Principles of Management", "BBA", "2nd Year", "Yearly", "BBAR-202.pdf"),
+                    ("BBAR-203", "Advanced Business Mathematics", "BBA", "2nd Year", "Yearly", "BBAR-203.pdf"),
+                    ("BBAR-204", "Advanced Financial Accounting", "BBA", "2nd Year", "Yearly", "BBAR-204.pdf"),
+                    
+                    # BBA Yearly Courses - 3rd Year
+                    ("BBAR-301", "Expert Business Communication", "BBA", "3rd Year", "Yearly", "BBAR-301.pdf"),
+                    ("BBAR-302", "Expert Principles of Management", "BBA", "3rd Year", "Yearly", "BBAR-302.pdf"),
+                    ("BBAR-303", "Expert Business Mathematics", "BBA", "3rd Year", "Yearly", "BBAR-303.pdf"),
+                    ("BBAR-304", "Expert Financial Accounting", "BBA", "3rd Year", "Yearly", "BBAR-304.pdf"),
+                    
+                    # BBA Yearly Courses - 4th Year
+                    ("BBAR-401", "Master Business Communication", "BBA", "4th Year", "Yearly", "BBAR-401.pdf"),
+                    ("BBAR-402", "Master Principles of Management", "BBA", "4th Year", "Yearly", "BBAR-402.pdf"),
+                    ("BBAR-403", "Master Business Mathematics", "BBA", "4th Year", "Yearly", "BBAR-403.pdf"),
+                    ("BBAR-404", "Master Financial Accounting", "BBA", "4th Year", "Yearly", "BBAR-404.pdf"),
                 ]
                 
                 for course_code, course_name, program, year, semester, pdf_filename in yearly_courses:
@@ -1089,6 +1122,85 @@ class Database:
                     ''', (course_code, course_name, program, year, semester, pdf_filename))
                 
                 print("✅ Yearly courses created")
+                
+                # Add semester-only courses (no year required)
+                semester_only_courses = [
+                    # MBA Semester Courses (No Year Required)
+                    ("MMPC-S01", "General Management Principles", "MBA", "", "1st Semester", "MMPC-S01.pdf"),
+                    ("MMPC-S02", "Business Fundamentals", "MBA", "", "1st Semester", "MMPC-S02.pdf"),
+                    ("MMPC-S03", "Introduction to Business", "MBA", "", "1st Semester", "MMPC-S03.pdf"),
+                    
+                    ("MMPC-S04", "Advanced Business Concepts", "MBA", "", "2nd Semester", "MMPC-S04.pdf"),
+                    ("MMPC-S05", "Business Strategy", "MBA", "", "2nd Semester", "MMPC-S05.pdf"),
+                    ("MMPC-S06", "Leadership Skills", "MBA", "", "2nd Semester", "MMPC-S06.pdf"),
+                    
+                    ("MMPC-S07", "Strategic Management", "MBA", "", "3rd Semester", "MMPC-S07.pdf"),
+                    ("MMPC-S08", "Financial Analysis", "MBA", "", "3rd Semester", "MMPC-S08.pdf"),
+                    ("MMPC-S09", "Marketing Strategy", "MBA", "", "3rd Semester", "MMPC-S09.pdf"),
+                    
+                    ("MMPC-S10", "Executive Management", "MBA", "", "4th Semester", "MMPC-S10.pdf"),
+                    ("MMPC-S11", "Business Innovation", "MBA", "", "4th Semester", "MMPC-S11.pdf"),
+                    ("MMPC-S12", "Global Business", "MBA", "", "4th Semester", "MMPC-S12.pdf"),
+                    
+                    # MCA Semester Courses (No Year Required)
+                    ("MCS-S01", "Programming Fundamentals", "MCA", "", "1st Semester", "MCS-S01.pdf"),
+                    ("MCS-S02", "Computer Basics", "MCA", "", "1st Semester", "MCS-S02.pdf"),
+                    ("MCS-S03", "Mathematics for Computing", "MCA", "", "1st Semester", "MCS-S03.pdf"),
+                    
+                    ("MCS-S04", "Data Structures", "MCA", "", "2nd Semester", "MCS-S04.pdf"),
+                    ("MCS-S05", "Database Systems", "MCA", "", "2nd Semester", "MCS-S05.pdf"),
+                    ("MCS-S06", "Object-Oriented Programming", "MCA", "", "2nd Semester", "MCS-S06.pdf"),
+                    
+                    ("MCS-S07", "Software Engineering", "MCA", "", "3rd Semester", "MCS-S07.pdf"),
+                    ("MCS-S08", "Computer Networks", "MCA", "", "3rd Semester", "MCS-S08.pdf"),
+                    ("MCS-S09", "Web Technologies", "MCA", "", "3rd Semester", "MCS-S09.pdf"),
+                    
+                    ("MCS-S10", "Advanced Programming", "MCA", "", "4th Semester", "MCS-S10.pdf"),
+                    ("MCS-S11", "System Design", "MCA", "", "4th Semester", "MCS-S11.pdf"),
+                    ("MCS-S12", "Project Management", "MCA", "", "4th Semester", "MCS-S12.pdf"),
+                    
+                    # BCA Semester Courses (No Year Required)
+                    ("BCS-S01", "Computer Applications", "BCA", "", "1st Semester", "BCS-S01.pdf"),
+                    ("BCS-S02", "Programming Logic", "BCA", "", "1st Semester", "BCS-S02.pdf"),
+                    ("BCS-S03", "Basic Computing", "BCA", "", "1st Semester", "BCS-S03.pdf"),
+                    
+                    ("BCS-S04", "Database Management", "BCA", "", "2nd Semester", "BCS-S04.pdf"),
+                    ("BCS-S05", "Web Development", "BCA", "", "2nd Semester", "BCS-S05.pdf"),
+                    ("BCS-S06", "Software Applications", "BCA", "", "2nd Semester", "BCS-S06.pdf"),
+                    
+                    ("BCS-S07", "System Programming", "BCA", "", "3rd Semester", "BCS-S07.pdf"),
+                    ("BCS-S08", "Network Programming", "BCA", "", "3rd Semester", "BCS-S08.pdf"),
+                    ("BCS-S09", "Mobile Applications", "BCA", "", "3rd Semester", "BCS-S09.pdf"),
+                    
+                    ("BCS-S10", "Advanced Applications", "BCA", "", "4th Semester", "BCS-S10.pdf"),
+                    ("BCS-S11", "Enterprise Systems", "BCA", "", "4th Semester", "BCS-S11.pdf"),
+                    ("BCS-S12", "Final Project", "BCA", "", "4th Semester", "BCS-S12.pdf"),
+                    
+                    # BBA Semester Courses (No Year Required)
+                    ("BBAR-S01", "Business Basics", "BBA", "", "1st Semester", "BBAR-S01.pdf"),
+                    ("BBAR-S02", "Management Principles", "BBA", "", "1st Semester", "BBAR-S02.pdf"),
+                    ("BBAR-S03", "Business Communication", "BBA", "", "1st Semester", "BBAR-S03.pdf"),
+                    
+                    ("BBAR-S04", "Financial Management", "BBA", "", "2nd Semester", "BBAR-S04.pdf"),
+                    ("BBAR-S05", "Marketing Management", "BBA", "", "2nd Semester", "BBAR-S05.pdf"),
+                    ("BBAR-S06", "Human Resource Management", "BBA", "", "2nd Semester", "BBAR-S06.pdf"),
+                    
+                    ("BBAR-S07", "Operations Management", "BBA", "", "3rd Semester", "BBAR-S07.pdf"),
+                    ("BBAR-S08", "Strategic Planning", "BBA", "", "3rd Semester", "BBAR-S08.pdf"),
+                    ("BBAR-S09", "Business Analytics", "BBA", "", "3rd Semester", "BBAR-S09.pdf"),
+                    
+                    ("BBAR-S10", "Leadership Development", "BBA", "", "4th Semester", "BBAR-S10.pdf"),
+                    ("BBAR-S11", "Entrepreneurship", "BBA", "", "4th Semester", "BBAR-S11.pdf"),
+                    ("BBAR-S12", "Business Ethics", "BBA", "", "4th Semester", "BBAR-S12.pdf"),
+                ]
+                
+                for course_code, course_name, program, year, semester, pdf_filename in semester_only_courses:
+                    cursor.execute('''
+                        INSERT INTO courses (course_code, course_name, program, year, semester, pdf_filename)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    ''', (course_code, course_name, program, year, semester, pdf_filename))
+                
+                print("✅ Semester-only courses created")
             
             conn.commit()
             conn.close()
