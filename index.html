@@ -1340,10 +1340,12 @@
                 semesterGroup.style.display = 'none';
                 semesterSelect.required = false;
                 semesterSelect.value = ''; // Clear semester selection
+                yearSelect.required = true; // Year is required for yearly exams
             } else if (examType === 'Semester') {
                 // For semester, hide year selection and show only semester selection
                 yearSelect.innerHTML = '<option value="">Not Required</option>';
                 yearSelect.value = ''; // Clear year selection
+                yearSelect.required = false; // Year is NOT required for semester exams
                 semesterGroup.style.display = 'block';
                 semesterSelect.required = true;
             }
