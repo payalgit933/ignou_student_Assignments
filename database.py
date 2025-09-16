@@ -91,6 +91,9 @@ class Database:
                 year TEXT NOT NULL,
                 semester TEXT NOT NULL,
                 pdf_filename TEXT,
+                pdf_filename_en TEXT,
+                pdf_filename_hi TEXT,
+                credits INTEGER,
                 is_active BOOLEAN DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -106,6 +109,24 @@ class Database:
                 description TEXT,
                 is_active BOOLEAN DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # Create study_centers table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS study_centers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                center_code TEXT UNIQUE NOT NULL,
+                name TEXT NOT NULL,
+                address TEXT NOT NULL,
+                city TEXT,
+                state TEXT,
+                pincode TEXT,
+                phone TEXT,
+                email TEXT,
+                is_active BOOLEAN DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
         
@@ -147,6 +168,25 @@ class Database:
             cursor.execute("UPDATE user_assignments SET courses = subjects WHERE (courses IS NULL OR courses = '') AND subjects IS NOT NULL")
         except Exception:
             pass
+
+        # Migrate courses table to add medium-specific filenames and credits if missing
+        cursor.execute("PRAGMA table_info(courses)")
+        course_columns = [row[1] for row in cursor.fetchall()]
+        if 'pdf_filename_en' not in course_columns:
+            try:
+                cursor.execute("ALTER TABLE courses ADD COLUMN pdf_filename_en TEXT")
+            except Exception:
+                pass
+        if 'pdf_filename_hi' not in course_columns:
+            try:
+                cursor.execute("ALTER TABLE courses ADD COLUMN pdf_filename_hi TEXT")
+            except Exception:
+                pass
+        if 'credits' not in course_columns:
+            try:
+                cursor.execute("ALTER TABLE courses ADD COLUMN credits INTEGER")
+            except Exception:
+                pass
         
         conn.commit()
         conn.close()
@@ -586,7 +626,7 @@ class Database:
             print(f"❌ Failed to create default admin: {str(e)}")
     
     # Course management methods
-    def add_course(self, course_code, course_name, program, year, semester, pdf_filename=None):
+    def add_course(self, course_code, course_name, program, year, semester, pdf_filename=None, pdf_filename_en=None, pdf_filename_hi=None, credits=None):
         """Add a new course"""
         try:
             conn = sqlite3.connect(self.db_name)
@@ -598,9 +638,9 @@ class Database:
                 return {"success": False, "error": "Course code already exists"}
             
             cursor.execute('''
-                INSERT INTO courses (course_code, course_name, program, year, semester, pdf_filename)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (course_code, course_name, program, year, semester, pdf_filename))
+                INSERT INTO courses (course_code, course_name, program, year, semester, pdf_filename, pdf_filename_en, pdf_filename_hi, credits)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (course_code, course_name, program, year, semester, pdf_filename, pdf_filename_en, pdf_filename_hi, credits))
             
             course_id = cursor.lastrowid
             conn.commit()
@@ -618,7 +658,7 @@ class Database:
             cursor = conn.cursor()
             
             cursor.execute('''
-                SELECT id, course_code, course_name, program, year, semester, pdf_filename, is_active, created_at
+                SELECT id, course_code, course_name, program, year, semester, pdf_filename, pdf_filename_en, pdf_filename_hi, credits, is_active, created_at
                 FROM courses 
                 ORDER BY created_at DESC 
                 LIMIT ? OFFSET ?
@@ -642,8 +682,11 @@ class Database:
                     "year": course[4],
                     "semester": course[5],
                     "pdf_filename": course[6],
-                    "is_active": course[7],
-                    "created_at": course[8]
+                    "pdf_filename_en": course[7],
+                    "pdf_filename_hi": course[8],
+                    "credits": course[9],
+                    "is_active": course[10],
+                    "created_at": course[11]
                 } for course in courses],
                 "total_count": total_count
             }
@@ -659,7 +702,7 @@ class Database:
             
             # Build dynamic query
             query = '''
-                SELECT id, course_code, course_name, program, year, semester, pdf_filename, is_active, created_at
+                SELECT id, course_code, course_name, program, year, semester, pdf_filename, pdf_filename_en, pdf_filename_hi, credits, is_active, created_at
                 FROM courses 
                 WHERE 1=1
             '''
@@ -697,15 +740,18 @@ class Database:
                     "year": course[4],
                     "semester": course[5],
                     "pdf_filename": course[6],
-                    "is_active": course[7],
-                    "created_at": course[8]
+                    "pdf_filename_en": course[7],
+                    "pdf_filename_hi": course[8],
+                    "credits": course[9],
+                    "is_active": course[10],
+                    "created_at": course[11]
                 } for course in courses]
             }
             
         except Exception as e:
             return {"success": False, "error": f"Failed to get filtered courses: {str(e)}"}
     
-    def update_course(self, course_id, course_code=None, course_name=None, program=None, year=None, semester=None, pdf_filename=None, is_active=None):
+    def update_course(self, course_id, course_code=None, course_name=None, program=None, year=None, semester=None, pdf_filename=None, pdf_filename_en=None, pdf_filename_hi=None, credits=None, is_active=None):
         """Update course information"""
         try:
             conn = sqlite3.connect(self.db_name)
@@ -733,6 +779,15 @@ class Database:
             if pdf_filename is not None:
                 updates.append("pdf_filename = ?")
                 params.append(pdf_filename)
+            if pdf_filename_en is not None:
+                updates.append("pdf_filename_en = ?")
+                params.append(pdf_filename_en)
+            if pdf_filename_hi is not None:
+                updates.append("pdf_filename_hi = ?")
+                params.append(pdf_filename_hi)
+            if credits is not None:
+                updates.append("credits = ?")
+                params.append(credits)
             if is_active is not None:
                 updates.append("is_active = ?")
                 params.append(is_active)
@@ -769,6 +824,119 @@ class Database:
             
         except Exception as e:
             return {"success": False, "error": f"Failed to delete course: {str(e)}"}
+
+    # Study center management methods
+    def add_study_center(self, center_code, name, address, city=None, state=None, pincode=None, phone=None, email=None):
+        """Add a new study center"""
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+            cursor.execute("SELECT id FROM study_centers WHERE center_code = ?", (center_code,))
+            if cursor.fetchone():
+                return {"success": False, "error": "Study center code already exists"}
+            cursor.execute('''
+                INSERT INTO study_centers (center_code, name, address, city, state, pincode, phone, email)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (center_code, name, address, city, state, pincode, phone, email))
+            center_id = cursor.lastrowid
+            conn.commit()
+            conn.close()
+            return {"success": True, "center_id": center_id, "message": "Study center added successfully"}
+        except Exception as e:
+            return {"success": False, "error": f"Failed to add study center: {str(e)}"}
+
+    def get_study_centers(self, limit=100, offset=0):
+        """Get all study centers with pagination"""
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT id, center_code, name, address, city, state, pincode, phone, email, is_active, created_at
+                FROM study_centers
+                ORDER BY created_at DESC
+                LIMIT ? OFFSET ?
+            ''', (limit, offset))
+            centers = cursor.fetchall()
+            cursor.execute("SELECT COUNT(*) FROM study_centers")
+            total_count = cursor.fetchone()[0]
+            conn.close()
+            return {
+                "success": True,
+                "centers": [{
+                    "id": c[0],
+                    "center_code": c[1],
+                    "name": c[2],
+                    "address": c[3],
+                    "city": c[4],
+                    "state": c[5],
+                    "pincode": c[6],
+                    "phone": c[7],
+                    "email": c[8],
+                    "is_active": c[9],
+                    "created_at": c[10]
+                } for c in centers],
+                "total_count": total_count
+            }
+        except Exception as e:
+            return {"success": False, "error": f"Failed to get study centers: {str(e)}"}
+
+    def update_study_center(self, center_id, center_code=None, name=None, address=None, city=None, state=None, pincode=None, phone=None, email=None, is_active=None):
+        """Update study center information"""
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+            updates = []
+            params = []
+            if center_code is not None:
+                updates.append("center_code = ?")
+                params.append(center_code)
+            if name is not None:
+                updates.append("name = ?")
+                params.append(name)
+            if address is not None:
+                updates.append("address = ?")
+                params.append(address)
+            if city is not None:
+                updates.append("city = ?")
+                params.append(city)
+            if state is not None:
+                updates.append("state = ?")
+                params.append(state)
+            if pincode is not None:
+                updates.append("pincode = ?")
+                params.append(pincode)
+            if phone is not None:
+                updates.append("phone = ?")
+                params.append(phone)
+            if email is not None:
+                updates.append("email = ?")
+                params.append(email)
+            if is_active is not None:
+                updates.append("is_active = ?")
+                params.append(is_active)
+            if not updates:
+                return {"success": False, "error": "No fields to update"}
+            updates.append("updated_at = CURRENT_TIMESTAMP")
+            params.append(center_id)
+            query = f"UPDATE study_centers SET {', '.join(updates)} WHERE id = ?"
+            cursor.execute(query, params)
+            conn.commit()
+            conn.close()
+            return {"success": True, "message": "Study center updated successfully"}
+        except Exception as e:
+            return {"success": False, "error": f"Failed to update study center: {str(e)}"}
+
+    def delete_study_center(self, center_id):
+        """Delete a study center"""
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM study_centers WHERE id = ?", (center_id,))
+            conn.commit()
+            conn.close()
+            return {"success": True, "message": "Study center deleted successfully"}
+        except Exception as e:
+            return {"success": False, "error": f"Failed to delete study center: {str(e)}"}
     
     # Program management methods
     def add_program(self, program_code, program_name, description=None):

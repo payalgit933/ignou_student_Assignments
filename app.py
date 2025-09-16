@@ -6,6 +6,7 @@ import json
 import os
 import time
 from flask import Flask, request, jsonify, redirect, send_from_directory, session, send_file
+import sqlite3
 from flask_cors import CORS
 import requests
 from database import db
@@ -1008,11 +1009,17 @@ def admin_add_course():
         year = data.get("year")
         semester = data.get("semester")
         pdf_filename = data.get("pdf_filename")
+        pdf_filename_en = data.get("pdf_filename_en")
+        pdf_filename_hi = data.get("pdf_filename_hi")
+        credits = data.get("credits")
         
         if not all([course_code, course_name, program, year, semester]):
             return jsonify({"success": False, "error": "All required fields must be provided"}), 400
         
-        result = db.add_course(course_code, course_name, program, year, semester, pdf_filename)
+        result = db.add_course(
+            course_code, course_name, program, year, semester, 
+            pdf_filename, pdf_filename_en, pdf_filename_hi, credits
+        )
         return jsonify(result)
         
     except Exception as e:
@@ -1032,6 +1039,9 @@ def admin_update_course(course_id):
             year=data.get("year"),
             semester=data.get("semester"),
             pdf_filename=data.get("pdf_filename"),
+            pdf_filename_en=data.get("pdf_filename_en"),
+            pdf_filename_hi=data.get("pdf_filename_hi"),
+            credits=data.get("credits"),
             is_active=data.get("is_active")
         )
         return jsonify(result)
@@ -1075,6 +1085,69 @@ def admin_add_program():
         result = db.add_program(program_code, program_name, description)
         return jsonify(result)
         
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Admin study centers management
+@app.route("/api/admin/study-centers")
+@require_admin_auth
+def admin_get_study_centers():
+    try:
+        page = request.args.get('page', 1, type=int)
+        limit = request.args.get('limit', 50, type=int)
+        offset = (page - 1) * limit
+        result = db.get_study_centers(limit=limit, offset=offset)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/admin/study-centers", methods=["POST"])
+@require_admin_auth
+def admin_add_study_center():
+    try:
+        data = request.json
+        center_code = data.get("center_code")
+        name = data.get("name")
+        address = data.get("address")
+        city = data.get("city")
+        state = data.get("state")
+        pincode = data.get("pincode")
+        phone = data.get("phone")
+        email = data.get("email")
+        if not all([center_code, name, address]):
+            return jsonify({"success": False, "error": "center_code, name and address are required"}), 400
+        result = db.add_study_center(center_code, name, address, city, state, pincode, phone, email)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/admin/study-centers/<int:center_id>", methods=["PUT"])
+@require_admin_auth
+def admin_update_study_center(center_id):
+    try:
+        data = request.json
+        result = db.update_study_center(
+            center_id,
+            center_code=data.get("center_code"),
+            name=data.get("name"),
+            address=data.get("address"),
+            city=data.get("city"),
+            state=data.get("state"),
+            pincode=data.get("pincode"),
+            phone=data.get("phone"),
+            email=data.get("email"),
+            is_active=data.get("is_active")
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/admin/study-centers/<int:center_id>", methods=["DELETE"])
+@require_admin_auth
+def admin_delete_study_center(center_id):
+    try:
+        result = db.delete_study_center(center_id)
+        return jsonify(result)
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
