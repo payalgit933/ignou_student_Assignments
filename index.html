@@ -796,6 +796,80 @@
         }
         
         /* PDF-specific styling removed - now using jsPDF */
+        
+        /* Confirmation Modal Styles */
+        #confirmOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(4px);
+        }
+        
+        #confirmModal {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            text-align: center;
+        }
+        
+        #confirmOverlay[style*="flex"] #confirmModal {
+            transform: scale(1);
+        }
+        
+        #confirmHeader {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        #confirmBody {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 24px;
+            line-height: 1.6;
+            white-space: pre-line;
+        }
+        
+        #confirmActions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        #confirmActions .btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            margin: 0;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: #6b7280;
+            border: 2px solid #d1d5db;
+        }
+        
+        .btn-outline:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 <body>
@@ -1029,7 +1103,7 @@
                         <!-- Title Block -->
                         <div class="text-center mb-8">
                             <h3 class="text-lg font-bold underline mb-2">Format for Assignment Submission</h3>
-                            <p class="text-sm text-gray-600 italic mb-1">For Term End Exam June/December <span class="border-b border-gray-400 px-2">_____</span> (Year) <span class="border-b border-gray-400 px-2">_____</span></p>
+                            <p class="text-sm text-gray-600 italic mb-1">For Term End Exam <span class="border-b border-gray-400 px-2" id="semesterDisplay">_____</span> (Year) <span class="border-b border-gray-400 px-2" id="yearDisplay">_____</span></p>
                             <p class="text-sm text-gray-600 italic">(Please read the instructions given below carefully before submitting assignments)</p>
                         </div>
 
@@ -1193,14 +1267,63 @@
         // Remove.bg API configuration
         window.removeBgApiKey = 'px2zysgmbvcxprf'; // Stored API key
         
+        // Function to update year display
+        function updateYearDisplay() {
+            const yearSelect = document.getElementById('yearSelection');
+            const yearDisplay = document.getElementById('yearDisplay');
+            if (yearSelect.value) {
+                yearDisplay.textContent = yearSelect.value;
+            } else {
+                yearDisplay.textContent = '_____';
+            }
+        }
+        
+        // Function to update semester display
+        function updateSemesterDisplay() {
+            const semesterSelect = document.getElementById('semesterNumber');
+            const semesterDisplay = document.getElementById('semesterDisplay');
+            const examType = document.querySelector('input[name="examType"]:checked').value;
+            
+            if (examType === 'Yearly') {
+                semesterDisplay.textContent = '_____';
+            } else if (semesterSelect.value) {
+                const semesterNum = semesterSelect.value.match(/\d+/);
+                if (semesterNum) {
+                    const num = parseInt(semesterNum[0]);
+                    if (num === 1 || num === 3) {
+                        semesterDisplay.textContent = 'June';
+                    } else if (num === 2 || num === 4) {
+                        semesterDisplay.textContent = 'Dec';
+                    } else {
+                        semesterDisplay.textContent = 'June/Dec';
+                    }
+                } else {
+                    semesterDisplay.textContent = 'June/Dec';
+                }
+            } else {
+                semesterDisplay.textContent = 'June/Dec';
+            }
+        }
+        
         // Function to update exam type selection and year options
         function updateExamTypeSelection() {
             const examType = document.querySelector('input[name="examType"]:checked').value;
             const yearSelect = document.getElementById('yearSelection');
             const semesterGroup = document.getElementById('semesterNumberGroup');
             const semesterSelect = document.getElementById('semesterNumber');
+            const semesterDisplay = document.getElementById('semesterDisplay');
+            const yearDisplay = document.getElementById('yearDisplay');
             
             console.log('Exam type changed to:', examType);
+            
+            // Update display elements
+            if (examType === 'Yearly') {
+                semesterDisplay.textContent = '_____';
+                yearDisplay.textContent = '_____';
+            } else {
+                semesterDisplay.textContent = 'June/Dec';
+                yearDisplay.textContent = '_____';
+            }
             
             // Clear existing options
             yearSelect.innerHTML = '<option value="">Select year</option>';
@@ -1713,8 +1836,14 @@
             }
             updateCoursesSelect();
         });
-        document.getElementById('yearSelection').addEventListener('change', updateCoursesSelect);
-        document.getElementById('semesterNumber').addEventListener('change', updateCoursesSelect);
+        document.getElementById('yearSelection').addEventListener('change', function() {
+            updateCoursesSelect();
+            updateYearDisplay();
+        });
+        document.getElementById('semesterNumber').addEventListener('change', function() {
+            updateCoursesSelect();
+            updateSemesterDisplay();
+        });
         
         // Add event listeners for exam type changes
         document.querySelectorAll('input[name="examType"]').forEach(radio => {

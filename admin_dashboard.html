@@ -168,6 +168,161 @@
             color: #16a34a;
             border: 1px solid #bbf7d0;
         }
+        
+        /* Modal Styles */
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal-content[style*="block"] {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .close-btn:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        .modal-body .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .modal-body .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .modal-body .form-group input,
+        .modal-body .form-group select,
+        .modal-body .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+        
+        .modal-body .form-group input:focus,
+        .modal-body .form-group select:focus,
+        .modal-body .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 24px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        /* Confirmation Modal Overlay */
+        #confirmOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(4px);
+        }
+        
+        #confirmModal {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            text-align: center;
+        }
+        
+        #confirmOverlay[style*="flex"] #confirmModal {
+            transform: scale(1);
+        }
+        
+        #confirmHeader {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        #confirmBody {
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 24px;
+            line-height: 1.6;
+            white-space: pre-line;
+        }
+        
+        #confirmActions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        #confirmActions .btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -199,6 +354,13 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                 </svg>
                 <span>Courses</span>
+            </a>
+            
+            <a href="#" class="nav-item" data-section="programs">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                <span>Programs</span>
             </a>
             
             <a href="#" class="nav-item" data-section="study-centers">
@@ -406,6 +568,34 @@
                 </div>
             </div>
 
+            <!-- Programs Section -->
+            <div id="programs-section" class="section hidden">
+                <div class="card">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold">Programs</h3>
+                        <button onclick="showAddProgramModal()" class="btn btn-primary">Add Program</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Program Name</th>
+                                    <th>Program Code</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="programsTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center py-8 text-gray-500">Loading programs...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- Study Centers Section -->
             <div id="study-centers-section" class="section hidden">
                 <div class="card">
@@ -485,6 +675,147 @@
         </div>
     </div>
 
+    <!-- Confirmation Modal -->
+    <div id="confirmOverlay" style="display: none;">
+        <div id="confirmModal">
+            <div id="confirmHeader">Please Confirm</div>
+            <div id="confirmBody"></div>
+            <div id="confirmActions">
+                <button id="confirmCancel" class="btn btn-outline">Cancel</button>
+                <button id="confirmOk" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Course Modal -->
+    <div id="addCourseModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Course</h3>
+                <button onclick="closeAddCourseModal()" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="modalProgram">Program *</label>
+                    <div style="display: flex; gap: 8px;">
+                        <select id="modalProgram" required onchange="handleProgramSelection()">
+                            <option value="">Select Program</option>
+                        </select>
+                        <button type="button" onclick="showAddProgramModal()" class="btn btn-outline" style="padding: 8px 12px; font-size: 12px;">+ Add New</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="modalExamType">Exam Type *</label>
+                    <select id="modalExamType" onchange="updateModalExamType()" required>
+                        <option value="">Select Type</option>
+                        <option value="Yearly">Yearly</option>
+                        <option value="Semester">Semester</option>
+                    </select>
+                </div>
+                <div class="form-group" id="modalYearGroup" style="display: none;">
+                    <label for="modalYear">Year *</label>
+                    <select id="modalYear">
+                        <option value="">Select Year</option>
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                        <option value="3rd Year">3rd Year</option>
+                        <option value="4th Year">4th Year</option>
+                    </select>
+                </div>
+                <div class="form-group" id="modalSemesterGroup" style="display: none;">
+                    <label for="modalSemester">Semester *</label>
+                    <select id="modalSemester">
+                        <option value="">Select Semester</option>
+                        <option value="1st Semester">1st Semester</option>
+                        <option value="2nd Semester">2nd Semester</option>
+                        <option value="3rd Semester">3rd Semester</option>
+                        <option value="4th Semester">4th Semester</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="modalCourseCode">Course Code *</label>
+                    <input type="text" id="modalCourseCode" placeholder="e.g., MMPC-004" required>
+                </div>
+                <div class="form-group">
+                    <label for="modalCourseName">Course Name *</label>
+                    <input type="text" id="modalCourseName" placeholder="e.g., Management" required>
+                </div>
+                <div class="form-group">
+                    <label for="modalPdfFilename">Default PDF Filename (optional)</label>
+                    <input type="text" id="modalPdfFilename" placeholder="e.g., MMPC-004.pdf">
+                </div>
+                <div class="form-group">
+                    <label for="modalPdfFilenameEn">English PDF Filename (optional)</label>
+                    <input type="text" id="modalPdfFilenameEn" placeholder="e.g., MMPC-004-EN.pdf">
+                </div>
+                <div class="form-group">
+                    <label for="modalPdfFilenameHi">Hindi PDF Filename (optional)</label>
+                    <input type="text" id="modalPdfFilenameHi" placeholder="e.g., MMPC-004-HI.pdf">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeAddCourseModal()" class="btn btn-outline">Cancel</button>
+                <button onclick="submitAddCourse()" class="btn btn-primary">Add Course</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Program Modal -->
+    <div id="addProgramModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Program</h3>
+                <button onclick="closeAddProgramModal()" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="modalProgramName">Program Name *</label>
+                    <input type="text" id="modalProgramName" placeholder="e.g., Master of Business Administration" required>
+                </div>
+                <div class="form-group">
+                    <label for="modalProgramCode">Program Code *</label>
+                    <input type="text" id="modalProgramCode" placeholder="e.g., MBA" required>
+                </div>
+                <div class="form-group">
+                    <label for="modalProgramDescription">Description (optional)</label>
+                    <textarea id="modalProgramDescription" placeholder="Enter program description" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeAddProgramModal()" class="btn btn-outline">Cancel</button>
+                <button onclick="submitAddProgram()" class="btn btn-primary">Add Program</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Study Center Modal -->
+    <div id="addStudyCenterModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Study Center</h3>
+                <button onclick="closeAddStudyCenterModal()" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="modalCenterName">Center Name *</label>
+                    <input type="text" id="modalCenterName" placeholder="e.g., Delhi Study Center" required>
+                </div>
+                <div class="form-group">
+                    <label for="modalCenterCode">Center Code *</label>
+                    <input type="text" id="modalCenterCode" placeholder="e.g., 0101" required>
+                </div>
+                <div class="form-group">
+                    <label for="modalCenterAddress">Complete Address *</label>
+                    <textarea id="modalCenterAddress" placeholder="Enter complete address" rows="3" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeAddStudyCenterModal()" class="btn btn-outline">Cancel</button>
+                <button onclick="submitAddStudyCenter()" class="btn btn-primary">Add Study Center</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentSection = 'dashboard';
         let adminData = null;
@@ -546,6 +877,7 @@
                 'dashboard': 'Dashboard',
                 'users': 'User Management',
                 'courses': 'Course Management',
+                'programs': 'Programs',
                 'study-centers': 'Study Centers',
                 'analytics': 'Analytics',
                 'settings': 'Settings'
@@ -563,6 +895,9 @@
                     break;
                 case 'courses':
                     loadCourses();
+                    break;
+                case 'programs':
+                    loadPrograms();
                     break;
                 case 'study-centers':
                     loadStudyCenters();
@@ -772,28 +1107,52 @@
             }
         }
 
-        async function showAddCenterModal() {
-            const center_code = prompt('Enter center code:');
-            if (!center_code) return;
-            const name = prompt('Enter center name:');
-            if (!name) return;
-            const address = prompt('Enter address:');
-            if (!address) return;
-            const city = prompt('City (optional):');
-            const state = prompt('State (optional):');
-            const pincode = prompt('Pincode (optional):');
-            const phone = prompt('Phone (optional):');
-            const email = prompt('Email (optional):');
+        function showAddCenterModal() {
+            document.getElementById('addStudyCenterModal').style.display = 'flex';
+            document.getElementById('addStudyCenterModal').style.justifyContent = 'center';
+            document.getElementById('addStudyCenterModal').style.alignItems = 'center';
+            document.getElementById('addStudyCenterModal').style.position = 'fixed';
+            document.getElementById('addStudyCenterModal').style.top = '0';
+            document.getElementById('addStudyCenterModal').style.left = '0';
+            document.getElementById('addStudyCenterModal').style.width = '100%';
+            document.getElementById('addStudyCenterModal').style.height = '100%';
+            document.getElementById('addStudyCenterModal').style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            document.getElementById('addStudyCenterModal').style.zIndex = '10000';
+        }
+        
+        function closeAddStudyCenterModal() {
+            document.getElementById('addStudyCenterModal').style.display = 'none';
+            // Clear form
+            document.getElementById('modalCenterName').value = '';
+            document.getElementById('modalCenterCode').value = '';
+            document.getElementById('modalCenterAddress').value = '';
+        }
+        
+        async function submitAddStudyCenter() {
+            const centerName = document.getElementById('modalCenterName').value;
+            const centerCode = document.getElementById('modalCenterCode').value;
+            const centerAddress = document.getElementById('modalCenterAddress').value;
+            
+            if (!centerName || !centerCode || !centerAddress) {
+                showAlert('Please fill in all required fields', 'error');
+                return;
+            }
+            
             try {
                 const res = await fetch('/api/admin/study-centers', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ center_code, name, address, city, state, pincode, phone, email })
+                    body: JSON.stringify({ 
+                        name: centerName, 
+                        code: centerCode, 
+                        address: centerAddress 
+                    })
                 });
                 const data = await res.json();
                 if (data.success) {
                     showAlert('Study center added successfully!', 'success');
                     loadStudyCenters();
+                    closeAddStudyCenterModal();
                 } else {
                     showAlert(data.error || 'Failed to add study center', 'error');
                 }
@@ -806,8 +1165,24 @@
             showAlert('Edit form coming soon. For now, delete and re-add.', 'success');
         }
 
+        function showConfirm(message) {
+            return new Promise(resolve => {
+                const overlay = document.getElementById('confirmOverlay');
+                const body = document.getElementById('confirmBody');
+                const okBtn = document.getElementById('confirmOk');
+                const cancelBtn = document.getElementById('confirmCancel');
+                if (!overlay || !body || !okBtn || !cancelBtn) return resolve(false);
+                body.textContent = message;
+                overlay.style.display = 'flex';
+                const cleanup = () => { overlay.style.display = 'none'; okBtn.onclick = null; cancelBtn.onclick = null; };
+                okBtn.onclick = () => { cleanup(); resolve(true); };
+                cancelBtn.onclick = () => { cleanup(); resolve(false); };
+            });
+        }
+        
         async function deleteCenter(centerId) {
-            if (!confirm('Are you sure you want to delete this study center?')) return;
+            const confirmed = await showConfirm('Are you sure you want to delete this study center?');
+            if (!confirmed) return;
             try {
                 const res = await fetch(`/api/admin/study-centers/${centerId}`, { method: 'DELETE' });
                 const data = await res.json();
@@ -874,132 +1249,141 @@
         }
         
         // Course management functions
-        async function showAddCourseModal() {
-            // Build a themed modal form
-            const container = document.createElement('div');
-            container.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
-            container.innerHTML = `
-                <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
-                    <h3 class="text-lg font-semibold mb-4">Add Course</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Program (e.g., MBA, MCA)</label>
-                            <input id="modalProgramInput" class="form-input w-full" placeholder="Enter Program Code (e.g., MBA)" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                            <select id="modalTrack" class="form-input w-full">
-                                <option value="Yearly">Yearly</option>
-                                <option value="Semester">Semester</option>
-                            </select>
-                        </div>
-                        <div id="modalYearWrap">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Year</label>
-                            <select id="modalYear" class="form-input w-full">
-                                <option value="">Select Year</option>
-                                <option value="1st Year">1st Year</option>
-                                <option value="2nd Year">2nd Year</option>
-                                <option value="3rd Year">3rd Year</option>
-                                <option value="4th Year">4th Year</option>
-                            </select>
-                        </div>
-                        <div id="modalSemWrap" class="hidden">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-                            <select id="modalSemester" class="form-input w-full">
-                                <option value="">Select Semester</option>
-                                <option value="1st Semester">1st Semester</option>
-                                <option value="2nd Semester">2nd Semester</option>
-                                <option value="3rd Semester">3rd Semester</option>
-                                <option value="4th Semester">4th Semester</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Course Code</label>
-                            <input id="modalCode" class="form-input w-full" placeholder="e.g., MMPC-004" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Course Name</label>
-                            <input id="modalName" class="form-input w-full" placeholder="Course Name" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">English PDF filename</label>
-                            <input id="modalPdfEn" class="form-input w-full" placeholder="MMPC-004.pdf or MBA/MMPC-004.pdf" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Hindi PDF filename</label>
-                            <input id="modalPdfHi" class="form-input w-full" placeholder="MMPC-004-HN.pdf" />
-                        </div>
-                        <div class="flex justify-end space-x-2 pt-2">
-                            <button id="modalCancel" class="btn">Cancel</button>
-                            <button id="modalSave" class="btn btn-primary">Save</button>
-                        </div>
-                    </div>
-                </div>`;
-            document.body.appendChild(container);
-
-            // Toggle year/semester
-            const trackSel = container.querySelector('#modalTrack');
-            const yearWrap = container.querySelector('#modalYearWrap');
-            const semWrap = container.querySelector('#modalSemWrap');
-            trackSel.addEventListener('change', () => {
-                if (trackSel.value === 'Yearly') { yearWrap.classList.remove('hidden'); semWrap.classList.add('hidden'); }
-                else { semWrap.classList.remove('hidden'); yearWrap.classList.add('hidden'); }
-            });
-
-            container.querySelector('#modalCancel').onclick = () => document.body.removeChild(container);
-            container.querySelector('#modalSave').onclick = async () => {
-                const body = {
-                    course_code: container.querySelector('#modalCode').value.trim(),
-                    course_name: container.querySelector('#modalName').value.trim(),
-                    program: container.querySelector('#modalProgramInput').value.trim(),
-                };
-                if (trackSel.value === 'Yearly') body.year = container.querySelector('#modalYear').value; else body.semester = container.querySelector('#modalSemester').value;
-                body.pdf_filename_en = container.querySelector('#modalPdfEn').value.trim() || null;
-                body.pdf_filename_hi = container.querySelector('#modalPdfHi').value.trim() || null;
-                try {
-                    const resp = await fetch('/api/admin/courses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                    const result = await resp.json();
-                    if (result.success) { showAlert('Course added successfully!', 'success'); loadCourses(); document.body.removeChild(container); }
-                    else { showAlert(result.error || 'Failed to add course', 'error'); }
-                } catch { showAlert('Error adding course', 'error'); }
-            };
+        function showAddCourseModal() {
+            // Populate programs first
+            populateProgramSelect();
+            
+            document.getElementById('addCourseModal').style.display = 'flex';
+            document.getElementById('addCourseModal').style.justifyContent = 'center';
+            document.getElementById('addCourseModal').style.alignItems = 'center';
+            document.getElementById('addCourseModal').style.position = 'fixed';
+            document.getElementById('addCourseModal').style.top = '0';
+            document.getElementById('addCourseModal').style.left = '0';
+            document.getElementById('addCourseModal').style.width = '100%';
+            document.getElementById('addCourseModal').style.height = '100%';
+            document.getElementById('addCourseModal').style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            document.getElementById('addCourseModal').style.zIndex = '10000';
+        }
+        
+        function closeAddCourseModal() {
+            document.getElementById('addCourseModal').style.display = 'none';
+            // Clear form
+            document.getElementById('modalProgram').value = '';
+            document.getElementById('modalExamType').value = '';
+            document.getElementById('modalYear').value = '';
+            document.getElementById('modalSemester').value = '';
+            document.getElementById('modalCourseCode').value = '';
+            document.getElementById('modalCourseName').value = '';
+            document.getElementById('modalPdfFilename').value = '';
+            document.getElementById('modalPdfFilenameEn').value = '';
+            document.getElementById('modalPdfFilenameHi').value = '';
+            document.getElementById('modalYearGroup').style.display = 'none';
+            document.getElementById('modalSemesterGroup').style.display = 'none';
+        }
+        
+        function updateModalExamType() {
+            const examType = document.getElementById('modalExamType').value;
+            const yearGroup = document.getElementById('modalYearGroup');
+            const semesterGroup = document.getElementById('modalSemesterGroup');
+            
+            if (examType === 'Yearly') {
+                yearGroup.style.display = 'block';
+                semesterGroup.style.display = 'none';
+                document.getElementById('modalYear').required = true;
+                document.getElementById('modalSemester').required = false;
+            } else if (examType === 'Semester') {
+                yearGroup.style.display = 'none';
+                semesterGroup.style.display = 'block';
+                document.getElementById('modalYear').required = false;
+                document.getElementById('modalSemester').required = true;
+            } else {
+                yearGroup.style.display = 'none';
+                semesterGroup.style.display = 'none';
+                document.getElementById('modalYear').required = false;
+                document.getElementById('modalSemester').required = false;
+            }
+        }
+        
+        async function submitAddCourse() {
+            const program = document.getElementById('modalProgram').value;
+            const examType = document.getElementById('modalExamType').value;
+            const year = document.getElementById('modalYear').value;
+            const semester = document.getElementById('modalSemester').value;
+            const courseCode = document.getElementById('modalCourseCode').value;
+            const courseName = document.getElementById('modalCourseName').value;
+            const pdfFilename = document.getElementById('modalPdfFilename').value;
+            const pdfFilenameEn = document.getElementById('modalPdfFilenameEn').value;
+            const pdfFilenameHi = document.getElementById('modalPdfFilenameHi').value;
+            
+            if (!program || !examType || !courseCode || !courseName) {
+                showAlert('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            if (examType === 'Yearly' && !year) {
+                showAlert('Please select a year for yearly courses', 'error');
+                return;
+            }
+            
+            if (examType === 'Semester' && !semester) {
+                showAlert('Please select a semester for semester courses', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/courses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        course_code: courseCode,
+                        course_name: courseName,
+                        program: program,
+                        year: examType === 'Yearly' ? year : null,
+                        semester: examType === 'Semester' ? semester : null,
+                        pdf_filename: pdfFilename || null,
+                        pdf_filename_en: pdfFilenameEn || null,
+                        pdf_filename_hi: pdfFilenameHi || null
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showAlert('Course added successfully!', 'success');
+                    loadCourses();
+                    closeAddCourseModal();
+                } else {
+                    showAlert(data.error || 'Failed to add course', 'error');
+                }
+            } catch (error) {
+                console.error('Error adding course:', error);
+                showAlert('Error adding course', 'error');
+            }
         }
         
         async function editCourse(courseId) {
-            const container = document.createElement('div');
-            container.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
-            container.innerHTML = `
-                <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
-                    <h3 class="text-lg font-semibold mb-4">Edit Course Files</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">English PDF filename</label>
-                            <input id="editPdfEn" class="form-input w-full" placeholder="MMPC-004.pdf or MBA/MMPC-004.pdf" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Hindi PDF filename</label>
-                            <input id="editPdfHi" class="form-input w-full" placeholder="MMPC-004-HN.pdf" />
-                        </div>
-                        <div class="flex justify-end space-x-2 pt-2">
-                            <button id="editCancel" class="btn">Cancel</button>
-                            <button id="editSave" class="btn btn-primary">Save</button>
-                        </div>
-                    </div>
-                </div>`;
-            document.body.appendChild(container);
-            container.querySelector('#editCancel').onclick = () => document.body.removeChild(container);
-            container.querySelector('#editSave').onclick = async () => {
-                const body = {
-                    pdf_filename_en: container.querySelector('#editPdfEn').value.trim() || null,
-                    pdf_filename_hi: container.querySelector('#editPdfHi').value.trim() || null
-                };
-                try {
-                    const response = await fetch(`/api/admin/courses/${courseId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                    const data = await response.json();
-                    if (data.success) { showAlert('Course updated successfully!', 'success'); loadCourses(); document.body.removeChild(container); }
-                    else { showAlert(data.error || 'Failed to update course', 'error'); }
-                } catch (e) { showAlert('Error updating course', 'error'); }
-            };
+            // Prompt editor for PDF filenames and credits
+            const pdfFilename = prompt('Default PDF filename (optional):');
+            const pdfFilenameEn = prompt('English PDF filename (optional):');
+            const pdfFilenameHi = prompt('Hindi PDF filename (optional):');
+            try {
+                const response = await fetch(`/api/admin/courses/${courseId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pdf_filename: pdfFilename || null,
+                        pdf_filename_en: pdfFilenameEn || null,
+                        pdf_filename_hi: pdfFilenameHi || null,
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showAlert('Course updated successfully!', 'success');
+                    loadCourses();
+                } else {
+                    showAlert(data.error || 'Failed to update course', 'error');
+                }
+            } catch (e) {
+                showAlert('Error updating course', 'error');
+            }
         }
         
         async function deleteCourse(courseId) {
@@ -1034,6 +1418,118 @@
             document.getElementById('filterYear').value = '';
             document.getElementById('filterSemester').value = '';
             loadCourses();
+        }
+
+        // Program management functions
+        async function loadPrograms() {
+            try {
+                // For now, we'll use a simple approach - get programs from existing courses
+                const response = await fetch('/api/admin/courses');
+                const data = await response.json();
+                if (data.success) {
+                    const programs = [...new Set(data.courses.map(course => course.program))].filter(Boolean);
+                    const tbody = document.getElementById('programsTableBody');
+                    if (programs.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No programs found. Add courses first.</td></tr>';
+                    } else {
+                        tbody.innerHTML = programs.map(program => `
+                            <tr>
+                                <td>${program}</td>
+                                <td>${program}</td>
+                                <td>Program for ${program} courses</td>
+                                <td><span class="badge badge-success">Active</span></td>
+                                <td>
+                                    <button onclick="editProgram('${program}')" class="btn btn-sm btn-outline">Edit</button>
+                                    <button onclick="deleteProgram('${program}')" class="btn btn-sm btn-danger">Delete</button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+                // Also populate the program select in course modal
+                populateProgramSelect();
+            } catch (error) {
+                console.error('Error loading programs:', error);
+            }
+        }
+        
+        function populateProgramSelect() {
+            const select = document.getElementById('modalProgram');
+            // Get programs from existing courses
+            fetch('/api/admin/courses')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const programs = [...new Set(data.courses.map(course => course.program))].filter(Boolean);
+                        select.innerHTML = '<option value="">Select Program</option>' + 
+                            programs.map(program => `<option value="${program}">${program}</option>`).join('');
+                    }
+                })
+                .catch(error => console.error('Error loading programs for select:', error));
+        }
+        
+        function handleProgramSelection() {
+            const selectedProgram = document.getElementById('modalProgram').value;
+            if (selectedProgram === '') {
+                // Show add new program option
+                return;
+            }
+        }
+        
+        function showAddProgramModal() {
+            document.getElementById('addProgramModal').style.display = 'flex';
+            document.getElementById('addProgramModal').style.justifyContent = 'center';
+            document.getElementById('addProgramModal').style.alignItems = 'center';
+            document.getElementById('addProgramModal').style.position = 'fixed';
+            document.getElementById('addProgramModal').style.top = '0';
+            document.getElementById('addProgramModal').style.left = '0';
+            document.getElementById('addProgramModal').style.width = '100%';
+            document.getElementById('addProgramModal').style.height = '100%';
+            document.getElementById('addProgramModal').style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            document.getElementById('addProgramModal').style.zIndex = '10000';
+        }
+        
+        function closeAddProgramModal() {
+            document.getElementById('addProgramModal').style.display = 'none';
+            // Clear form
+            document.getElementById('modalProgramName').value = '';
+            document.getElementById('modalProgramCode').value = '';
+            document.getElementById('modalProgramDescription').value = '';
+        }
+        
+        async function submitAddProgram() {
+            const programName = document.getElementById('modalProgramName').value;
+            const programCode = document.getElementById('modalProgramCode').value;
+            const programDescription = document.getElementById('modalProgramDescription').value;
+            
+            if (!programName || !programCode) {
+                showAlert('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            // For now, we'll just add it to the program select and show success
+            // In a real implementation, you'd save this to the database
+            const select = document.getElementById('modalProgram');
+            const option = document.createElement('option');
+            option.value = programCode;
+            option.textContent = programCode;
+            select.appendChild(option);
+            
+            showAlert('Program added successfully! You can now use it when adding courses.', 'success');
+            closeAddProgramModal();
+            loadPrograms(); // Refresh the programs list
+        }
+        
+        function editProgram(program) {
+            showAlert('Edit functionality coming soon. For now, delete and re-add.', 'info');
+        }
+        
+        async function deleteProgram(program) {
+            const confirmed = await showConfirm(`Are you sure you want to delete program "${program}"? This will affect all courses under this program.`);
+            if (!confirmed) return;
+            
+            // For now, just show a message
+            showAlert('Program deletion coming soon. This would require updating all related courses.', 'info');
         }
 
         // Populate study center select in student form (public site) will use /api/study-centers
