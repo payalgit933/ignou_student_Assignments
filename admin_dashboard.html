@@ -822,6 +822,8 @@
         
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize available programs array
+            window.availablePrograms = [];
             checkAdminAuth();
             setupNavigation();
             loadDashboardData();
@@ -1144,7 +1146,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         name: centerName, 
-                        code: centerCode, 
+                        center_code: centerCode, 
                         address: centerAddress 
                     })
                 });
@@ -1250,7 +1252,7 @@
         
         // Course management functions
         function showAddCourseModal() {
-            // Populate programs first
+            // Populate programs first and ensure it's up to date
             populateProgramSelect();
             
             document.getElementById('addCourseModal').style.display = 'flex';
@@ -1461,8 +1463,14 @@
                 .then(data => {
                     if (data.success) {
                         const programs = [...new Set(data.courses.map(course => course.program))].filter(Boolean);
+                        // Add any programs that were added in this session
+                        if (window.availablePrograms) {
+                            programs.push(...window.availablePrograms);
+                        }
+                        // Remove duplicates
+                        const uniquePrograms = [...new Set(programs)];
                         select.innerHTML = '<option value="">Select Program</option>' + 
-                            programs.map(program => `<option value="${program}">${program}</option>`).join('');
+                            uniquePrograms.map(program => `<option value="${program}">${program}</option>`).join('');
                     }
                 })
                 .catch(error => console.error('Error loading programs for select:', error));
@@ -1507,17 +1515,28 @@
                 return;
             }
             
-            // For now, we'll just add it to the program select and show success
-            // In a real implementation, you'd save this to the database
+            // Add the program to the dropdown immediately
             const select = document.getElementById('modalProgram');
             const option = document.createElement('option');
             option.value = programCode;
             option.textContent = programCode;
             select.appendChild(option);
             
+            // Also add to the programs list in memory for future use
+            if (!window.availablePrograms) {
+                window.availablePrograms = [];
+            }
+            window.availablePrograms.push(programCode);
+            
             showAlert('Program added successfully! You can now use it when adding courses.', 'success');
             closeAddProgramModal();
             loadPrograms(); // Refresh the programs list
+            
+            // Also refresh the program dropdown in course modal if it's open
+            const courseModal = document.getElementById('addCourseModal');
+            if (courseModal && courseModal.style.display !== 'none') {
+                populateProgramSelect();
+            }
         }
         
         function editProgram(program) {
