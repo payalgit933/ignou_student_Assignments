@@ -1291,11 +1291,16 @@
                 return;
             }
             
-            // For semester exam type, semester is required
+            // For semester exam type, semester is preferred. If not provided but Year is chosen, try Yearly fallback.
+            let useYearlyFallback = false;
             if (examType === 'Semester' && !semester) {
-                dropdownText.textContent = 'Please select a Semester first';
-                if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
-                return;
+                if (year) {
+                    useYearlyFallback = true;
+                } else {
+                    dropdownText.textContent = 'Please select a Semester first';
+                    if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
+                    return;
+                }
             }
             
             try {
@@ -1307,7 +1312,7 @@
                 params.append('program', program);
                 
                 // For yearly exams, include year parameter and semester = "Yearly"
-                if (examType === 'Yearly' && year) {
+                if ((examType === 'Yearly' && year) || useYearlyFallback) {
                     params.append('year', year);
                     params.append('semester', 'Yearly');
                 }
