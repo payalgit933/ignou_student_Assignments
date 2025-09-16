@@ -79,10 +79,10 @@ def index():
 def welcome():
     return send_from_directory('.', 'welcome.html')
 
-# Route to serve static files (PDFs, images, etc.)
-@app.route('/pdfs/<filename>')
+# Route to serve static files (PDFs, images, etc.) including nested paths
+@app.route('/pdfs/<path:filename>')
 def serve_pdf(filename):
-    return send_from_directory('.', filename)
+    return send_from_directory('pdfs', filename)
 
 @app.route('/images/<filename>')
 def serve_image(filename):
