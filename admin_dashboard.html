@@ -883,8 +883,8 @@
                     <h3 class="text-lg font-semibold mb-4">Add Course</h3>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Program</label>
-                            <select id="modalProgram" class="form-input w-full"></select>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Program (e.g., MBA, MCA)</label>
+                            <input id="modalProgramInput" class="form-input w-full" placeholder="Enter Program Code (e.g., MBA)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
@@ -937,22 +937,6 @@
                 </div>`;
             document.body.appendChild(container);
 
-            // Populate programs from backend
-            try {
-                const res = await fetch('/api/admin/programs');
-                const data = await res.json();
-                const sel = container.querySelector('#modalProgram');
-                sel.innerHTML = '';
-                if (data.success && data.programs?.length) {
-                    data.programs.forEach(p => {
-                        const opt = document.createElement('option');
-                        opt.value = p.program_code;
-                        opt.textContent = `${p.program_code} - ${p.program_name}`;
-                        sel.appendChild(opt);
-                    });
-                }
-            } catch {}
-
             // Toggle year/semester
             const trackSel = container.querySelector('#modalTrack');
             const yearWrap = container.querySelector('#modalYearWrap');
@@ -967,7 +951,7 @@
                 const body = {
                     course_code: container.querySelector('#modalCode').value.trim(),
                     course_name: container.querySelector('#modalName').value.trim(),
-                    program: container.querySelector('#modalProgram').value,
+                    program: container.querySelector('#modalProgramInput').value.trim(),
                 };
                 if (trackSel.value === 'Yearly') body.year = container.querySelector('#modalYear').value; else body.semester = container.querySelector('#modalSemester').value;
                 body.pdf_filename_en = container.querySelector('#modalPdfEn').value.trim() || null;
