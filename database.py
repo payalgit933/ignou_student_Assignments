@@ -185,8 +185,8 @@ class Database:
         if 'credits' not in course_columns:
             try:
                 cursor.execute("ALTER TABLE courses ADD COLUMN credits INTEGER")
-            except Exception:
-                pass
+        except Exception:
+            pass
         
         conn.commit()
         conn.close()
@@ -722,8 +722,8 @@ class Database:
                     query += " AND (semester = ? OR semester = '')"
                     params.append('Yearly')
                 else:
-                    query += ' AND semester = ?'
-                    params.append(semester)
+                query += ' AND semester = ?'
+                params.append(semester)
             
             if is_active is not None:
                 query += ' AND is_active = ?'
