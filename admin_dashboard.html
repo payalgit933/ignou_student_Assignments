@@ -594,8 +594,8 @@
                         </table>
                     </div>
                 </div>
-            </div>
-
+                    </div>
+                    
             <!-- Study Centers Section -->
             <div id="study-centers-section" class="section hidden">
                 <div class="card">
@@ -610,17 +610,12 @@
                                     <th>Code</th>
                                     <th>Name</th>
                                     <th>Address</th>
-                                    <th>City</th>
-                                    <th>State</th>
-                                    <th>Phone</th>
-                                    <th>Email</th>
-                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="centersTableBody">
                                 <tr>
-                                    <td colspan="9" class="text-center py-8 text-gray-500">Loading study centers...</td>
+                                    <td colspan="4" class="text-center py-8 text-gray-500">Loading study centers...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1085,15 +1080,6 @@
                             <td>${c.center_code}</td>
                             <td>${c.name}</td>
                             <td>${c.address}</td>
-                            <td>${c.city || ''}</td>
-                            <td>${c.state || ''}</td>
-                            <td>${c.phone || ''}</td>
-                            <td>${c.email || ''}</td>
-                            <td>
-                                <span class="status-badge ${c.is_active ? 'status-active' : 'status-inactive'}">
-                                    ${c.is_active ? 'Active' : 'Inactive'}
-                                </span>
-                            </td>
                             <td>
                                 <div class="flex space-x-2">
                                     <button onclick="editCenter(${c.id})" class="btn btn-primary text-xs">Edit</button>
