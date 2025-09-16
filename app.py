@@ -20,11 +20,7 @@ CASHFREE_APP_ID = os.getenv('CASHFREE_APP_ID', 'your_production_app_id')
 CASHFREE_SECRET_KEY = os.getenv('CASHFREE_SECRET_KEY', 'your_production_secret_key')
 CASHFREE_BASE_URL = "https://api.cashfree.com/pg/orders"  # Production URL
 
-# Debug: Print configuration status
-print(f"🔍 Cashfree Production Configuration:")
-print(f"   Base URL: {CASHFREE_BASE_URL}")
-print(f"   APP_ID: {'✅ Set' if CASHFREE_APP_ID != 'your_production_app_id' else '❌ Using placeholder'}")
-print(f"   SECRET_KEY: {'✅ Set' if CASHFREE_SECRET_KEY != 'your_production_secret_key' else '❌ Using placeholder'}")
+# Configuration loaded from environment variables
 
 # PhonePe sandbox URL
 PHONEPE_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay"
@@ -278,11 +274,7 @@ def test_cashfree_credentials():
             "Content-Type": "application/json"
         }
         
-        print(f"🧪 Testing Cashfree credentials...")
-        print(f"🧪 APP_ID: {CASHFREE_APP_ID}")
-        print(f"🧪 SECRET_KEY: {CASHFREE_SECRET_KEY[:10]}...{CASHFREE_SECRET_KEY[-10:]}")
-        print(f"🧪 API_URL: {CASHFREE_BASE_URL}")
-        print(f"🧪 Test payload: {test_payload}")
+        # Testing Cashfree credentials
         
         # Make test request
         response = requests.post(CASHFREE_BASE_URL, headers=headers, json=test_payload)
@@ -390,17 +382,7 @@ def initiate_payment():
         if not customer_phone or len(customer_phone.replace("+", "").replace("-", "").replace(" ", "")) < 10:
             customer_phone = "9334273197"
         
-        print(f"🔍 Payment data validation:")
-        print(f"   Student: {student_name}")
-        print(f"   Enrollment: {enrollment}")
-        print(f"   Programme Code: {programme_code}")
-        print(f"   Course Code: {course_code}")
-        print(f"   Study Center Code: {study_center_code}")
-        print(f"   Study Center Name: {study_center_name}")
-        print(f"   Email: {customer_email}")
-        print(f"   Phone: {customer_phone}")
-        print(f"   Amount: ₹{amount_rupees}")
-        print(f"   Order ID: {order_id}")
+        # Payment data validated
 
         payload = {
             "order_id": order_id,
@@ -425,43 +407,19 @@ def initiate_payment():
             "Content-Type": "application/json"
         }
 
-        print(f"🔍 Cashfree API Request:")
-        print(f"URL: {CASHFREE_BASE_URL}")
-        print(f"Headers: {headers}")
-        print(f"Payload: {payload}")
-        
         response = requests.post(CASHFREE_BASE_URL, headers=headers, json=payload)
-        
-        print(f"📡 Cashfree API Response:")
-        print(f"Status Code: {response.status_code}")
-        print(f"Response Headers: {dict(response.headers)}")
-        print(f"Response Text: {response.text}")
 
         if response.status_code != 200:
             return jsonify({"success": False, "error": f"Cashfree API error: {response.text}"}), 400
 
         try:
             res_data = response.json()
-            print(f"📊 Parsed Response Data: {res_data}")
             
             # Check for payment_session_id to construct payment URL
             if "payment_session_id" in res_data:
                 payment_session_id = res_data["payment_session_id"]
-                print(f"✅ Found payment_session_id: {payment_session_id}")
-                
-                # Construct the payment URL using the session ID
                 payment_url = f"https://payments.cashfree.com/order/#/{payment_session_id}"
-                print(f"✅ Constructed payment URL: {payment_url}")
-                
-                # Add warning about potential account issues
-                print(f"⚠️  If payment page shows error, check Cashfree dashboard for:")
-                print(f"   - KYC completion status")
-                print(f"   - Business verification")
-                print(f"   - Bank account verification")
-                print(f"   - Account activation status")
-                
             else:
-                print(f"❌ No payment_session_id found in response. Available keys: {list(res_data.keys())}")
                 return jsonify({
                     "success": False, 
                     "error": f"Payment session ID not found in response. Available fields: {list(res_data.keys())}. Response: {res_data}"
@@ -499,7 +457,6 @@ def initiate_payment():
             })
             
         except json.JSONDecodeError as e:
-            print(f"❌ Failed to parse JSON response: {e}")
             return jsonify({
                 "success": False, 
                 "error": f"Invalid JSON response from Cashfree: {response.text}"
@@ -514,7 +471,6 @@ def payment_success():
     try:
         # Get order ID from query parameters (Cashfree sends this)
         order_id = request.args.get("order_id")
-        print(f"🔍 Payment success request - Order ID: {order_id}")
         
         if not order_id:
             return "Payment verification failed. Order ID not found."
@@ -531,22 +487,14 @@ def payment_success():
         order_url = f"https://api.cashfree.com/pg/orders/{order_id}"
         response = requests.get(order_url, headers=headers)
         
-        print(f"📡 Cashfree order status response: {response.status_code}")
-        print(f"📡 Response: {response.text}")
-        
         if response.status_code != 200:
             return f"Payment verification failed. API error: {response.text}"
         
         order_data = response.json()
         order_status = order_data.get("order_status", "UNKNOWN")
         
-        print(f"📊 Order status: {order_status}")
-        
         if order_status != "PAID":
             return f"Payment verification failed. Order status: {order_status}. Please contact support."
-        
-        # Payment is verified as successful
-        print(f"✅ Payment verified as successful for order: {order_id}")
         
         # Store payment data in session for use in index.html
         session['payment_success'] = True
@@ -587,7 +535,6 @@ def payment_success():
         return redirect(f"/?payment_success=true&order_id={order_id}")
         
     except Exception as e:
-        print(f"❌ Error in payment success: {str(e)}")
         return f"Error processing payment success: {str(e)}"
 
 # Route to check payment status
@@ -610,21 +557,17 @@ def payment_callback():
     try:
         # Cashfree sends webhook data
         data = request.json
-        print(f"📡 Cashfree webhook received: {data}")
         
         # Extract order information
         order_id = data.get("order_id")
         order_status = data.get("order_status")
         
         if order_status == "PAID":
-            print(f"✅ Payment confirmed via webhook for order: {order_id}")
             return jsonify({"status": "success", "message": "Payment received. Allow PDF download."})
         else:
-            print(f"❌ Payment not completed. Status: {order_status}")
             return jsonify({"status": "failed", "message": "Payment not completed"})
             
     except Exception as e:
-        print(f"❌ Webhook processing error: {str(e)}")
         return jsonify({"status": "error", "message": "Webhook processing failed"}), 500
 
 @app.route("/payment-status", methods=["POST"])
@@ -824,11 +767,9 @@ def get_pdf(course_code):
         if not os.path.exists(pdf_file):
             return jsonify({"success": False, "error": f"PDF file not found for course {course_code}"}), 404
 
-        print(f"✅ Serving PDF for course {course_code} to paid user")
         return send_file(pdf_file, as_attachment=False, mimetype='application/pdf')
         
     except Exception as e:
-        print(f"❌ Error serving PDF for course {course_code}: {str(e)}")
         return jsonify({"success": False, "error": "Internal server error"}), 500
 
 # Admin routes
@@ -1141,6 +1082,7 @@ def resolve_course_material(course_code):
         return jsonify({"success": True, "pdf_path": pdf_path})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
 # Admin study centers management
 @app.route("/api/admin/study-centers")
 @require_admin_auth

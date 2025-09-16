@@ -185,8 +185,8 @@ class Database:
         if 'credits' not in course_columns:
             try:
                 cursor.execute("ALTER TABLE courses ADD COLUMN credits INTEGER")
-        except Exception:
-            pass
+            except Exception:
+                pass
         
         conn.commit()
         conn.close()
