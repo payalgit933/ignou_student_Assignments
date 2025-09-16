@@ -1454,7 +1454,13 @@
                 let attached = false;
                 try {
                     const medium = (document.querySelector('input[name="mediumSelection"]:checked')?.value || '').toLowerCase();
-                    const res = await fetch(`/api/course-material/${encodeURIComponent(courseName)}?medium=${encodeURIComponent(medium)}`);
+                    // Prefer a proper course code token if courseName contains extra text
+                    let courseCodeForApi = courseName;
+                    const match = String(courseName).match(/[A-Z]{2,}[-][0-9]{2,}/);
+                    if (match && match[0]) {
+                        courseCodeForApi = match[0];
+                    }
+                    const res = await fetch(`/api/course-material/${encodeURIComponent(courseCodeForApi)}?medium=${encodeURIComponent(medium)}`);
                     const data = await res.json();
                     if (data.success && data.pdf_path) {
                         console.log('Resolved course material path:', data.pdf_path);
@@ -1862,11 +1868,9 @@
                 const amount = selectedCourses.length;
                 
                 // Show payment confirmation
+                // Show modal confirm instead of native prompt
                 const confirmPayment = await showConfirm(`Selected Courses: ${selectedCourses.join(', ')}\nAmount: ₹${amount}\nStudent: ${studentName}\nEnrollment: ${enrollmentNumber}\n\nProceed with payment?`);
-                
-                if (!confirmPayment) {
-                    return;
-                }
+                if (!confirmPayment) return;
                 
                 // Show loading state
                 const submitButton = document.querySelector('button[type="submit"]');
