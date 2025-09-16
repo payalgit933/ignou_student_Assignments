@@ -1450,32 +1450,25 @@
                 generatedPages.forEach(page => mergedPdf.addPage(page));
                 console.log('Generated PDF pages added to merged document');
                 
-                // Try to attach a local PDF by course code (works offline like working/index.html)
-                const pdfCandidates = [
-                    `pdfs/MBA/${courseName}.pdf`,
-                    `pdfs/${courseName}.pdf`,
-                ];
+                // Resolve material path via backend using medium
                 let attached = false;
-                for (const candidate of pdfCandidates) {
-                    try {
-                        console.log(`Attempting to fetch PDF: ${candidate}`);
-                        const resp = await fetch(candidate, { method: 'GET' });
-                        if (!resp.ok) {
-                            console.log(`Not found or inaccessible: ${candidate} → status ${resp.status}`);
-                            continue;
+                try {
+                    const medium = (document.querySelector('input[name="mediumSelection"]:checked')?.value || '').toLowerCase();
+                    const res = await fetch(`/api/course-material/${encodeURIComponent(courseName)}?medium=${encodeURIComponent(medium)}`);
+                    const data = await res.json();
+                    if (data.success && data.pdf_path) {
+                        console.log('Resolved course material path:', data.pdf_path);
+                        const resp = await fetch(data.pdf_path);
+                        if (resp.ok) {
+                            const subjectPDFBytes = await resp.arrayBuffer();
+                            const subjectPdf = await PDFDocument.load(subjectPDFBytes);
+                            const subjectPages = await mergedPdf.copyPages(subjectPdf, subjectPdf.getPageIndices());
+                            subjectPages.forEach(page => mergedPdf.addPage(page));
+                            attached = true;
                         }
-                        const subjectPDFBytes = await resp.arrayBuffer();
-                    console.log('Subject PDF bytes received:', subjectPDFBytes.byteLength);
-                    const subjectPdf = await PDFDocument.load(subjectPDFBytes);
-                    console.log('Subject PDF loaded, pages:', subjectPdf.getPageCount());
-                    const subjectPages = await mergedPdf.copyPages(subjectPdf, subjectPdf.getPageIndices());
-                    subjectPages.forEach(page => mergedPdf.addPage(page));
-                        console.log(`Successfully merged ${subjectPages.length} pages from ${candidate}`);
-                        attached = true;
-                        break;
-                    } catch (err) {
-                        console.warn(`Failed to attach from ${candidate}:`, err.message);
                     }
+                } catch (err) {
+                    console.warn('Failed to resolve/attach course material via API:', err.message);
                 }
                 if (!attached) {
                     console.log('No subject PDF attached; proceeding with generated PDF only');

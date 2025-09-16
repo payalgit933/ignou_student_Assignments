@@ -709,7 +709,7 @@
                             <td>${course.program}</td>
                             <td>${course.year}</td>
                             <td>${course.semester}</td>
-                            <td>${course.pdf_filename || 'Not set'}</td>
+                            <td>${course.pdf_filename_en || course.pdf_filename || course.pdf_filename_hi || 'Not set'}</td>
                             <td>
                                 <span class="status-badge ${course.is_active ? 'status-active' : 'status-inactive'}">
                                     ${course.is_active ? 'Active' : 'Inactive'}
@@ -931,7 +931,33 @@
         }
         
         async function editCourse(courseId) {
-            showAlert('Course editing feature coming soon!', 'success');
+            // Prompt editor for PDF filenames and credits
+            const pdfFilename = prompt('Default PDF filename (optional):');
+            const pdfFilenameEn = prompt('English PDF filename (optional):');
+            const pdfFilenameHi = prompt('Hindi PDF filename (optional):');
+            const creditsStr = prompt('Credits (optional):');
+            const credits = creditsStr ? parseInt(creditsStr, 10) : null;
+            try {
+                const response = await fetch(`/api/admin/courses/${courseId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pdf_filename: pdfFilename || null,
+                        pdf_filename_en: pdfFilenameEn || null,
+                        pdf_filename_hi: pdfFilenameHi || null,
+                        credits: credits
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showAlert('Course updated successfully!', 'success');
+                    loadCourses();
+                } else {
+                    showAlert(data.error || 'Failed to update course', 'error');
+                }
+            } catch (e) {
+                showAlert('Error updating course', 'error');
+            }
         }
         
         async function deleteCourse(courseId) {

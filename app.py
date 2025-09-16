@@ -1103,6 +1103,41 @@ def admin_add_program():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+# Resolve PDF filename(s) for a given course code and medium
+@app.route("/api/course-material/<course_code>")
+def resolve_course_material(course_code):
+    try:
+        medium = request.args.get('medium', '').lower()  # 'english' or 'hindi'
+        result = db.get_course_by_code(course_code)
+        if not result.get('success'):
+            return jsonify(result), 404
+        course = result['course']
+        # Priority: medium-specific > default
+        filename = None
+        if medium == 'hindi' and course.get('pdf_filename_hi'):
+            filename = course['pdf_filename_hi']
+        elif medium == 'english' and course.get('pdf_filename_en'):
+            filename = course['pdf_filename_en']
+        elif course.get('pdf_filename'):
+            filename = course['pdf_filename']
+        if not filename:
+            return jsonify({"success": False, "error": "No PDF filename configured for this course"}), 404
+        # Build path under ./pdfs. If filename contains a slash, use as-is relative to pdfs.
+        if '/' in filename or '\\' in filename:
+            pdf_path = f"pdfs/{filename}"
+        else:
+            # Try program subfolder, else root pdfs
+            program = course.get('program') or ''
+            program_folder = program.upper().replace('.', '').replace(' ', '')
+            # First try program folder
+            candidate = f"pdfs/{program_folder}/{filename}"
+            if os.path.exists(candidate):
+                pdf_path = candidate
+            else:
+                pdf_path = f"pdfs/{filename}"
+        return jsonify({"success": True, "pdf_path": pdf_path})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 # Admin study centers management
 @app.route("/api/admin/study-centers")
 @require_admin_auth

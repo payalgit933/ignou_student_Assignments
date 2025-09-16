@@ -830,6 +830,39 @@ class Database:
         except Exception as e:
             return {"success": False, "error": f"Failed to delete course: {str(e)}"}
 
+    def get_course_by_code(self, course_code):
+        """Fetch a single course by its code"""
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT id, course_code, course_name, program, year, semester,
+                       pdf_filename, pdf_filename_en, pdf_filename_hi, credits, is_active
+                FROM courses
+                WHERE course_code = ? LIMIT 1
+            ''', (course_code,))
+            row = cursor.fetchone()
+            conn.close()
+            if not row:
+                return {"success": False, "error": "Course not found"}
+            return {
+                "success": True,
+                "course": {
+                    "id": row[0],
+                    "course_code": row[1],
+                    "course_name": row[2],
+                    "program": row[3],
+                    "year": row[4],
+                    "semester": row[5],
+                    "pdf_filename": row[6],
+                    "pdf_filename_en": row[7],
+                    "pdf_filename_hi": row[8],
+                    "credits": row[9],
+                    "is_active": row[10]
+                }
+            }
+        except Exception as e:
+            return {"success": False, "error": f"Failed to get course: {str(e)}"}
     # Study center management methods
     def add_study_center(self, center_code, name, address, city=None, state=None, pincode=None, phone=None, email=None):
         """Add a new study center"""
