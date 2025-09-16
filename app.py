@@ -172,6 +172,18 @@ def get_profile():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+# Public API: list active study centers for the student form
+@app.route("/api/study-centers")
+def public_study_centers():
+    try:
+        result = db.get_study_centers(limit=1000, offset=0)
+        if not result.get("success"):
+            return jsonify(result), 500
+        centers = [c for c in result.get("centers", []) if c.get("is_active")]
+        return jsonify({"success": True, "centers": centers})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 # Protected route decorator
 def require_auth(f):
     def decorated_function(*args, **kwargs):
@@ -1006,15 +1018,18 @@ def admin_add_course():
         course_code = data.get("course_code")
         course_name = data.get("course_name")
         program = data.get("program")
-        year = data.get("year")
-        semester = data.get("semester")
+        year = data.get("year") or ""
+        semester = data.get("semester") or ""
         pdf_filename = data.get("pdf_filename")
         pdf_filename_en = data.get("pdf_filename_en")
         pdf_filename_hi = data.get("pdf_filename_hi")
         credits = data.get("credits")
         
-        if not all([course_code, course_name, program, year, semester]):
-            return jsonify({"success": False, "error": "All required fields must be provided"}), 400
+        if not all([course_code, course_name, program]):
+            return jsonify({"success": False, "error": "course_code, course_name and program are required"}), 400
+        # Require exactly one of year OR semester to be provided (non-empty)
+        if (year == "" and semester == "") or (year != "" and semester != ""):
+            return jsonify({"success": False, "error": "Provide either year or semester (not both)"}), 400
         
         result = db.add_course(
             course_code, course_name, program, year, semester, 

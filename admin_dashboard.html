@@ -875,24 +875,33 @@
         
         // Course management functions
         async function showAddCourseModal() {
-            // Simple prompt-based course addition for now
+            // Program first
+            const program = prompt('Select/Enter Program (e.g., MBA, MCA, BCA):');
+            if (!program) return;
+            // Choose track: Yearly or Semester
+            const track = prompt('Is this for Yearly or Semester? Type "Yearly" or "Semester"');
+            if (!track || (track !== 'Yearly' && track !== 'Semester')) {
+                alert('Please type exactly Yearly or Semester');
+                return;
+            }
+            let year = '';
+            let semester = '';
+            if (track === 'Yearly') {
+                year = prompt('Enter year (e.g., 1st Year, 2nd Year, 3rd Year, 4th Year):') || '';
+                if (!year) return;
+            } else {
+                semester = prompt('Enter semester (1st Semester, 2nd Semester, 3rd Semester, 4th Semester):') || '';
+                if (!semester) return;
+            }
             const courseCode = prompt('Enter course code (e.g., MMPC-004):');
             if (!courseCode) return;
-            
             const courseName = prompt('Enter course name:');
             if (!courseName) return;
-            
-            const program = prompt('Enter program (MBA, MCA, BCA, etc.):');
-            if (!program) return;
-            
-            const year = prompt('Enter year (e.g., 1st Year):');
-            if (!year) return;
-            
-            const semester = prompt('Enter semester (e.g., 1st Semester):');
-            if (!semester) return;
-            
-            const pdfFilename = prompt('Enter PDF filename (optional):');
-            
+            const creditsStr = prompt('Enter credits (optional, number):');
+            const credits = creditsStr ? parseInt(creditsStr, 10) : null;
+            const pdfFilename = prompt('Enter default PDF filename (optional):');
+            const pdfFilenameEn = prompt('Enter English PDF filename (optional):');
+            const pdfFilenameHi = prompt('Enter Hindi PDF filename (optional):');
             try {
                 const response = await fetch('/api/admin/courses', {
                     method: 'POST',
@@ -903,16 +912,18 @@
                         program: program,
                         year: year,
                         semester: semester,
-                        pdf_filename: pdfFilename || null
+                        credits: credits,
+                        pdf_filename: pdfFilename || null,
+                        pdf_filename_en: pdfFilenameEn || null,
+                        pdf_filename_hi: pdfFilenameHi || null
                     })
                 });
-                
                 const data = await response.json();
                 if (data.success) {
                     showAlert('Course added successfully!', 'success');
                     loadCourses();
                 } else {
-                    showAlert(data.error, 'error');
+                    showAlert(data.error || 'Failed to add course', 'error');
                 }
             } catch (error) {
                 showAlert('Error adding course', 'error');
@@ -956,6 +967,8 @@
             document.getElementById('filterSemester').value = '';
             loadCourses();
         }
+
+        // Populate study center select in student form (public site) will use /api/study-centers
     </script>
 </body>
 </html>
