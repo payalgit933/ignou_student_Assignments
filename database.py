@@ -722,8 +722,8 @@ class Database:
                     query += " AND (semester = ? OR semester = '')"
                     params.append('Yearly')
                 else:
-                query += ' AND semester = ?'
-                params.append(semester)
+                    query += ' AND semester = ?'
+                    params.append(semester)
             
             if is_active is not None:
                 query += ' AND is_active = ?'
