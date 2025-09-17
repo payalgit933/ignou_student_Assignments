@@ -1525,30 +1525,32 @@
         // Program management functions
         async function loadPrograms() {
             try {
-                // For now, we'll use a simple approach - get programs from existing courses
-                const response = await fetch('/api/admin/courses');
+                const response = await fetch('/api/admin/programs');
                 const data = await response.json();
-                if (data.success) {
-                    const programs = [...new Set(data.courses.map(course => course.program))].filter(Boolean);
-                    const tbody = document.getElementById('programsTableBody');
-                    if (programs.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No programs found. Add courses first.</td></tr>';
-                    } else {
-                        tbody.innerHTML = programs.map(program => `
-                            <tr>
-                                <td>${program}</td>
-                                <td>${program}</td>
-                                <td>Program for ${program} courses</td>
-                                <td><span class="badge badge-success">Active</span></td>
-                                <td>
-                                    <button onclick="editProgram('${program}')" class="btn btn-sm btn-outline">Edit</button>
-                                    <button onclick="deleteProgram('${program}')" class="btn btn-sm btn-danger">Delete</button>
-                                </td>
-                            </tr>
-                        `).join('');
-                    }
+                const tbody = document.getElementById('programsTableBody');
+                if (!tbody) return;
+                if (!data.success) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">Failed to load programs</td></tr>';
+                    return;
                 }
-                // Also populate the program select in course modal
+                const programs = data.programs || [];
+                if (programs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No programs found. Add a program.</td></tr>';
+                } else {
+                    tbody.innerHTML = programs.map(p => `
+                        <tr>
+                            <td>${p.program_name}</td>
+                            <td>${p.program_code}</td>
+                            <td>${p.description || ''}</td>
+                            <td><span class="status-badge ${p.is_active ? 'status-active' : 'status-inactive'}">${p.is_active ? 'Active' : 'Inactive'}</span></td>
+                            <td>
+                                <button onclick="editProgram('${p.program_code}')" class="btn btn-sm btn-outline">Edit</button>
+                                <button onclick="deleteProgram('${p.program_code}')" class="btn btn-sm btn-danger">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+                // Populate the program select in course modal
                 populateProgramSelect();
             } catch (error) {
                 console.error('Error loading programs:', error);
@@ -1557,23 +1559,15 @@
         
         function populateProgramSelect() {
             const select = document.getElementById('modalProgram');
-            // Get programs from existing courses
-            fetch('/api/admin/courses')
-                .then(response => response.json())
+            fetch('/api/admin/programs')
+                .then(r => r.json())
                 .then(data => {
-                    if (data.success) {
-                        const programs = [...new Set(data.courses.map(course => course.program))].filter(Boolean);
-                        // Add any programs that were added in this session
-                        if (window.availablePrograms) {
-                            programs.push(...window.availablePrograms);
-                        }
-                        // Remove duplicates
-                        const uniquePrograms = [...new Set(programs)];
-                        select.innerHTML = '<option value="">Select Program</option>' + 
-                            uniquePrograms.map(program => `<option value="${program}">${program}</option>`).join('');
-                    }
+                    if (!data.success) return;
+                    const programs = data.programs || [];
+                    select.innerHTML = '<option value="">Select Program</option>' +
+                        programs.map(p => `<option value="${p.program_code}">${p.program_code} — ${p.program_name}</option>`).join('');
                 })
-                .catch(error => console.error('Error loading programs for select:', error));
+                .catch(err => console.error('Error loading programs for select:', err));
         }
         
         function handleProgramSelection() {
@@ -1609,33 +1603,28 @@
             const programName = document.getElementById('modalProgramName').value;
             const programCode = document.getElementById('modalProgramCode').value;
             const programDescription = document.getElementById('modalProgramDescription').value;
-            
             if (!programName || !programCode) {
                 showAlert('Please fill in all required fields', 'error');
                 return;
             }
-            
-            // Add the program to the dropdown immediately
-            const select = document.getElementById('modalProgram');
-            const option = document.createElement('option');
-            option.value = programCode;
-            option.textContent = programCode;
-            select.appendChild(option);
-            
-            // Also add to the programs list in memory for future use
-            if (!window.availablePrograms) {
-                window.availablePrograms = [];
-            }
-            window.availablePrograms.push(programCode);
-            
-            showAlert('Program added successfully! You can now use it when adding courses.', 'success');
-            closeAddProgramModal();
-            loadPrograms(); // Refresh the programs list
-            
-            // Also refresh the program dropdown in course modal if it's open
-            const courseModal = document.getElementById('addCourseModal');
-            if (courseModal && courseModal.style.display !== 'none') {
-                populateProgramSelect();
+            try {
+                const res = await fetch('/api/admin/programs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ program_code: programCode, program_name: programName, description: programDescription })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showAlert('Program added successfully!', 'success');
+                    closeAddProgramModal();
+                    await loadPrograms();
+                    // Refresh course modal select if open
+                    populateProgramSelect();
+                } else {
+                    showAlert(data.error || 'Failed to add program', 'error');
+                }
+            } catch (e) {
+                showAlert('Error adding program', 'error');
             }
         }
         
