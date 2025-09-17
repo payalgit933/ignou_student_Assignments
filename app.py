@@ -1116,10 +1116,16 @@ def resolve_course_material(course_code):
                     return web_path
             return None
 
-        # Try medium-specific first, then default
-        pdf_path = try_resolve_paths(filename_primary) or try_resolve_paths(filename_fallback)
-        if not pdf_path:
-            return jsonify({"success": False, "error": "No PDF found for selected medium or default"}), 404
+        # When a specific medium is selected, require that medium's PDF only
+        if medium in ('english', 'hindi'):
+            pdf_path = try_resolve_paths(filename_primary)
+            if not pdf_path:
+                return jsonify({"success": False, "error": f"No {medium} PDF found for this course"}), 404
+        else:
+            # No medium specified: try medium-specific then default
+            pdf_path = try_resolve_paths(filename_primary) or try_resolve_paths(filename_fallback)
+            if not pdf_path:
+                return jsonify({"success": False, "error": "No PDF found for selected course"}), 404
         return jsonify({"success": True, "pdf_path": pdf_path})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
