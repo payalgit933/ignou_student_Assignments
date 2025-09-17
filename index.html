@@ -1418,9 +1418,9 @@
                 if (year) {
                     useYearlyFallback = true;
                 } else {
-                    dropdownText.textContent = 'Please select a Semester first';
-                    if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
-                    return;
+                dropdownText.textContent = 'Please select a Semester first';
+                if (display) display.innerHTML = '<small class="text-gray-600">Selected courses will appear here</small>';
+                return;
                 }
             }
             
@@ -1593,11 +1593,11 @@
                         console.log('Resolved course material path:', data.pdf_path);
                         const resp = await fetch(data.pdf_path);
                         if (resp.ok) {
-                            const subjectPDFBytes = await resp.arrayBuffer();
-                            const subjectPdf = await PDFDocument.load(subjectPDFBytes);
-                            const subjectPages = await mergedPdf.copyPages(subjectPdf, subjectPdf.getPageIndices());
-                            subjectPages.forEach(page => mergedPdf.addPage(page));
-                            attached = true;
+                        const subjectPDFBytes = await resp.arrayBuffer();
+                    const subjectPdf = await PDFDocument.load(subjectPDFBytes);
+                    const subjectPages = await mergedPdf.copyPages(subjectPdf, subjectPdf.getPageIndices());
+                    subjectPages.forEach(page => mergedPdf.addPage(page));
+                        attached = true;
                             console.log(`Successfully attached ${subjectPages.length} pages from ${medium} PDF`);
                         } else {
                             attachmentError = `Failed to fetch PDF: ${resp.status} ${resp.statusText}`;
@@ -1614,7 +1614,7 @@
                     if (attachmentError) {
                         console.log(`No subject PDF attached for ${courseName}: ${attachmentError}`);
                     } else {
-                        console.log('No subject PDF attached; proceeding with generated PDF only');
+                    console.log('No subject PDF attached; proceeding with generated PDF only');
                     }
                 }
                 
