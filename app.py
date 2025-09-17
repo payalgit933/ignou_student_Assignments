@@ -1058,10 +1058,29 @@ def admin_add_program():
 def resolve_course_material(course_code):
     try:
         medium = request.args.get('medium', '').lower()  # 'english' or 'hindi'
-        result = db.get_course_by_code(course_code)
-        if not result.get('success'):
-            return jsonify(result), 404
-        course = result['course']
+        # Support duplicates: fetch all rows for this code and pick best match
+        multi = getattr(db, 'get_courses_by_code_all', None)
+        courses_list = []
+        if callable(multi):
+            res_all = db.get_courses_by_code_all(course_code)
+            if res_all.get('success'):
+                courses_list = res_all.get('courses', [])
+        if not courses_list:
+            single = db.get_course_by_code(course_code)
+            if not single.get('success'):
+                return jsonify(single), 404
+            courses_list = [single['course']]
+
+        # Choose course row based on medium-specific availability
+        chosen = None
+        if medium == 'hindi':
+            chosen = next((c for c in courses_list if c.get('pdf_filename_hi')), None)
+        elif medium == 'english':
+            chosen = next((c for c in courses_list if c.get('pdf_filename_en')), None)
+        if not chosen:
+            chosen = next((c for c in courses_list if c.get('pdf_filename')), courses_list[0])
+
+        course = chosen
         # Priority: medium-specific > default
         filename = None
         if medium == 'hindi' and course.get('pdf_filename_hi'):
