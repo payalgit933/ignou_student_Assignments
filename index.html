@@ -1612,10 +1612,17 @@
                 
                 if (!attached) {
                     if (attachmentError) {
-                        console.log(`No subject PDF attached for ${courseName}: ${attachmentError}`);
+                        console.warn(`⚠️ No subject PDF attached for ${courseName}: ${attachmentError}`);
+                        // Show user-friendly message
+                        const errorMsg = document.createElement('div');
+                        errorMsg.className = 'bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4';
+                        errorMsg.innerHTML = `⚠️ Course material PDF not found for ${courseName}. Assignment generated without course material.`;
+                        document.querySelector('.form-section').insertBefore(errorMsg, document.querySelector('.form-section').firstChild);
                     } else {
-                    console.log('No subject PDF attached; proceeding with generated PDF only');
+                        console.log('No subject PDF attached; proceeding with generated PDF only');
                     }
+                } else {
+                    console.log(`✅ Successfully attached course material for ${courseName}`);
                 }
                 
                 // Save the merged PDF

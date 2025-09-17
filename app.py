@@ -1116,16 +1116,33 @@ def resolve_course_material(course_code):
                     return web_path
             return None
 
-        # When a specific medium is selected, require that medium's PDF only
-        if medium in ('english', 'hindi'):
+        # Always try to find a PDF - prioritize medium-specific, then fallback to default
+        pdf_path = None
+        
+        # First try: medium-specific PDF if medium is selected
+        if medium in ('english', 'hindi') and filename_primary:
             pdf_path = try_resolve_paths(filename_primary)
-            if not pdf_path:
-                return jsonify({"success": False, "error": f"No {medium} PDF found for this course"}), 404
-        else:
-            # No medium specified: try medium-specific then default
-            pdf_path = try_resolve_paths(filename_primary) or try_resolve_paths(filename_fallback)
-            if not pdf_path:
-                return jsonify({"success": False, "error": "No PDF found for selected course"}), 404
+            print(f"DEBUG: Medium {medium} specific PDF search: {filename_primary} -> {pdf_path}")
+        
+        # Second try: default PDF if medium-specific not found
+        if not pdf_path and filename_fallback:
+            pdf_path = try_resolve_paths(filename_fallback)
+            print(f"DEBUG: Fallback to default PDF: {filename_fallback} -> {pdf_path}")
+        
+        # Third try: any available PDF from the course (for backward compatibility)
+        if not pdf_path:
+            all_filenames = [f for f in [filename_primary, filename_fallback] if f]
+            for filename in all_filenames:
+                pdf_path = try_resolve_paths(filename)
+                if pdf_path:
+                    print(f"DEBUG: Found PDF with filename: {filename} -> {pdf_path}")
+                    break
+        
+        if not pdf_path:
+            return jsonify({
+                "success": False, 
+                "error": f"No PDF found for course {course_code}. Please ensure PDF files are uploaded in uploads/{medium}/ or pdfs/ directory."
+            }), 404
         return jsonify({"success": True, "pdf_path": pdf_path})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
