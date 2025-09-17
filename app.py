@@ -75,10 +75,19 @@ def index():
 def welcome():
     return send_from_directory('.', 'welcome.html')
 
+# Ensure uploads directory structure exists
+os.makedirs(os.path.join('uploads', 'english'), exist_ok=True)
+os.makedirs(os.path.join('uploads', 'hindi'), exist_ok=True)
+
 # Route to serve static files (PDFs, images, etc.) including nested paths
 @app.route('/pdfs/<path:filename>')
 def serve_pdf(filename):
     return send_from_directory('pdfs', filename)
+
+# Route to serve uploaded files (English/Hindi)
+@app.route('/uploads/<path:filename>')
+def serve_upload(filename):
+    return send_from_directory('uploads', filename)
 
 @app.route('/images/<filename>')
 def serve_image(filename):
@@ -1066,20 +1075,79 @@ def resolve_course_material(course_code):
         # Ensure .pdf extension if missing
         if '.' not in os.path.basename(filename):
             filename = filename + ".pdf"
-        # Build path under ./pdfs. If filename contains a slash, use as-is relative to pdfs.
-        if '/' in filename or '\\' in filename:
-            pdf_path = f"/pdfs/{filename}"
-        else:
-            # Try program subfolder, else root pdfs
+        # Prefer uploads/<medium>/... if available
+        pdf_path = None
+        if medium in ('english', 'hindi'):
             program = course.get('program') or ''
             program_folder = program.upper().replace('.', '').replace(' ', '')
-            # First try program folder
-            candidate = os.path.join('pdfs', program_folder, filename)
-            if os.path.exists(candidate):
-                pdf_path = f"/pdfs/{program_folder}/{filename}"
-            else:
+            upload_candidate_program = os.path.join('uploads', medium, program_folder, filename)
+            upload_candidate_root = os.path.join('uploads', medium, filename)
+            if os.path.exists(upload_candidate_program):
+                pdf_path = f"/uploads/{medium}/{program_folder}/{filename}"
+            elif os.path.exists(upload_candidate_root):
+                pdf_path = f"/uploads/{medium}/{filename}"
+        # If medium explicitly selected, require uploads path; otherwise allow legacy pdfs fallback
+        if not pdf_path:
+            if medium in ('english', 'hindi'):
+                return jsonify({"success": False, "error": "No uploaded PDF found for selected medium"}), 404
+            # Legacy fallback when no medium provided
+            if '/' in filename or '\\' in filename:
                 pdf_path = f"/pdfs/{filename}"
+            else:
+                program = course.get('program') or ''
+                program_folder = program.upper().replace('.', '').replace(' ', '')
+                candidate = os.path.join('pdfs', program_folder, filename)
+                if os.path.exists(candidate):
+                    pdf_path = f"/pdfs/{program_folder}/{filename}"
+                else:
+                    pdf_path = f"/pdfs/{filename}"
         return jsonify({"success": True, "pdf_path": pdf_path})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Admin uploads management
+@app.route('/api/admin/uploads', methods=['POST'])
+@require_admin_auth
+def admin_upload_file():
+    try:
+        medium = (request.args.get('medium') or '').lower()
+        if medium not in ('english', 'hindi'):
+            return jsonify({"success": False, "error": "medium must be 'english' or 'hindi'"}), 400
+        if 'file' not in request.files:
+            return jsonify({"success": False, "error": "No file part in the request"}), 400
+        f = request.files['file']
+        # Optional subfolder (e.g., program code)
+        subfolder = (request.form.get('subfolder') or '').strip().replace('..', '').replace('\\', '/').strip('/')
+        dest_dir = os.path.join('uploads', medium, subfolder) if subfolder else os.path.join('uploads', medium)
+        os.makedirs(dest_dir, exist_ok=True)
+        filename = f.filename
+        if not filename:
+            return jsonify({"success": False, "error": "Invalid filename"}), 400
+        save_path = os.path.join(dest_dir, filename)
+        f.save(save_path)
+        public_path = f"/uploads/{medium}/{subfolder + '/' if subfolder else ''}{filename}"
+        return jsonify({"success": True, "path": public_path})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/admin/uploads', methods=['GET'])
+@require_admin_auth
+def admin_list_uploads():
+    try:
+        medium = (request.args.get('medium') or '').lower()
+        if medium not in ('english', 'hindi'):
+            return jsonify({"success": False, "error": "medium must be 'english' or 'hindi'"}), 400
+        base_dir = os.path.join('uploads', medium)
+        files = []
+        for root, _, filenames in os.walk(base_dir):
+            for name in filenames:
+                rel = os.path.relpath(os.path.join(root, name), base_dir).replace('\\', '/')
+                files.append({
+                    'name': name,
+                    'relative_path': rel,
+                    'public_url': f"/uploads/{medium}/{rel}"
+                })
+        return jsonify({"success": True, "files": files})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 

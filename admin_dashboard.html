@@ -372,6 +372,14 @@
                 <span>Study Centers</span>
             </a>
             
+            <a href="#" class="nav-item" data-section="uploads">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12V4m0 0l-4 4m4-4l4 4"/>
+                </svg>
+                <span>Uploads</span>
+            </a>
+            
             <a href="#" class="nav-item" data-section="analytics">
                 <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
@@ -667,6 +675,52 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Uploads Section -->
+            <div id="uploads-section" class="section hidden">
+                <div class="card">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold">Manage Uploads</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Medium</label>
+                            <select id="uploadMedium" class="w-full" onchange="listUploads()">
+                                <option value="english">English</option>
+                                <option value="hindi">Hindi</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Subfolder (optional)</label>
+                            <input id="uploadSubfolder" class="w-full" placeholder="e.g., MBA" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Select PDF</label>
+                            <input id="uploadFile" type="file" accept="application/pdf" class="w-full" />
+                        </div>
+                    </div>
+                    <div class="mb-6">
+                        <button onclick="submitUpload()" class="btn btn-primary">Upload PDF</button>
+                        <button onclick="listUploads()" class="btn btn-secondary" style="margin-left:8px;">Refresh List</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Filename</th>
+                                    <th>Relative Path</th>
+                                    <th>URL</th>
+                                </tr>
+                            </thead>
+                            <tbody id="uploadsTableBody">
+                                <tr>
+                                    <td colspan="3" class="text-center py-8 text-gray-500">Select a medium to list files...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -877,6 +931,7 @@
                 'programs': 'Programs',
                 'study-centers': 'Study Centers',
                 'analytics': 'Analytics',
+                'uploads': 'Uploads',
                 'settings': 'Settings'
             };
             
@@ -901,6 +956,9 @@
                     break;
                 case 'analytics':
                     loadAnalytics();
+                    break;
+                case 'uploads':
+                    listUploads();
                     break;
             }
         }
@@ -1234,6 +1292,62 @@
         
         function saveSettings() {
             showAlert('Settings saved successfully!', 'success');
+        }
+
+        async function submitUpload() {
+            try {
+                const medium = document.getElementById('uploadMedium').value;
+                const subfolder = document.getElementById('uploadSubfolder').value.trim();
+                const fileInput = document.getElementById('uploadFile');
+                if (!fileInput.files || !fileInput.files[0]) {
+                    showAlert('Please select a PDF file to upload.', 'error');
+                    return;
+                }
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                if (subfolder) formData.append('subfolder', subfolder);
+                const res = await fetch(`/api/admin/uploads?medium=${encodeURIComponent(medium)}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showAlert('File uploaded successfully!', 'success');
+                    listUploads();
+                } else {
+                    showAlert(data.error || 'Upload failed', 'error');
+                }
+            } catch (e) {
+                showAlert('Upload error', 'error');
+            }
+        }
+
+        async function listUploads() {
+            try {
+                const medium = document.getElementById('uploadMedium').value;
+                const res = await fetch(`/api/admin/uploads?medium=${encodeURIComponent(medium)}`);
+                const data = await res.json();
+                const tbody = document.getElementById('uploadsTableBody');
+                if (!tbody) return;
+                if (data.success) {
+                    if (!data.files || data.files.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">No files uploaded yet.</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = data.files.map(f => `
+                        <tr>
+                            <td>${f.name}</td>
+                            <td>${f.relative_path}</td>
+                            <td><a href="${f.public_url}" target="_blank">${f.public_url}</a></td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">Failed to load files.</td></tr>';
+                }
+            } catch (e) {
+                const tbody = document.getElementById('uploadsTableBody');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">Error loading files.</td></tr>';
+            }
         }
         
         // Course management functions

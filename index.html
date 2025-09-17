@@ -930,17 +930,12 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="required">Medium Selection</label>
-                        <div class="radio-group">
-                            <div class="radio-item">
-                                <input type="radio" id="mediumEnglish" name="mediumSelection" value="English" required>
-                                <label for="mediumEnglish">English</label>
-                            </div>
-                            <div class="radio-item">
-                                <input type="radio" id="mediumHindi" name="mediumSelection" value="Hindi" required>
-                                <label for="mediumHindi">Hindi</label>
-                            </div>
-                        </div>
+                        <label class="required" for="mediumSelection">Medium Selection</label>
+                        <select id="mediumSelection" name="mediumSelection" required>
+                            <option value="">Select Medium</option>
+                            <option value="English">English</option>
+                            <option value="Hindi">Hindi</option>
+                        </select>
                     </div>
                     <div class="form-group">
                          <label for="examType" class="required">Exam Type Selection</label>
@@ -1578,7 +1573,7 @@
                 // Resolve material path via backend using medium
                 let attached = false;
                 try {
-                    const medium = (document.querySelector('input[name="mediumSelection"]:checked')?.value || '').toLowerCase();
+                    const medium = (document.getElementById('mediumSelection')?.value || '').toLowerCase();
                     // Prefer a proper course code token if courseName contains extra text
                     let courseCodeForApi = courseName;
                     const match = String(courseName).match(/[A-Z]{2,}[-][0-9]{2,}/);
