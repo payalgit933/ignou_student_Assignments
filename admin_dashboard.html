@@ -792,14 +792,17 @@
                 <div class="form-group">
                     <label for="modalPdfFilename">Default PDF Filename (optional)</label>
                     <input type="text" id="modalPdfFilename" placeholder="e.g., MMPC-004.pdf">
+                    <small class="text-gray-500">Used as fallback when medium-specific PDF is not available</small>
                 </div>
                 <div class="form-group">
                     <label for="modalPdfFilenameEn">English PDF Filename (optional)</label>
                     <input type="text" id="modalPdfFilenameEn" placeholder="e.g., MMPC-004-EN.pdf">
+                    <small class="text-gray-500">PDF file for English medium students</small>
                 </div>
                 <div class="form-group">
                     <label for="modalPdfFilenameHi">Hindi PDF Filename (optional)</label>
                     <input type="text" id="modalPdfFilenameHi" placeholder="e.g., MMPC-004-HI.pdf">
+                    <small class="text-gray-500">PDF file for Hindi medium students</small>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1099,7 +1102,14 @@
                             <td>${course.program}</td>
                             <td>${course.year}</td>
                             <td>${course.semester}</td>
-                            <td>${course.pdf_filename_en || course.pdf_filename || course.pdf_filename_hi || 'Not set'}</td>
+                            <td>
+                                <div class="text-sm">
+                                    ${course.pdf_filename_en ? `<span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-1">EN</span>` : ''}
+                                    ${course.pdf_filename_hi ? `<span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-xs mr-1">HI</span>` : ''}
+                                    ${course.pdf_filename ? `<span class="inline-block bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs mr-1">DEF</span>` : ''}
+                                    ${!course.pdf_filename_en && !course.pdf_filename_hi && !course.pdf_filename ? '<span class="text-red-500">Not set</span>' : ''}
+                                </div>
+                            </td>
                             <td>
                                 <span class="status-badge ${course.is_active ? 'status-active' : 'status-inactive'}">
                                     ${course.is_active ? 'Active' : 'Inactive'}
