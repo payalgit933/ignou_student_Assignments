@@ -1082,44 +1082,44 @@ def resolve_course_material(course_code):
 
         course = chosen
         # Priority: medium-specific > default
-        filename = None
+        filename_primary = None
         if medium == 'hindi' and course.get('pdf_filename_hi'):
-            filename = course['pdf_filename_hi']
+            filename_primary = course['pdf_filename_hi']
         elif medium == 'english' and course.get('pdf_filename_en'):
-            filename = course['pdf_filename_en']
-        elif course.get('pdf_filename'):
-            filename = course['pdf_filename']
-        if not filename:
-            return jsonify({"success": False, "error": "No PDF filename configured for this course"}), 404
-        # Ensure .pdf extension if missing
-        if '.' not in os.path.basename(filename):
-            filename = filename + ".pdf"
-        # Prefer uploads/<medium>/... if available
-        pdf_path = None
-        if medium in ('english', 'hindi'):
+            filename_primary = course['pdf_filename_en']
+        # Fallback filename from default
+        filename_fallback = course.get('pdf_filename')
+
+        def ensure_pdf_ext(name: str) -> str:
+            base = os.path.basename(name)
+            return name if ('.' in base) else f"{name}.pdf"
+
+        def try_resolve_paths(file_name: str) -> str:
+            if not file_name:
+                return None
+            file_name = ensure_pdf_ext(file_name)
             program = course.get('program') or ''
             program_folder = program.upper().replace('.', '').replace(' ', '')
-            upload_candidate_program = os.path.join('uploads', medium, program_folder, filename)
-            upload_candidate_root = os.path.join('uploads', medium, filename)
-            if os.path.exists(upload_candidate_program):
-                pdf_path = f"/uploads/{medium}/{program_folder}/{filename}"
-            elif os.path.exists(upload_candidate_root):
-                pdf_path = f"/uploads/{medium}/{filename}"
-        # If medium explicitly selected, require uploads path; otherwise allow legacy pdfs fallback
-        if not pdf_path:
+            candidates = []
+            # uploads/<medium>/Program/filename and uploads/<medium>/filename when medium is specified
             if medium in ('english', 'hindi'):
-                return jsonify({"success": False, "error": "No uploaded PDF found for selected medium"}), 404
-            # Legacy fallback when no medium provided
-            if '/' in filename or '\\' in filename:
-                pdf_path = f"/pdfs/{filename}"
-            else:
-                program = course.get('program') or ''
-                program_folder = program.upper().replace('.', '').replace(' ', '')
-                candidate = os.path.join('pdfs', program_folder, filename)
-                if os.path.exists(candidate):
-                    pdf_path = f"/pdfs/{program_folder}/{filename}"
-                else:
-                    pdf_path = f"/pdfs/{filename}"
+                candidates.append((os.path.join('uploads', medium, program_folder, file_name), f"/uploads/{medium}/{program_folder}/{file_name}"))
+                candidates.append((os.path.join('uploads', medium, file_name), f"/uploads/{medium}/{file_name}"))
+            # legacy pdfs folder as additional fallback
+            candidates.append((os.path.join('pdfs', program_folder, file_name), f"/pdfs/{program_folder}/{file_name}"))
+            candidates.append((os.path.join('pdfs', file_name), f"/pdfs/{file_name}"))
+            # if absolute/relative path provided directly
+            if '/' in file_name or '\\' in file_name:
+                candidates.append((os.path.join('pdfs', file_name), f"/pdfs/{file_name}"))
+            for fs_path, web_path in candidates:
+                if os.path.exists(fs_path):
+                    return web_path
+            return None
+
+        # Try medium-specific first, then default
+        pdf_path = try_resolve_paths(filename_primary) or try_resolve_paths(filename_fallback)
+        if not pdf_path:
+            return jsonify({"success": False, "error": "No PDF found for selected medium or default"}), 404
         return jsonify({"success": True, "pdf_path": pdf_path})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
