@@ -1101,47 +1101,34 @@ def resolve_course_material(course_code):
             program = course.get('program') or ''
             program_folder = program.upper().replace('.', '').replace(' ', '')
             candidates = []
-            # uploads/<medium>/Program/filename and uploads/<medium>/filename when medium is specified
+            # Strict medium-only resolution: uploads/<medium>/Program/filename and uploads/<medium>/filename
             if medium in ('english', 'hindi'):
                 candidates.append((os.path.join('uploads', medium, program_folder, file_name), f"/uploads/{medium}/{program_folder}/{file_name}"))
                 candidates.append((os.path.join('uploads', medium, file_name), f"/uploads/{medium}/{file_name}"))
-            # legacy pdfs folder as additional fallback
-            candidates.append((os.path.join('pdfs', program_folder, file_name), f"/pdfs/{program_folder}/{file_name}"))
-            candidates.append((os.path.join('pdfs', file_name), f"/pdfs/{file_name}"))
-            # if absolute/relative path provided directly
-            if '/' in file_name or '\\' in file_name:
-                candidates.append((os.path.join('pdfs', file_name), f"/pdfs/{file_name}"))
+            # Do NOT fallback to legacy pdfs when a medium is specified
             for fs_path, web_path in candidates:
                 if os.path.exists(fs_path):
                     return web_path
             return None
 
-        # Always try to find a PDF - prioritize medium-specific, then fallback to default
-        pdf_path = None
-        
-        # First try: medium-specific PDF if medium is selected
-        if medium in ('english', 'hindi') and filename_primary:
-            pdf_path = try_resolve_paths(filename_primary)
-            print(f"DEBUG: Medium {medium} specific PDF search: {filename_primary} -> {pdf_path}")
-        
-        # Second try: default PDF if medium-specific not found
-        if not pdf_path and filename_fallback:
-            pdf_path = try_resolve_paths(filename_fallback)
-            print(f"DEBUG: Fallback to default PDF: {filename_fallback} -> {pdf_path}")
-        
-        # Third try: any available PDF from the course (for backward compatibility)
-        if not pdf_path:
-            all_filenames = [f for f in [filename_primary, filename_fallback] if f]
-            for filename in all_filenames:
-                pdf_path = try_resolve_paths(filename)
-                if pdf_path:
-                    print(f"DEBUG: Found PDF with filename: {filename} -> {pdf_path}")
-                    break
-        
+        # Enforce medium requirement and medium-specific PDFs only
+        if medium not in ('english', 'hindi'):
+            return jsonify({"success": False, "error": "Medium is required and must be 'english' or 'hindi'"}), 400
+
+        # Require that the corresponding medium filename exists in DB
+        if medium == 'english' and not filename_primary:
+            return jsonify({"success": False, "error": "English PDF filename not set for this course"}), 404
+        if medium == 'hindi' and not filename_primary:
+            return jsonify({"success": False, "error": "Hindi PDF filename not set for this course"}), 404
+
+        # Strict resolution in uploads/<medium> only
+        pdf_path = try_resolve_paths(filename_primary)
+        print(f"DEBUG: Strict {medium} PDF search: {filename_primary} -> {pdf_path}")
+
         if not pdf_path:
             return jsonify({
-                "success": False, 
-                "error": f"No PDF found for course {course_code}. Please ensure PDF files are uploaded in uploads/{medium}/ or pdfs/ directory."
+                "success": False,
+                "error": f"{medium.capitalize()} PDF file not found in /uploads/{medium}/ for course {course_code}."
             }), 404
         return jsonify({"success": True, "pdf_path": pdf_path})
     except Exception as e:
