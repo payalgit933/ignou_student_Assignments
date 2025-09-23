@@ -81,11 +81,11 @@ class Database:
             )
         ''')
         
-        # Create courses table (initially may have UNIQUE on course_code in older versions)
+        # Create courses table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS courses (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                course_code TEXT NOT NULL,
+                course_code TEXT UNIQUE NOT NULL,
                 course_name TEXT NOT NULL,
                 program TEXT NOT NULL,
                 year TEXT NOT NULL,
@@ -188,39 +188,6 @@ class Database:
             except Exception:
                 pass
         
-        # Migrate courses table to drop UNIQUE constraint on course_code if present
-        try:
-            cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='courses'")
-            row = cursor.fetchone()
-            current_sql = row[0] if row else ''
-            if 'course_code TEXT UNIQUE' in current_sql:
-                # Recreate table without UNIQUE constraint
-                cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS courses_mig (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        course_code TEXT NOT NULL,
-                        course_name TEXT NOT NULL,
-                        program TEXT NOT NULL,
-                        year TEXT NOT NULL,
-                        semester TEXT NOT NULL,
-                        pdf_filename TEXT,
-                        pdf_filename_en TEXT,
-                        pdf_filename_hi TEXT,
-                        credits INTEGER,
-                        is_active BOOLEAN DEFAULT 1,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                ''')
-                cursor.execute('''
-                    INSERT INTO courses_mig (id, course_code, course_name, program, year, semester, pdf_filename, pdf_filename_en, pdf_filename_hi, credits, is_active, created_at, updated_at)
-                    SELECT id, course_code, course_name, program, year, semester, pdf_filename, pdf_filename_en, pdf_filename_hi, credits, is_active, created_at, updated_at FROM courses
-                ''')
-                cursor.execute('DROP TABLE courses')
-                cursor.execute('ALTER TABLE courses_mig RENAME TO courses')
-        except Exception:
-            pass
-
         conn.commit()
         conn.close()
     
@@ -665,6 +632,11 @@ class Database:
             conn = sqlite3.connect(self.db_name)
             cursor = conn.cursor()
             
+            # Check if course code already exists
+            cursor.execute("SELECT id FROM courses WHERE course_code = ?", (course_code,))
+            if cursor.fetchone():
+                return {"success": False, "error": "Course code already exists"}
+            
             cursor.execute('''
                 INSERT INTO courses (course_code, course_name, program, year, semester, pdf_filename, pdf_filename_en, pdf_filename_hi, credits)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -891,39 +863,6 @@ class Database:
             }
         except Exception as e:
             return {"success": False, "error": f"Failed to get course: {str(e)}"}
-
-    def get_courses_by_code_all(self, course_code):
-        """Fetch all courses by code (duplicates allowed)"""
-        try:
-            conn = sqlite3.connect(self.db_name)
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT id, course_code, course_name, program, year, semester,
-                       pdf_filename, pdf_filename_en, pdf_filename_hi, credits, is_active
-                FROM courses
-                WHERE course_code = ?
-                ORDER BY updated_at DESC, created_at DESC
-            ''', (course_code,))
-            rows = cursor.fetchall()
-            conn.close()
-            return {
-                "success": True,
-                "courses": [{
-                    "id": r[0],
-                    "course_code": r[1],
-                    "course_name": r[2],
-                    "program": r[3],
-                    "year": r[4],
-                    "semester": r[5],
-                    "pdf_filename": r[6],
-                    "pdf_filename_en": r[7],
-                    "pdf_filename_hi": r[8],
-                    "credits": r[9],
-                    "is_active": r[10]
-                } for r in rows]
-            }
-        except Exception as e:
-            return {"success": False, "error": f"Failed to get courses by code: {str(e)}"}
     # Study center management methods
     def add_study_center(self, center_code, name, address, city=None, state=None, pincode=None, phone=None, email=None):
         """Add a new study center"""

@@ -75,19 +75,10 @@ def index():
 def welcome():
     return send_from_directory('.', 'welcome.html')
 
-# Ensure uploads directory structure exists
-os.makedirs(os.path.join('uploads', 'english'), exist_ok=True)
-os.makedirs(os.path.join('uploads', 'hindi'), exist_ok=True)
-
 # Route to serve static files (PDFs, images, etc.) including nested paths
 @app.route('/pdfs/<path:filename>')
 def serve_pdf(filename):
     return send_from_directory('pdfs', filename)
-
-# Route to serve uploaded files (English/Hindi)
-@app.route('/uploads/<path:filename>')
-def serve_upload(filename):
-    return send_from_directory('uploads', filename)
 
 @app.route('/images/<filename>')
 def serve_image(filename):
@@ -535,30 +526,10 @@ def payment_success():
             "confirmation": payment_request.get("confirmation", "Not Provided"),
             # Selected Courses
             "courses": payment_request.get("courses", []) or payment_request.get("subjects", []),
-            # File uploads (frontend adds later)
+            # File uploads (these will be added by the frontend)
             "idCardPhoto": None,
             "signaturePhoto": None
         }
-
-        # ✅ Attach correct PDFs based on medium selection
-        from database import db
-        medium = payment_request.get("mediumSelection", "English")
-        selected_courses = payment_request.get("courses", []) or []
-        final_pdfs = []
-
-        # Fetch all courses from DB
-        courses_result = db.get_all_courses(limit=5000, offset=0)
-        if courses_result.get("success"):
-            for course_code in selected_courses:
-                for course in courses_result["courses"]:
-                    if course["course_code"] == course_code:
-                        if medium.lower() == "english" and course.get("pdf_filename_en"):
-                            final_pdfs.append(f"/uploads/english/{course['pdf_filename_en']}")
-                        elif medium.lower() == "hindi" and course.get("pdf_filename_hi"):
-                            final_pdfs.append(f"/uploads/hindi/{course['pdf_filename_hi']}")
-
-        # Save into session for frontend
-        session['payment_data']["final_pdfs"] = final_pdfs
         
         # Redirect to index.html with payment success flag
         return redirect(f"/?payment_success=true&order_id={order_id}")
@@ -1078,131 +1049,37 @@ def admin_add_program():
 def resolve_course_material(course_code):
     try:
         medium = request.args.get('medium', '').lower()  # 'english' or 'hindi'
-        # Support duplicates: fetch all rows for this code and pick best match
-        multi = getattr(db, 'get_courses_by_code_all', None)
-        courses_list = []
-        if callable(multi):
-            res_all = db.get_courses_by_code_all(course_code)
-            if res_all.get('success'):
-                courses_list = res_all.get('courses', [])
-        if not courses_list:
-            single = db.get_course_by_code(course_code)
-            if not single.get('success'):
-                return jsonify(single), 404
-            courses_list = [single['course']]
-
-        # Choose course row based on medium-specific availability
-        chosen = None
-        if medium == 'hindi':
-            chosen = next((c for c in courses_list if c.get('pdf_filename_hi')), None)
-        elif medium == 'english':
-            chosen = next((c for c in courses_list if c.get('pdf_filename_en')), None)
-        if not chosen:
-            chosen = next((c for c in courses_list if c.get('pdf_filename')), courses_list[0])
-
-        course = chosen
+        result = db.get_course_by_code(course_code)
+        if not result.get('success'):
+            return jsonify(result), 404
+        course = result['course']
         # Priority: medium-specific > default
-        filename_primary = None
+        filename = None
         if medium == 'hindi' and course.get('pdf_filename_hi'):
-            filename_primary = course['pdf_filename_hi']
+            filename = course['pdf_filename_hi']
         elif medium == 'english' and course.get('pdf_filename_en'):
-            filename_primary = course['pdf_filename_en']
-        # Fallback filename from default
-        filename_fallback = course.get('pdf_filename')
-
-        def ensure_pdf_ext(name: str) -> str:
-            base = os.path.basename(name)
-            return name if ('.' in base) else f"{name}.pdf"
-
-        def try_resolve_paths(file_name: str):
-            if not file_name:
-                return None, []
-            file_name = ensure_pdf_ext(file_name)
+            filename = course['pdf_filename_en']
+        elif course.get('pdf_filename'):
+            filename = course['pdf_filename']
+        if not filename:
+            return jsonify({"success": False, "error": "No PDF filename configured for this course"}), 404
+        # Ensure .pdf extension if missing
+        if '.' not in os.path.basename(filename):
+            filename = filename + ".pdf"
+        # Build path under ./pdfs. If filename contains a slash, use as-is relative to pdfs.
+        if '/' in filename or '\\' in filename:
+            pdf_path = f"/pdfs/{filename}"
+        else:
+            # Try program subfolder, else root pdfs
             program = course.get('program') or ''
             program_folder = program.upper().replace('.', '').replace(' ', '')
-            candidates = []
-            # Strict medium-only resolution: uploads/<medium>/Program/filename and uploads/<medium>/filename
-            if medium in ('english', 'hindi'):
-                candidates.append((os.path.join('uploads', medium, program_folder, file_name), f"/uploads/{medium}/{program_folder}/{file_name}"))
-                candidates.append((os.path.join('uploads', medium, file_name), f"/uploads/{medium}/{file_name}"))
-            # Do NOT fallback to legacy pdfs when a medium is specified
-            for fs_path, web_path in candidates:
-                if os.path.exists(fs_path):
-                    return web_path, candidates
-            return None, candidates
-
-        # Enforce medium requirement and medium-specific PDFs only
-        if medium not in ('english', 'hindi'):
-            return jsonify({"success": False, "error": "Medium is required and must be 'english' or 'hindi'"}), 400
-
-        # Require that the corresponding medium filename exists in DB
-        if medium == 'english' and not filename_primary:
-            return jsonify({"success": False, "error": "English PDF filename not set for this course"}), 404
-        if medium == 'hindi' and not filename_primary:
-            return jsonify({"success": False, "error": "Hindi PDF filename not set for this course"}), 404
-
-        # Strict resolution in uploads/<medium> only
-        pdf_path, tried = try_resolve_paths(filename_primary)
-        print(f"DEBUG: Strict {medium} PDF search: file={filename_primary} -> {pdf_path}")
-
-        if not pdf_path:
-            return jsonify({
-                "success": False,
-                "error": f"{medium.capitalize()} PDF file not found for course {course_code}",
-                "details": {
-                    "course_code": course_code,
-                    "program": course.get('program'),
-                    "expected_filename": ensure_pdf_ext(filename_primary or ''),
-                    "searched_paths": [fs for fs, _ in tried]
-                }
-            }), 404
+            # First try program folder
+            candidate = os.path.join('pdfs', program_folder, filename)
+            if os.path.exists(candidate):
+                pdf_path = f"/pdfs/{program_folder}/{filename}"
+            else:
+                pdf_path = f"/pdfs/{filename}"
         return jsonify({"success": True, "pdf_path": pdf_path})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-# Admin uploads management
-@app.route('/api/admin/uploads', methods=['POST'])
-@require_admin_auth
-def admin_upload_file():
-    try:
-        medium = (request.args.get('medium') or '').lower()
-        if medium not in ('english', 'hindi'):
-            return jsonify({"success": False, "error": "medium must be 'english' or 'hindi'"}), 400
-        if 'file' not in request.files:
-            return jsonify({"success": False, "error": "No file part in the request"}), 400
-        f = request.files['file']
-        # Optional subfolder (e.g., program code)
-        subfolder = (request.form.get('subfolder') or '').strip().replace('..', '').replace('\\', '/').strip('/')
-        dest_dir = os.path.join('uploads', medium, subfolder) if subfolder else os.path.join('uploads', medium)
-        os.makedirs(dest_dir, exist_ok=True)
-        filename = f.filename
-        if not filename:
-            return jsonify({"success": False, "error": "Invalid filename"}), 400
-        save_path = os.path.join(dest_dir, filename)
-        f.save(save_path)
-        public_path = f"/uploads/{medium}/{subfolder + '/' if subfolder else ''}{filename}"
-        return jsonify({"success": True, "path": public_path})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route('/api/admin/uploads', methods=['GET'])
-@require_admin_auth
-def admin_list_uploads():
-    try:
-        medium = (request.args.get('medium') or '').lower()
-        if medium not in ('english', 'hindi'):
-            return jsonify({"success": False, "error": "medium must be 'english' or 'hindi'"}), 400
-        base_dir = os.path.join('uploads', medium)
-        files = []
-        for root, _, filenames in os.walk(base_dir):
-            for name in filenames:
-                rel = os.path.relpath(os.path.join(root, name), base_dir).replace('\\', '/')
-                files.append({
-                    'name': name,
-                    'relative_path': rel,
-                    'public_url': f"/uploads/{medium}/{rel}"
-                })
-        return jsonify({"success": True, "files": files})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
