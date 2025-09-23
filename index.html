@@ -3170,6 +3170,10 @@
             // Generate individual course buttons
             generateIndividualCourseButtons(window.paymentData.courses || window.paymentData.subjects || []);
             
+            <div id="pdfDownloads" class="mt-6">
+                <h3 class="text-lg font-semibold mb-2">Your PDFs</h3>
+            </div>
+
             // Show success message
             showToast(`Payment successful! You can now download your assignments for: ${(paymentData.courses || []).join(', ')}`);
         }
@@ -3628,6 +3632,28 @@
             });
         }
     </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          if (typeof payment_data !== "undefined" && payment_data.final_pdfs) {
+            let container = document.getElementById("pdfDownloads");
+            
+            if (payment_data.final_pdfs.length === 0) {
+              container.innerHTML += "<p class='text-gray-600'>No PDFs available for your selection.</p>";
+            } else {
+              payment_data.final_pdfs.forEach((pdf, index) => {
+                let link = document.createElement("a");
+                link.href = pdf;
+                link.textContent = `Download PDF ${index + 1}`;
+                link.className = "btn btn-primary block my-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700";
+                link.setAttribute("target", "_blank");
+                link.setAttribute("download", "");
+                container.appendChild(link);
+              });
+            }
+          }
+        });
+      </script>
+      
 </body>
 </html>
 

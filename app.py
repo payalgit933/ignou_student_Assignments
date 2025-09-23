@@ -535,10 +535,30 @@ def payment_success():
             "confirmation": payment_request.get("confirmation", "Not Provided"),
             # Selected Courses
             "courses": payment_request.get("courses", []) or payment_request.get("subjects", []),
-            # File uploads (these will be added by the frontend)
+            # File uploads (frontend adds later)
             "idCardPhoto": None,
             "signaturePhoto": None
         }
+
+        # ✅ Attach correct PDFs based on medium selection
+        from database import db
+        medium = payment_request.get("mediumSelection", "English")
+        selected_courses = payment_request.get("courses", []) or []
+        final_pdfs = []
+
+        # Fetch all courses from DB
+        courses_result = db.get_all_courses(limit=5000, offset=0)
+        if courses_result.get("success"):
+            for course_code in selected_courses:
+                for course in courses_result["courses"]:
+                    if course["course_code"] == course_code:
+                        if medium.lower() == "english" and course.get("pdf_filename_en"):
+                            final_pdfs.append(f"/uploads/english/{course['pdf_filename_en']}")
+                        elif medium.lower() == "hindi" and course.get("pdf_filename_hi"):
+                            final_pdfs.append(f"/uploads/hindi/{course['pdf_filename_hi']}")
+
+        # Save into session for frontend
+        session['payment_data']["final_pdfs"] = final_pdfs
         
         # Redirect to index.html with payment success flag
         return redirect(f"/?payment_success=true&order_id={order_id}")
@@ -1094,9 +1114,9 @@ def resolve_course_material(course_code):
             base = os.path.basename(name)
             return name if ('.' in base) else f"{name}.pdf"
 
-        def try_resolve_paths(file_name: str) -> str:
+        def try_resolve_paths(file_name: str):
             if not file_name:
-                return None
+                return None, []
             file_name = ensure_pdf_ext(file_name)
             program = course.get('program') or ''
             program_folder = program.upper().replace('.', '').replace(' ', '')
@@ -1108,8 +1128,8 @@ def resolve_course_material(course_code):
             # Do NOT fallback to legacy pdfs when a medium is specified
             for fs_path, web_path in candidates:
                 if os.path.exists(fs_path):
-                    return web_path
-            return None
+                    return web_path, candidates
+            return None, candidates
 
         # Enforce medium requirement and medium-specific PDFs only
         if medium not in ('english', 'hindi'):
@@ -1122,13 +1142,19 @@ def resolve_course_material(course_code):
             return jsonify({"success": False, "error": "Hindi PDF filename not set for this course"}), 404
 
         # Strict resolution in uploads/<medium> only
-        pdf_path = try_resolve_paths(filename_primary)
-        print(f"DEBUG: Strict {medium} PDF search: {filename_primary} -> {pdf_path}")
+        pdf_path, tried = try_resolve_paths(filename_primary)
+        print(f"DEBUG: Strict {medium} PDF search: file={filename_primary} -> {pdf_path}")
 
         if not pdf_path:
             return jsonify({
                 "success": False,
-                "error": f"{medium.capitalize()} PDF file not found in /uploads/{medium}/ for course {course_code}."
+                "error": f"{medium.capitalize()} PDF file not found for course {course_code}",
+                "details": {
+                    "course_code": course_code,
+                    "program": course.get('program'),
+                    "expected_filename": ensure_pdf_ext(filename_primary or ''),
+                    "searched_paths": [fs for fs, _ in tried]
+                }
             }), 404
         return jsonify({"success": True, "pdf_path": pdf_path})
     except Exception as e:
