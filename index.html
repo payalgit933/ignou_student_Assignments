@@ -1574,24 +1574,39 @@
                 let attached = false;
                 try {
                     const medium = (document.getElementById('mediumSelection')?.value || '').toLowerCase();
-                    // Prefer a proper course code token if courseName contains extra text
-                    let courseCodeForApi = courseName;
-                    const match = String(courseName).match(/[A-Z]{2,}[-][0-9]{2,}/);
-                    if (match && match[0]) {
-                        courseCodeForApi = match[0];
+                    // Always prefer an actual selected course code
+                    let courseCodeForApi = '';
+                    const paidCourses = (window.paymentData && Array.isArray(window.paymentData.courses)) ? window.paymentData.courses : [];
+                    const selectedCoursesGlobal = (window.selectedCourses && Array.isArray(window.selectedCourses)) ? window.selectedCourses : [];
+                    if (paidCourses.length === 1) {
+                        courseCodeForApi = String(paidCourses[0] || '').trim();
+                    } else if (selectedCoursesGlobal.length === 1) {
+                        courseCodeForApi = String(selectedCoursesGlobal[0] || '').trim();
                     }
-                    const res = await fetch(`/api/course-material/${encodeURIComponent(courseCodeForApi)}?medium=${encodeURIComponent(medium)}`);
-                    const data = await res.json();
-                    if (data.success && data.pdf_path) {
-                        console.log('Resolved course material path:', data.pdf_path);
-                        const resp = await fetch(data.pdf_path);
-                        if (resp.ok) {
-                        const subjectPDFBytes = await resp.arrayBuffer();
-                    const subjectPdf = await PDFDocument.load(subjectPDFBytes);
-                    const subjectPages = await mergedPdf.copyPages(subjectPdf, subjectPdf.getPageIndices());
-                    subjectPages.forEach(page => mergedPdf.addPage(page));
-                        attached = true;
+                    // If still not available, try extracting from the displayed name
+                    if (!courseCodeForApi) {
+                        const match = String(courseName).match(/[A-Z]{2,}-[0-9]{2,}/);
+                        if (match && match[0]) {
+                            courseCodeForApi = match[0];
+                        }
                     }
+                    // If still empty, skip attach for this item
+                    if (!courseCodeForApi) {
+                        console.warn('No course code detected for', courseName, '- skipping attach.');
+                    } else {
+                        const res = await fetch(`/api/course-material/${encodeURIComponent(courseCodeForApi)}?medium=${encodeURIComponent(medium)}`);
+                        const data = await res.json();
+                        if (data.success && data.pdf_path) {
+                            console.log('Resolved course material path:', data.pdf_path);
+                            const resp = await fetch(data.pdf_path);
+                            if (resp.ok) {
+                                const subjectPDFBytes = await resp.arrayBuffer();
+                                const subjectPdf = await PDFDocument.load(subjectPDFBytes);
+                                const subjectPages = await mergedPdf.copyPages(subjectPdf, subjectPdf.getPageIndices());
+                                subjectPages.forEach(page => mergedPdf.addPage(page));
+                                attached = true;
+                            }
+                        }
                     }
                 } catch (err) {
                     console.warn('Failed to resolve/attach course material via API:', err.message);
