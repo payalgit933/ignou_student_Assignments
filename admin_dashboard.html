@@ -372,6 +372,14 @@
                 <span>Study Centers</span>
             </a>
             
+            <a href="#" class="nav-item" data-section="uploads">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12V4m0 0l-4 4m4-4l4 4"/>
+                </svg>
+                <span>Uploads</span>
+            </a>
+            
             <a href="#" class="nav-item" data-section="analytics">
                 <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
@@ -667,6 +675,52 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Uploads Section -->
+            <div id="uploads-section" class="section hidden">
+                <div class="card">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold">Manage Uploads</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Medium</label>
+                            <select id="uploadMedium" class="w-full" onchange="listUploads()">
+                                <option value="english">English</option>
+                                <option value="hindi">Hindi</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Subfolder (optional)</label>
+                            <input id="uploadSubfolder" class="w-full" placeholder="e.g., MBA" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Select PDF</label>
+                            <input id="uploadFile" type="file" accept="application/pdf" class="w-full" />
+                        </div>
+                    </div>
+                    <div class="mb-6">
+                        <button onclick="submitUpload()" class="btn btn-primary">Upload PDF</button>
+                        <button onclick="listUploads()" class="btn btn-secondary" style="margin-left:8px;">Refresh List</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Filename</th>
+                                    <th>Relative Path</th>
+                                    <th>URL</th>
+                                </tr>
+                            </thead>
+                            <tbody id="uploadsTableBody">
+                                <tr>
+                                    <td colspan="3" class="text-center py-8 text-gray-500">Select a medium to list files...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -877,6 +931,7 @@
                 'programs': 'Programs',
                 'study-centers': 'Study Centers',
                 'analytics': 'Analytics',
+                'uploads': 'Uploads',
                 'settings': 'Settings'
             };
             
@@ -901,6 +956,9 @@
                     break;
                 case 'analytics':
                     loadAnalytics();
+                    break;
+                case 'uploads':
+                    listUploads();
                     break;
             }
         }
@@ -1235,6 +1293,62 @@
         function saveSettings() {
             showAlert('Settings saved successfully!', 'success');
         }
+
+        async function submitUpload() {
+            try {
+                const medium = document.getElementById('uploadMedium').value;
+                const subfolder = document.getElementById('uploadSubfolder').value.trim();
+                const fileInput = document.getElementById('uploadFile');
+                if (!fileInput.files || !fileInput.files[0]) {
+                    showAlert('Please select a PDF file to upload.', 'error');
+                    return;
+                }
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                if (subfolder) formData.append('subfolder', subfolder);
+                const res = await fetch(`/api/admin/uploads?medium=${encodeURIComponent(medium)}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showAlert('File uploaded successfully!', 'success');
+                    listUploads();
+                } else {
+                    showAlert(data.error || 'Upload failed', 'error');
+                }
+            } catch (e) {
+                showAlert('Upload error', 'error');
+            }
+        }
+
+        async function listUploads() {
+            try {
+                const medium = document.getElementById('uploadMedium').value;
+                const res = await fetch(`/api/admin/uploads?medium=${encodeURIComponent(medium)}`);
+                const data = await res.json();
+                const tbody = document.getElementById('uploadsTableBody');
+                if (!tbody) return;
+                if (data.success) {
+                    if (!data.files || data.files.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">No files uploaded yet.</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = data.files.map(f => `
+                        <tr>
+                            <td>${f.name}</td>
+                            <td>${f.relative_path}</td>
+                            <td><a href="${f.public_url}" target="_blank">${f.public_url}</a></td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">Failed to load files.</td></tr>';
+                }
+            } catch (e) {
+                const tbody = document.getElementById('uploadsTableBody');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">Error loading files.</td></tr>';
+            }
+        }
         
         // Course management functions
         function showAddCourseModal() {
@@ -1411,30 +1525,32 @@
         // Program management functions
         async function loadPrograms() {
             try {
-                // For now, we'll use a simple approach - get programs from existing courses
-                const response = await fetch('/api/admin/courses');
+                const response = await fetch('/api/admin/programs');
                 const data = await response.json();
-                if (data.success) {
-                    const programs = [...new Set(data.courses.map(course => course.program))].filter(Boolean);
-                    const tbody = document.getElementById('programsTableBody');
-                    if (programs.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No programs found. Add courses first.</td></tr>';
-                    } else {
-                        tbody.innerHTML = programs.map(program => `
-                            <tr>
-                                <td>${program}</td>
-                                <td>${program}</td>
-                                <td>Program for ${program} courses</td>
-                                <td><span class="badge badge-success">Active</span></td>
-                                <td>
-                                    <button onclick="editProgram('${program}')" class="btn btn-sm btn-outline">Edit</button>
-                                    <button onclick="deleteProgram('${program}')" class="btn btn-sm btn-danger">Delete</button>
-                                </td>
-                            </tr>
-                        `).join('');
-                    }
+                const tbody = document.getElementById('programsTableBody');
+                if (!tbody) return;
+                if (!data.success) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">Failed to load programs</td></tr>';
+                    return;
                 }
-                // Also populate the program select in course modal
+                const programs = data.programs || [];
+                if (programs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No programs found. Add a program.</td></tr>';
+                } else {
+                    tbody.innerHTML = programs.map(p => `
+                        <tr>
+                            <td>${p.program_name}</td>
+                            <td>${p.program_code}</td>
+                            <td>${p.description || ''}</td>
+                            <td><span class="status-badge ${p.is_active ? 'status-active' : 'status-inactive'}">${p.is_active ? 'Active' : 'Inactive'}</span></td>
+                            <td>
+                                <button onclick="editProgram('${p.program_code}')" class="btn btn-sm btn-outline">Edit</button>
+                                <button onclick="deleteProgram('${p.program_code}')" class="btn btn-sm btn-danger">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+                // Populate the program select in course modal
                 populateProgramSelect();
             } catch (error) {
                 console.error('Error loading programs:', error);
@@ -1443,23 +1559,15 @@
         
         function populateProgramSelect() {
             const select = document.getElementById('modalProgram');
-            // Get programs from existing courses
-            fetch('/api/admin/courses')
-                .then(response => response.json())
+            fetch('/api/admin/programs')
+                .then(r => r.json())
                 .then(data => {
-                    if (data.success) {
-                        const programs = [...new Set(data.courses.map(course => course.program))].filter(Boolean);
-                        // Add any programs that were added in this session
-                        if (window.availablePrograms) {
-                            programs.push(...window.availablePrograms);
-                        }
-                        // Remove duplicates
-                        const uniquePrograms = [...new Set(programs)];
-                        select.innerHTML = '<option value="">Select Program</option>' + 
-                            uniquePrograms.map(program => `<option value="${program}">${program}</option>`).join('');
-                    }
+                    if (!data.success) return;
+                    const programs = data.programs || [];
+                    select.innerHTML = '<option value="">Select Program</option>' +
+                        programs.map(p => `<option value="${p.program_code}">${p.program_code} — ${p.program_name}</option>`).join('');
                 })
-                .catch(error => console.error('Error loading programs for select:', error));
+                .catch(err => console.error('Error loading programs for select:', err));
         }
         
         function handleProgramSelection() {
@@ -1495,33 +1603,28 @@
             const programName = document.getElementById('modalProgramName').value;
             const programCode = document.getElementById('modalProgramCode').value;
             const programDescription = document.getElementById('modalProgramDescription').value;
-            
             if (!programName || !programCode) {
                 showAlert('Please fill in all required fields', 'error');
                 return;
             }
-            
-            // Add the program to the dropdown immediately
-            const select = document.getElementById('modalProgram');
-            const option = document.createElement('option');
-            option.value = programCode;
-            option.textContent = programCode;
-            select.appendChild(option);
-            
-            // Also add to the programs list in memory for future use
-            if (!window.availablePrograms) {
-                window.availablePrograms = [];
-            }
-            window.availablePrograms.push(programCode);
-            
-            showAlert('Program added successfully! You can now use it when adding courses.', 'success');
-            closeAddProgramModal();
-            loadPrograms(); // Refresh the programs list
-            
-            // Also refresh the program dropdown in course modal if it's open
-            const courseModal = document.getElementById('addCourseModal');
-            if (courseModal && courseModal.style.display !== 'none') {
-                populateProgramSelect();
+            try {
+                const res = await fetch('/api/admin/programs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ program_code: programCode, program_name: programName, description: programDescription })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showAlert('Program added successfully!', 'success');
+                    closeAddProgramModal();
+                    await loadPrograms();
+                    // Refresh course modal select if open
+                    populateProgramSelect();
+                } else {
+                    showAlert(data.error || 'Failed to add program', 'error');
+                }
+            } catch (e) {
+                showAlert('Error adding program', 'error');
             }
         }
         

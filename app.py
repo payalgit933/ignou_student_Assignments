@@ -75,10 +75,19 @@ def index():
 def welcome():
     return send_from_directory('.', 'welcome.html')
 
+# Ensure uploads directory structure exists
+os.makedirs(os.path.join('uploads', 'english'), exist_ok=True)
+os.makedirs(os.path.join('uploads', 'hindi'), exist_ok=True)
+
 # Route to serve static files (PDFs, images, etc.) including nested paths
 @app.route('/pdfs/<path:filename>')
 def serve_pdf(filename):
     return send_from_directory('pdfs', filename)
+
+# Route to serve uploaded files (English/Hindi)
+@app.route('/uploads/<path:filename>')
+def serve_upload(filename):
+    return send_from_directory('uploads', filename)
 
 @app.route('/images/<filename>')
 def serve_image(filename):
@@ -1049,10 +1058,29 @@ def admin_add_program():
 def resolve_course_material(course_code):
     try:
         medium = request.args.get('medium', '').lower()  # 'english' or 'hindi'
-        result = db.get_course_by_code(course_code)
-        if not result.get('success'):
-            return jsonify(result), 404
-        course = result['course']
+        # Support duplicates: fetch all rows for this code and pick best match
+        multi = getattr(db, 'get_courses_by_code_all', None)
+        courses_list = []
+        if callable(multi):
+            res_all = db.get_courses_by_code_all(course_code)
+            if res_all.get('success'):
+                courses_list = res_all.get('courses', [])
+        if not courses_list:
+            single = db.get_course_by_code(course_code)
+            if not single.get('success'):
+                return jsonify(single), 404
+            courses_list = [single['course']]
+
+        # Choose course row based on medium-specific availability
+        chosen = None
+        if medium == 'hindi':
+            chosen = next((c for c in courses_list if c.get('pdf_filename_hi')), None)
+        elif medium == 'english':
+            chosen = next((c for c in courses_list if c.get('pdf_filename_en')), None)
+        if not chosen:
+            chosen = next((c for c in courses_list if c.get('pdf_filename')), courses_list[0])
+
+        course = chosen
         # Priority: medium-specific > default
         filename = None
         if medium == 'hindi' and course.get('pdf_filename_hi'):
@@ -1066,20 +1094,126 @@ def resolve_course_material(course_code):
         # Ensure .pdf extension if missing
         if '.' not in os.path.basename(filename):
             filename = filename + ".pdf"
-        # Build path under ./pdfs. If filename contains a slash, use as-is relative to pdfs.
-        if '/' in filename or '\\' in filename:
-            pdf_path = f"/pdfs/{filename}"
-        else:
-            # Try program subfolder, else root pdfs
-            program = course.get('program') or ''
-            program_folder = program.upper().replace('.', '').replace(' ', '')
-            # First try program folder
-            candidate = os.path.join('pdfs', program_folder, filename)
-            if os.path.exists(candidate):
-                pdf_path = f"/pdfs/{program_folder}/{filename}"
+
+        pdf_path = None
+        program = course.get('program') or ''
+        program_folder = program.upper().replace('.', '').replace(' ', '')
+
+        # 1) Try uploaded file for selected medium
+        if medium in ('english', 'hindi'):
+            upload_candidate_program = os.path.join('uploads', medium, program_folder, filename)
+            upload_candidate_root = os.path.join('uploads', medium, filename)
+            if os.path.exists(upload_candidate_program):
+                pdf_path = f"/uploads/{medium}/{program_folder}/{filename}"
+            elif os.path.exists(upload_candidate_root):
+                pdf_path = f"/uploads/{medium}/{filename}"
+
+        # 2) Fallback to DB-configured medium filename in legacy /pdfs when uploads missing
+        if not pdf_path and medium in ('english', 'hindi'):
+            legacy_candidate = None
+            # Use the same chosen filename (already medium-prioritized)
+            if '/' in filename or '\\' in filename:
+                legacy_candidate = os.path.join('pdfs', filename)
+                if os.path.exists(legacy_candidate):
+                    pdf_path = f"/pdfs/{filename}"
             else:
+                legacy_candidate_prog = os.path.join('pdfs', program_folder, filename)
+                if os.path.exists(legacy_candidate_prog):
+                    pdf_path = f"/pdfs/{program_folder}/{filename}"
+                else:
+                    legacy_candidate_root = os.path.join('pdfs', filename)
+                    if os.path.exists(legacy_candidate_root):
+                        pdf_path = f"/pdfs/{filename}"
+
+        # 3) Final fallback: default filename from DB (if different) in legacy /pdfs
+        if not pdf_path and medium in ('english', 'hindi'):
+            default_name = course.get('pdf_filename')
+            if default_name:
+                if '.' not in os.path.basename(default_name):
+                    default_name = default_name + '.pdf'
+                if '/' in default_name or '\\' in default_name:
+                    candidate = os.path.join('pdfs', default_name)
+                    if os.path.exists(candidate):
+                        pdf_path = f"/pdfs/{default_name}"
+                else:
+                    candidate_prog = os.path.join('pdfs', program_folder, default_name)
+                    if os.path.exists(candidate_prog):
+                        pdf_path = f"/pdfs/{program_folder}/{default_name}"
+                    else:
+                        candidate_root = os.path.join('pdfs', default_name)
+                        if os.path.exists(candidate_root):
+                            pdf_path = f"/pdfs/{default_name}"
+
+        # 4) If still not found and no medium provided, allow legacy fallback on chosen filename
+        if not pdf_path and medium not in ('english', 'hindi'):
+            if '/' in filename or '\\' in filename:
                 pdf_path = f"/pdfs/{filename}"
+            else:
+                candidate = os.path.join('pdfs', program_folder, filename)
+                if os.path.exists(candidate):
+                    pdf_path = f"/pdfs/{program_folder}/{filename}"
+                else:
+                    pdf_path = f"/pdfs/{filename}"
+
+        # If after all fallbacks nothing found for a specified medium, report clearly
+        if not pdf_path:
+            missing_for = 'English' if medium == 'english' else ('Hindi' if medium == 'hindi' else 'the requested')
+            return jsonify({
+                "success": False,
+                "error": f"{missing_for} PDF not found for course {course_code}",
+                "details": {
+                    "course_code": course_code,
+                    "program": course.get('program'),
+                    "expected_filename": filename
+                }
+            }), 404
         return jsonify({"success": True, "pdf_path": pdf_path})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# Admin uploads management
+@app.route('/api/admin/uploads', methods=['POST'])
+@require_admin_auth
+def admin_upload_file():
+    try:
+        medium = (request.args.get('medium') or '').lower()
+        if medium not in ('english', 'hindi'):
+            return jsonify({"success": False, "error": "medium must be 'english' or 'hindi'"}), 400
+        if 'file' not in request.files:
+            return jsonify({"success": False, "error": "No file part in the request"}), 400
+        f = request.files['file']
+        # Optional subfolder (e.g., program code)
+        subfolder = (request.form.get('subfolder') or '').strip().replace('..', '').replace('\\', '/').strip('/')
+        dest_dir = os.path.join('uploads', medium, subfolder) if subfolder else os.path.join('uploads', medium)
+        os.makedirs(dest_dir, exist_ok=True)
+        filename = f.filename
+        if not filename:
+            return jsonify({"success": False, "error": "Invalid filename"}), 400
+        save_path = os.path.join(dest_dir, filename)
+        f.save(save_path)
+        public_path = f"/uploads/{medium}/{subfolder + '/' if subfolder else ''}{filename}"
+        return jsonify({"success": True, "path": public_path})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/admin/uploads', methods=['GET'])
+@require_admin_auth
+def admin_list_uploads():
+    try:
+        medium = (request.args.get('medium') or '').lower()
+        if medium not in ('english', 'hindi'):
+            return jsonify({"success": False, "error": "medium must be 'english' or 'hindi'"}), 400
+        base_dir = os.path.join('uploads', medium)
+        files = []
+        for root, _, filenames in os.walk(base_dir):
+            for name in filenames:
+                rel = os.path.relpath(os.path.join(root, name), base_dir).replace('\\', '/')
+                files.append({
+                    'name': name,
+                    'relative_path': rel,
+                    'public_url': f"/uploads/{medium}/{rel}"
+                })
+        return jsonify({"success": True, "files": files})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
