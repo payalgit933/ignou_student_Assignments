@@ -1600,12 +1600,12 @@
                             console.log('Resolved course material path:', data.pdf_path);
                             const resp = await fetch(data.pdf_path);
                             if (resp.ok) {
-                                const subjectPDFBytes = await resp.arrayBuffer();
-                                const subjectPdf = await PDFDocument.load(subjectPDFBytes);
-                                const subjectPages = await mergedPdf.copyPages(subjectPdf, subjectPdf.getPageIndices());
-                                subjectPages.forEach(page => mergedPdf.addPage(page));
-                                attached = true;
-                            }
+                        const subjectPDFBytes = await resp.arrayBuffer();
+                    const subjectPdf = await PDFDocument.load(subjectPDFBytes);
+                    const subjectPages = await mergedPdf.copyPages(subjectPdf, subjectPdf.getPageIndices());
+                    subjectPages.forEach(page => mergedPdf.addPage(page));
+                        attached = true;
+                    }
                         }
                     }
                 } catch (err) {

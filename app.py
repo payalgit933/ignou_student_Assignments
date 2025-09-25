@@ -1107,22 +1107,6 @@ def resolve_course_material(course_code):
                 pdf_path = f"/uploads/{medium}/{program_folder}/{filename}"
             elif os.path.exists(upload_candidate_root):
                 pdf_path = f"/uploads/{medium}/{filename}"
-            else:
-                # If exact program folder didn't match, try first-level subfolders under the medium
-                try:
-                    base_dir = os.path.join('uploads', medium)
-                    if os.path.isdir(base_dir):
-                        for entry in os.listdir(base_dir):
-                            entry_path = os.path.join(base_dir, entry)
-                            if not os.path.isdir(entry_path):
-                                continue
-                            candidate = os.path.join(entry_path, filename)
-                            if os.path.exists(candidate):
-                                subfolder_rel = entry.replace('\\', '/').strip('/')
-                                pdf_path = f"/uploads/{medium}/{subfolder_rel}/{filename}"
-                                break
-                except Exception:
-                    pass
 
         # 2) Fallback to DB-configured medium filename in legacy /pdfs when uploads missing
         if not pdf_path and medium in ('english', 'hindi'):
