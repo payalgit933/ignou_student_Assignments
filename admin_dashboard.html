@@ -455,32 +455,8 @@
                         <div>Total Users</div>
                     </div>
                     
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalRevenue">₹-</div>
-                        <div>Total Revenue</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="recentAssignments">-</div>
-                        <div>Recent (7 days)</div>
-                    </div>
                 </div>
                 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    
-                    
-                    <div class="card">
-                        <h3 class="text-lg font-semibold mb-4">Recent Activity</h3>
-                        <div id="recentActivity" class="space-y-3">
-                            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                                <div>
-                                    <p class="text-sm font-medium">System initialized</p>
-                                    <p class="text-xs text-gray-500">Just now</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Users Section -->
@@ -971,8 +947,6 @@
                 if (data.success) {
                     const stats = data.statistics;
                     document.getElementById('totalUsers').textContent = stats.total_users || 0;
-                    document.getElementById('totalRevenue').textContent = `₹${stats.total_revenue || 0}`;
-                    document.getElementById('recentAssignments').textContent = stats.recent_assignments || 0;
                 }
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
