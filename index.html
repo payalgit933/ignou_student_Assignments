@@ -1573,21 +1573,27 @@
                 // Resolve material path via backend using medium
                 let attached = false;
                 try {
-                    const medium = (document.getElementById('mediumSelection')?.value || '').toLowerCase();
-                    // Always prefer an actual selected course code
+                    // Get medium from payment data first, then fallback to form
+                    const pd = window.paymentData || (JSON.parse(localStorage.getItem('paymentStudentData') || '{}'));
+                    const medium = (pd.mediumSelection || document.getElementById('mediumSelection')?.value || '').toLowerCase();
+                    // Use the courseName parameter directly as it contains the specific course code
                     let courseCodeForApi = '';
-                    const paidCourses = (window.paymentData && Array.isArray(window.paymentData.courses)) ? window.paymentData.courses : [];
-                    const selectedCoursesGlobal = (window.selectedCourses && Array.isArray(window.selectedCourses)) ? window.selectedCourses : [];
-                    if (paidCourses.length === 1) {
-                        courseCodeForApi = String(paidCourses[0] || '').trim();
-                    } else if (selectedCoursesGlobal.length === 1) {
-                        courseCodeForApi = String(selectedCoursesGlobal[0] || '').trim();
-                    }
-                    // If still not available, try extracting from the displayed name
-                    if (!courseCodeForApi) {
+                    if (courseName && courseName !== 'student_assignment') {
+                        // Extract course code from courseName parameter
                         const match = String(courseName).match(/[A-Z]{2,}-[0-9]{2,}/);
                         if (match && match[0]) {
                             courseCodeForApi = match[0];
+                        } else {
+                            courseCodeForApi = String(courseName).trim();
+                        }
+                    } else {
+                        // Fallback to payment data or selected courses for general assignment
+                        const paidCourses = (window.paymentData && Array.isArray(window.paymentData.courses)) ? window.paymentData.courses : [];
+                        const selectedCoursesGlobal = (window.selectedCourses && Array.isArray(window.selectedCourses)) ? window.selectedCourses : [];
+                        if (paidCourses.length === 1) {
+                            courseCodeForApi = String(paidCourses[0] || '').trim();
+                        } else if (selectedCoursesGlobal.length === 1) {
+                            courseCodeForApi = String(selectedCoursesGlobal[0] || '').trim();
                         }
                     }
                     // If still empty, skip attach for this item
