@@ -1099,7 +1099,7 @@ def resolve_course_material(course_code):
         program = course.get('program') or ''
         program_folder = program.upper().replace('.', '').replace(' ', '')
 
-        # 1) Try uploaded file for selected medium
+        # Only allow PDFs that were uploaded via admin panel (uploads folder). No legacy fallbacks.
         if medium in ('english', 'hindi'):
             upload_candidate_program = os.path.join('uploads', medium, program_folder, filename)
             upload_candidate_root = os.path.join('uploads', medium, filename)
@@ -1107,53 +1107,6 @@ def resolve_course_material(course_code):
                 pdf_path = f"/uploads/{medium}/{program_folder}/{filename}"
             elif os.path.exists(upload_candidate_root):
                 pdf_path = f"/uploads/{medium}/{filename}"
-
-        # 2) Fallback to DB-configured medium filename in legacy /pdfs when uploads missing
-        if not pdf_path and medium in ('english', 'hindi'):
-            legacy_candidate = None
-            # Use the same chosen filename (already medium-prioritized)
-            if '/' in filename or '\\' in filename:
-                legacy_candidate = os.path.join('pdfs', filename)
-                if os.path.exists(legacy_candidate):
-                    pdf_path = f"/pdfs/{filename}"
-            else:
-                legacy_candidate_prog = os.path.join('pdfs', program_folder, filename)
-                if os.path.exists(legacy_candidate_prog):
-                    pdf_path = f"/pdfs/{program_folder}/{filename}"
-                else:
-                    legacy_candidate_root = os.path.join('pdfs', filename)
-                    if os.path.exists(legacy_candidate_root):
-                        pdf_path = f"/pdfs/{filename}"
-
-        # 3) Final fallback: default filename from DB (if different) in legacy /pdfs
-        if not pdf_path and medium in ('english', 'hindi'):
-            default_name = course.get('pdf_filename')
-            if default_name:
-                if '.' not in os.path.basename(default_name):
-                    default_name = default_name + '.pdf'
-                if '/' in default_name or '\\' in default_name:
-                    candidate = os.path.join('pdfs', default_name)
-                    if os.path.exists(candidate):
-                        pdf_path = f"/pdfs/{default_name}"
-                else:
-                    candidate_prog = os.path.join('pdfs', program_folder, default_name)
-                    if os.path.exists(candidate_prog):
-                        pdf_path = f"/pdfs/{program_folder}/{default_name}"
-                    else:
-                        candidate_root = os.path.join('pdfs', default_name)
-                        if os.path.exists(candidate_root):
-                            pdf_path = f"/pdfs/{default_name}"
-
-        # 4) If still not found and no medium provided, allow legacy fallback on chosen filename
-        if not pdf_path and medium not in ('english', 'hindi'):
-            if '/' in filename or '\\' in filename:
-                pdf_path = f"/pdfs/{filename}"
-            else:
-                candidate = os.path.join('pdfs', program_folder, filename)
-                if os.path.exists(candidate):
-                    pdf_path = f"/pdfs/{program_folder}/{filename}"
-                else:
-                    pdf_path = f"/pdfs/{filename}"
 
         # If after all fallbacks nothing found for a specified medium, report clearly
         if not pdf_path:
