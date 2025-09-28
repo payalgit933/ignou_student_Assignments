@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - IGNOU Assignment Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             background: #f8fafc;
@@ -96,6 +95,30 @@
         
         .btn-primary:hover {
             background: #5a67d8;
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c53030;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #cbd5e0;
+            color: #4a5568;
+        }
+        
+        .btn-outline:hover {
+            background: #f7fafc;
         }
         
         .btn-success {
@@ -380,12 +403,6 @@
                 <span>Uploads</span>
             </a>
             
-            <a href="#" class="nav-item" data-section="analytics">
-                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg>
-                <span>Analytics</span>
-            </a>
             
             <a href="#" class="nav-item" data-section="settings">
                 <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -631,20 +648,6 @@
                 </div>
             </div>
 
-            <!-- Analytics Section -->
-            <div id="analytics-section" class="section hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="card">
-                        <h3 class="text-lg font-semibold mb-4">Revenue Trends</h3>
-                        <canvas id="revenueChart" width="400" height="200"></canvas>
-                    </div>
-                    
-                    <div class="card">
-                        <h3 class="text-lg font-semibold mb-4">User Registration Trends</h3>
-                        <canvas id="userChart" width="400" height="200"></canvas>
-                    </div>
-                </div>
-            </div>
 
             <!-- Settings Section -->
             <div id="settings-section" class="section hidden">
@@ -708,13 +711,14 @@
                             <thead>
                                 <tr>
                                     <th>Filename</th>
-                                    <th>Relative Path</th>
-                                    <th>URL</th>
+                                    <th>Size</th>
+                                    <th>Modified</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="uploadsTableBody">
                                 <tr>
-                                    <td colspan="3" class="text-center py-8 text-gray-500">Select a medium to list files...</td>
+                                    <td colspan="4" class="text-center py-8 text-gray-500">Select a medium to list files...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -930,7 +934,6 @@
                 'courses': 'Course Management',
                 'programs': 'Programs',
                 'study-centers': 'Study Centers',
-                'analytics': 'Analytics',
                 'uploads': 'Uploads',
                 'settings': 'Settings'
             };
@@ -953,9 +956,6 @@
                     break;
                 case 'study-centers':
                     loadStudyCenters();
-                    break;
-                case 'analytics':
-                    loadAnalytics();
                     break;
                 case 'uploads':
                     listUploads();
@@ -1243,10 +1243,6 @@
             }
         }
         
-        function loadAnalytics() {
-            // Placeholder for analytics
-            console.log('Loading analytics...');
-        }
         
         function showAlert(message, type) {
             const alertContainer = document.getElementById('alert-container');
@@ -1331,22 +1327,101 @@
                 if (!tbody) return;
                 if (data.success) {
                     if (!data.files || data.files.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">No files uploaded yet.</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-500">No files uploaded yet.</td></tr>';
                         return;
                     }
-                    tbody.innerHTML = data.files.map(f => `
-                        <tr>
-                            <td>${f.name}</td>
-                            <td>${f.relative_path}</td>
-                            <td><a href="${f.public_url}" target="_blank">${f.public_url}</a></td>
-                        </tr>
-                    `).join('');
+                    tbody.innerHTML = data.files.map(f => {
+                        const sizeKB = Math.round(f.size / 1024);
+                        const modifiedDate = new Date(f.modified * 1000).toLocaleDateString();
+                        return `
+                            <tr>
+                                <td>${f.name}</td>
+                                <td>${sizeKB} KB</td>
+                                <td>${modifiedDate}</td>
+                                <td>
+                                    <button onclick="editUpload('${f.relative_path}', '${f.name}')" class="btn btn-sm btn-outline" style="margin-right: 4px;">Edit</button>
+                                    <button onclick="deleteUpload('${f.relative_path}', '${f.name}')" class="btn btn-sm btn-danger">Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">Failed to load files.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-500">Failed to load files.</td></tr>';
                 }
             } catch (e) {
                 const tbody = document.getElementById('uploadsTableBody');
-                if (tbody) tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">Error loading files.</td></tr>';
+                if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-500">Error loading files.</td></tr>';
+            }
+        }
+
+        async function deleteUpload(filePath, fileName) {
+            if (!confirm(`Are you sure you want to delete "${fileName}"?`)) {
+                return;
+            }
+            
+            try {
+                const medium = document.getElementById('uploadMedium').value;
+                const res = await fetch('/api/admin/uploads', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        medium: medium,
+                        file_path: filePath
+                    })
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    showAlert('File deleted successfully', 'success');
+                    listUploads(); // Refresh the list
+                } else {
+                    showAlert('Error deleting file: ' + data.error, 'error');
+                }
+            } catch (e) {
+                showAlert('Error deleting file: ' + e.message, 'error');
+            }
+        }
+
+        function editUpload(filePath, currentName) {
+            const newName = prompt(`Enter new name for "${currentName}":`, currentName);
+            if (!newName || newName === currentName) {
+                return;
+            }
+            
+            if (!newName.endsWith('.pdf')) {
+                showAlert('Filename must end with .pdf', 'error');
+                return;
+            }
+            
+            renameUpload(filePath, newName);
+        }
+
+        async function renameUpload(filePath, newName) {
+            try {
+                const medium = document.getElementById('uploadMedium').value;
+                const res = await fetch('/api/admin/uploads', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        medium: medium,
+                        old_path: filePath,
+                        new_name: newName
+                    })
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    showAlert('File renamed successfully', 'success');
+                    listUploads(); // Refresh the list
+                } else {
+                    showAlert('Error renaming file: ' + data.error, 'error');
+                }
+            } catch (e) {
+                showAlert('Error renaming file: ' + e.message, 'error');
             }
         }
         

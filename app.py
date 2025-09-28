@@ -1161,12 +1161,91 @@ def admin_list_uploads():
         for root, _, filenames in os.walk(base_dir):
             for name in filenames:
                 rel = os.path.relpath(os.path.join(root, name), base_dir).replace('\\', '/')
+                full_path = os.path.join(root, name)
+                stat = os.stat(full_path)
                 files.append({
                     'name': name,
                     'relative_path': rel,
-                    'public_url': f"/uploads/{medium}/{rel}"
+                    'public_url': f"/uploads/{medium}/{rel}",
+                    'size': stat.st_size,
+                    'modified': stat.st_mtime
                 })
         return jsonify({"success": True, "files": files})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/admin/uploads', methods=['DELETE'])
+@require_admin_auth
+def admin_delete_upload():
+    try:
+        data = request.json
+        medium = (data.get('medium') or '').lower()
+        file_path = data.get('file_path', '').strip()
+        
+        if medium not in ('english', 'hindi'):
+            return jsonify({"success": False, "error": "medium must be 'english' or 'hindi'"}), 400
+        
+        if not file_path:
+            return jsonify({"success": False, "error": "file_path is required"}), 400
+        
+        # Security: ensure path is within uploads directory
+        if '..' in file_path or file_path.startswith('/') or file_path.startswith('\\'):
+            return jsonify({"success": False, "error": "Invalid file path"}), 400
+        
+        full_path = os.path.join('uploads', medium, file_path)
+        
+        if not os.path.exists(full_path):
+            return jsonify({"success": False, "error": "File not found"}), 404
+        
+        os.remove(full_path)
+        return jsonify({"success": True, "message": "File deleted successfully"})
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/admin/uploads', methods=['PUT'])
+@require_admin_auth
+def admin_rename_upload():
+    try:
+        data = request.json
+        medium = (data.get('medium') or '').lower()
+        old_path = data.get('old_path', '').strip()
+        new_name = data.get('new_name', '').strip()
+        
+        if medium not in ('english', 'hindi'):
+            return jsonify({"success": False, "error": "medium must be 'english' or 'hindi'"}), 400
+        
+        if not old_path or not new_name:
+            return jsonify({"success": False, "error": "old_path and new_name are required"}), 400
+        
+        # Security: ensure paths are within uploads directory
+        if '..' in old_path or old_path.startswith('/') or old_path.startswith('\\'):
+            return jsonify({"success": False, "error": "Invalid old path"}), 400
+        
+        if '..' in new_name or '/' in new_name or '\\' in new_name:
+            return jsonify({"success": False, "error": "Invalid new name"}), 400
+        
+        old_full_path = os.path.join('uploads', medium, old_path)
+        new_full_path = os.path.join(os.path.dirname(old_full_path), new_name)
+        
+        if not os.path.exists(old_full_path):
+            return jsonify({"success": False, "error": "File not found"}), 404
+        
+        if os.path.exists(new_full_path):
+            return jsonify({"success": False, "error": "File with new name already exists"}), 400
+        
+        os.rename(old_full_path, new_full_path)
+        
+        # Return new relative path
+        new_relative_path = os.path.relpath(new_full_path, os.path.join('uploads', medium)).replace('\\', '/')
+        
+        return jsonify({
+            "success": True, 
+            "message": "File renamed successfully",
+            "new_path": new_relative_path,
+            "new_url": f"/uploads/{medium}/{new_relative_path}"
+        })
+        
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -1268,48 +1347,6 @@ def admin_get_filtered_courses():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-# Admin analytics
-@app.route("/api/admin/analytics")
-@require_admin_auth
-def admin_analytics():
-    try:
-        conn = sqlite3.connect(db.db_name)
-        cursor = conn.cursor()
-        
-        # Get user registration trends (last 30 days)
-        cursor.execute('''
-            SELECT DATE(created_at) as date, COUNT(*) as count
-            FROM users 
-            WHERE created_at >= datetime('now', '-30 days')
-            GROUP BY DATE(created_at)
-            ORDER BY date
-        ''')
-        
-        user_trends = cursor.fetchall()
-        
-        # Get revenue trends (last 30 days)
-        cursor.execute('''
-            SELECT DATE(created_at) as date, SUM(amount) as revenue
-            FROM user_assignments 
-            WHERE created_at >= datetime('now', '-30 days') AND status = 'completed'
-            GROUP BY DATE(created_at)
-            ORDER BY date
-        ''')
-        
-        revenue_trends = cursor.fetchall()
-        
-        conn.close()
-        
-        return jsonify({
-            "success": True,
-            "analytics": {
-                "user_trends": [{"date": trend[0], "count": trend[1]} for trend in user_trends],
-                "revenue_trends": [{"date": trend[0], "revenue": trend[1] or 0} for trend in revenue_trends]
-            }
-        })
-        
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
