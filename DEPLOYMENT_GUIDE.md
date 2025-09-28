@@ -1,95 +1,111 @@
-# Deployment Guide for IGNOU Assignment Portal
+# IGNOU Assignment Portal - Hostinger Deployment Guide
 
-## 🚀 Render Deployment Fix
+## 🚀 Pre-Deployment Checklist
 
-The error you encountered (`waitress-serve: command not found`) has been fixed by updating the `requirements.txt` file.
+### 1. **Database Setup** ⚠️ CRITICAL
+The current `users.db` file will NOT work on Hostinger. You need to:
 
-### ✅ What was fixed:
+**Option A: Use Hostinger's MySQL Database (Recommended)**
+1. Create a MySQL database in your Hostinger control panel
+2. Update `database.py` to use MySQL instead of SQLite
+3. Install `mysql-connector-python` or `PyMySQL`
 
-1. **Added missing dependencies** to `requirements.txt`:
-   - `waitress==2.1.2` - WSGI server for production
-   - `requests==2.31.0` - HTTP library
-   - `python-dotenv==1.0.0` - Environment variables
+**Option B: Use SQLite with proper file path**
+1. Create a `data/` folder in your project
+2. Update database path to use environment variable
+3. Ensure the folder has write permissions
 
-2. **Created deployment configuration files**:
-   - `render.yaml` - Render-specific configuration
-   - `Procfile` - Alternative deployment configuration
+### 2. **Environment Variables**
+Set these in your Hostinger control panel:
+```
+CASHFREE_APP_ID=your_production_app_id
+CASHFREE_SECRET_KEY=your_production_secret_key
+DATABASE_URL=your_database_connection_string (if using external DB)
+```
 
-3. **Removed payment integration** from frontend since you removed it from backend
+### 3. **Missing Files**
+You need to upload these PDF files to the `pdfs/MBA/` folder:
+- MMPC-001.pdf
+- MMPC-002.pdf
+
+### 4. **File Structure for Hostinger**
+```
+your-domain.com/
+├── app.py
+├── database.py
+├── requirements.txt
+├── Procfile
+├── index.html
+├── login.html
+├── register.html
+├── welcome.html
+├── admin_login.html
+├── admin_dashboard.html
+├── pdfs/
+│   └── MBA/
+│       ├── MMPC-001.pdf
+│       ├── MMPC-002.pdf
+│       ├── MMPC-003.pdf
+│       ├── MMPC-004.pdf
+│       ├── MMPC-005.pdf
+│       ├── MMPC-006.pdf
+│       └── MMPC-007.pdf
+└── uploads/
+    ├── english/
+    │   └── MBA/
+    └── hindi/
+        └── MBA/
+```
+
+## 🔧 Quick Fixes Needed
+
+### Fix 1: Update Database Configuration
+```python
+# In database.py, add this at the top:
+import os
+
+class Database:
+    def __init__(self, db_name=None):
+        if db_name is None:
+            # Use environment variable or default
+            db_name = os.environ.get('DATABASE_URL', 'users.db')
+        self.db_name = db_name
+        self.init_database()
+```
+
+### Fix 2: Create Missing PDF Files
+You need to create these files in `pdfs/MBA/`:
+- MMPC-001.pdf
+- MMPC-002.pdf
+
+### Fix 3: Update Requirements
+Add to `requirements.txt`:
+```
+mysql-connector-python==8.0.33
+```
 
 ## 📋 Deployment Steps
 
-### For Render:
-1. **Push your updated code** to your repository
-2. **Set environment variables** in Render dashboard:
-   - `CASHFREE_APP_ID` (if you plan to add payment later)
-   - `CASHFREE_SECRET_KEY` (if you plan to add payment later)
-3. **Deploy** - Render will automatically use the `render.yaml` configuration
+1. **Upload all files** to your Hostinger hosting directory
+2. **Set environment variables** in Hostinger control panel
+3. **Create database** (MySQL recommended)
+4. **Update database configuration** in `database.py`
+5. **Test the application** by visiting your domain
 
-### For Heroku:
-1. **Push your code** to your repository
-2. **Create Heroku app** and connect repository
-3. **Set environment variables** in Heroku dashboard
-4. **Deploy** - Heroku will use the `Procfile`
+## ⚠️ Important Notes
 
-### For other platforms:
-- Use the `Procfile` configuration
-- Ensure `waitress` is installed via `requirements.txt`
+- **Database**: SQLite files are not persistent on shared hosting
+- **File Permissions**: Ensure `uploads/` folder has write permissions
+- **SSL**: Enable SSL certificate for secure payments
+- **Backup**: Regular database backups are essential
 
-## 🔧 Current Application Features
+## 🆘 If Something Goes Wrong
 
-✅ **User Authentication** - Login/Register system  
-✅ **Form Submission** - Student assignment form  
-✅ **PDF Generation** - Custom IGNOU assignment format  
-✅ **File Uploads** - ID card and signature handling  
-✅ **Database** - SQLite for user management  
+1. Check Hostinger error logs
+2. Verify all environment variables are set
+3. Ensure database connection is working
+4. Check file permissions on uploads folder
+5. Test payment integration with Cashfree
 
-## 🚫 Removed Features
-
-❌ **Payment Integration** - Cashfree payment gateway removed  
-❌ **Payment Verification** - No payment required now  
-
-## 🧪 Testing Locally
-
-1. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Run the application**:
-   ```bash
-   python app.py
-   ```
-
-3. **Access the application**:
-   - Main form: `http://localhost:5000`
-   - Welcome page: `http://localhost:5000/welcome`
-   - Login: `http://localhost:5000/login`
-   - Register: `http://localhost:5000/register`
-
-## 📁 File Structure
-
-```
-your-project/
-├── app.py                 # Main Flask application
-├── database.py           # Database management
-├── index.html           # Main form page
-├── login.html           # Login page
-├── register.html        # Registration page
-├── welcome.html         # Welcome/landing page
-├── requirements.txt     # Python dependencies
-├── render.yaml          # Render deployment config
-├── Procfile            # Alternative deployment config
-├── users.db            # SQLite database (created automatically)
-└── pdfs/               # PDF files directory
-    ├── BCS-53-EM-2025-26.pdf
-    └── BCS-54-EM-2025-26.pdf
-```
-
-## 🎯 Next Steps
-
-1. **Deploy to Render** with the updated files
-2. **Test the application** functionality
-3. **Add payment integration later** if needed (using the previous Cashfree setup)
-
-The deployment error should now be resolved! 🎉
+## 📞 Support
+If you need help with any of these steps, let me know!
